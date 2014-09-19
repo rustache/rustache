@@ -1,0 +1,5 @@
+[package]
+
+name = "rustache"
+version = "0.0.1"
+authors = ["Jarrod Ruhland <jarrod.ruhland@gmail.com>"]
