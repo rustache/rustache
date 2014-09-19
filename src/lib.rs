@@ -1,18 +1,18 @@
 use std::io::File;
 
-// helpers
+// Helpers
 fn get_template(template_path: &str) -> String {
     let path = Path::new(template_path);
     let display = path.display();
 
     let mut file = match File::open(&path) {
-        Err(why) => fail!("couldn't open {}: {}", display, why.desc),
+        Err(why) => fail!("Couldn't open {}: {}", display, why.desc),
         Ok(file) => file,
     };
 
     let template_str: String = match file.read_to_string() {
-        Err(why) => fail!("couldn't read {}: {}", display, why.desc),
-        Ok( string) =>  string,
+        Err(why)   => fail!("Couldn't read {}: {}", display, why.desc),
+        Ok(string) =>  string,
     };
 
 
