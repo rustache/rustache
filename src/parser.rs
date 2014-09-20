@@ -2,59 +2,48 @@
 //!
 //! Can parse parse opening and closing rustaches and text nodes.
 
-#![feature(phase)]
-#[phase(plugin)]
-extern crate regex_macros;
-extern crate regex;
 use std::collections::hashmap::HashMap;
-
-// Parse an HTML template and returns a HashMap of the tags 
 
 struct Token<'a> {
     pos: uint,
     name: &'a str,
-    tag_type: &'a Tag 
+    tag_type: Tag<'a>,
+    data: &'a str
 }
 
-impl Token {
-    fn new(pos: uint, name: &str, tag_type: Tag) -> Token {
+impl<'a> Token<'a> {
+    fn new(pos: uint, name: &'a str, tag_type: Tag) -> Token<'a> {
         Token {
             pos: pos,
             name: name,
-            tag_type: tag_type
+            tag_type: tag_type,
+            data: ""
         }
     }
 }
-
 
  pub enum Tag<'a> {
     Unescaped,
-    Variable,
-    Truthy,
-    Falsy, 
-    List,
-    Lambda,
     Inverted,
     Comment,
     Partial,
-    Section
+    Section,
 }
 
 pub struct Parser<'a> {
-    input: String
+    pub input: String,
+    pub token_map: HashMap<String, Vec<Token<'a>>>
 }
 
-impl Parser {
-    pub fn parse(source: Vec<Token>) -> HashMap<String, Vec<Token>> {
-        let tag_map: HashMap<String, Vec<Token>> = HashMap::new();
-        for token in source.iter() {
-            tag_map.insert(token);
+impl<'a> Parser<'a> {
+    fn new(input: String) -> Parser<'a> {
+        Parser {
+            input: input
         }
-        tag_map
     }
 
     // Parse a single string tag
-    fn parse_string_tag(input: &str, token: &Token) -> Vec<Token> {
+    fn parse_string_tag<'a >(input: &str, token: &Token) -> Vec<Token<'a>> {
         let mut result: Vec<Token> = Vec::new();
         let tokens = Parser::find_token_matches(input);
         for token in tokens {
@@ -64,11 +53,22 @@ impl Parser {
         result
     }
 
+    pub fn parse<'a>(source: Vec<Token>) -> HashMap<&str, Vec<Token<'a>>> {
+        let tag_map: HashMap<&str, Vec<Token>> = HashMap::new();
+        for token in source.iter() {
+            tag_map.insert(token.name, token);
+        }
+        tag_map
+    }
+
+    pub fn insert_item_at_key(&self, key: Token<'a>) {
+        self.token_map.insert()
+    }
 
 
-    // Capture all regex matches for rustache tags and return them as a vector of
-    // string slices after parsing their tag types. Results will be used by the 
-    //parser in order to create the TagMap.
+    // Capture all regex matches for mustache tags and return them as a vector of
+    // tuples containing position, name and tagtype. Results will be used by the 
+    // to create the TokenMap.
     fn find_token_matches(input: &str) -> Vec<(uint, &str, &str)>{
         let mut result = Vec::new();
         let re = regex!(r"(\{\{*\S?\s?[\w\s]*\s?\S?\}\})");
@@ -81,11 +81,11 @@ impl Parser {
                 '!' => Comment,
                 '>' => Partial,
                 '#' => Section,
+                '^' => Inverted,
                 _   => Partial
             };
 
-            let mut token = (start, name, tag_type);
-            result.push(token);
+            result.push((start, name, tag_type));
         }
 
         result
@@ -94,10 +94,10 @@ impl Parser {
 
 }
 
-#[test]
-fn test_token_matches() {
-    let test_string: &str = "{{variable1}},{{variable2}},{{variable3}}";
-    let expected: Vec<&str> = vec!["{{variable1}}","{{variable2}}","{{variable3}}"];
-    let result = find_tag_matches(test_string);
-    assert_eq!(result, expected);
-}
+// #[test]
+// fn test_token_matches() {
+//     let test_string: &str = "{{variable1}},{{variable2}},{{variable3}}";
+//     let expected: Vec<&str> = vec!["{{variable1}}","{{variable2}}","{{variable3}}"];
+//     let result = find_tag_matches(test_string);
+//     assert_eq!(result, expected);
+// }
