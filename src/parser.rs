@@ -9,24 +9,6 @@ extern crate regex;
 use std::collections::hashmap::HashMap;
 
 // Parse an HTML template and returns a HashMap of the tags 
-pub fn parse(source: Vec<Token>) -> HashMap {
-    let tag_map: HashMap<String, Vec<Token>> = HashMap::new();
-    for token in source.iter() {
-        tag_map.insert(token);
-    }
-    tag_map
-}
-
-// Parse a single string tag
-fn parse_string_tag(input: &str, token: &Token) -> Vec<Token> {
-    let mut result: Vec<Token> = Vec::new();
-    let tokens = Parser::find_token_matches(input);
-    for token in tokens {
-        let (pos, name, tag_type) = token;
-        Token::new(pos, name, tag_type);
-    }
-    result
-}
 
 struct Token<'a> {
     pos: uint,
@@ -58,11 +40,32 @@ impl Token {
     Section
 }
 
-pub struct Parser {
+pub struct Parser<'a> {
     input: String
 }
 
 impl Parser {
+    pub fn parse(source: Vec<Token>) -> HashMap<String, Vec<Token>> {
+        let tag_map: HashMap<String, Vec<Token>> = HashMap::new();
+        for token in source.iter() {
+            tag_map.insert(token);
+        }
+        tag_map
+    }
+
+    // Parse a single string tag
+    fn parse_string_tag(input: &str, token: &Token) -> Vec<Token> {
+        let mut result: Vec<Token> = Vec::new();
+        let tokens = Parser::find_token_matches(input);
+        for token in tokens {
+            let (pos, name, tag_type) = token;
+            Token::new(pos, name, tag_type);
+        }
+        result
+    }
+
+
+
     // Capture all regex matches for rustache tags and return them as a vector of
     // string slices after parsing their tag types. Results will be used by the 
     //parser in order to create the TagMap.
