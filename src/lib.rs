@@ -7,7 +7,6 @@ use std::io::{File, MemWriter, stdout};
 pub use rustache::Rustache;
 pub use template::Template;
 pub use parser::Parser;
-use std::io::File;
 
 // Helpers
 fn get_template(template_path: &str) -> String {
