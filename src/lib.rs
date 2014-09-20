@@ -3,13 +3,12 @@
 extern crate regex_macros;
 extern crate regex;
 
-use std::io::File;
-use std::io::stdout;
+use std::io::{File, MemWriter, stdout};
 
 // Helpers
 
 // Retrieves a file from disk and converts to string. Returns the template string.
-fn get_template(template_path: &str) -> String {
+fn get_template(template_path: &str) -> Result<String, int> {
     let path = Path::new(template_path);
     let display = path.display();
 
@@ -25,8 +24,37 @@ fn get_template(template_path: &str) -> String {
         Ok(string) =>  string,
     };
 
-    template_str
+    Ok(template_str)
 }
+
+
+fn render_template_with_data<W: Writer>(writer: &mut W, data: &str) {
+    writer.write_str(data).unwrap();
+}
+
+// TODO: find out how to get around the limitation of traits in test-function signatures.
+// this does not work.
+#[test]
+// fn should_render_template() {
+//     let fake_template:&str = "<div>";
+//     render_test_helper(fake_template);
+// }
+
+
+#[test]
+fn should_retrieve_file() {
+
+    let path = "src/test_templates/sample.html";
+    let expected = String::from_str("<div>");
+    let retrieved_template = get_template(path);
+
+    // for testing a stream - not working yet.
+    // let passed_template: &str = retrieved_template.as_slice();
+    // render_template_with_data(&stream, passed_template);
+
+    assert_eq!(retrieved_template, Ok(expected));
+}
+
 
 // Capture all regex matches for rustache tags and return them as a vector of
 // string slices.  Results will be used by the parser in order to create the
@@ -42,25 +70,7 @@ fn find_tag_matches(input: &str) -> Vec<&str>{
     result
 }
 
-fn render_template_with_data<W: Writer>(writer: &mut W, data: &str) {
-    writer.write_str(data).unwrap();
-}
 
-#[test]
-fn should_retrieve_file() {
-
-    let mut stream =std::io::stdout;
-
-    let path = "src/test_templates/sample.html";
-    let expected = String::from_str("<div>");
-    let retrieved_template = get_template(path);
-
-    // for testing a stream - not working yet.
-    // let passed_template: &str = retrieved_template.as_slice();
-    // render_template_with_data(&stream, passed_template);
-
-    assert_eq!(expected, retrieved_template);
-}
 
 #[test]
 fn test_bucketing() {
