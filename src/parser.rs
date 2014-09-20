@@ -91,3 +91,10 @@ impl Parser {
 
 }
 
+#[test]
+fn test_token_matches() {
+    let test_string: &str = "{{variable1}},{{variable2}},{{variable3}}";
+    let expected: Vec<&str> = vec!["{{variable1}}","{{variable2}}","{{variable3}}"];
+    let result = find_tag_matches(test_string);
+    assert_eq!(result, expected);
+}

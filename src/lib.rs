@@ -4,6 +4,10 @@ extern crate regex_macros;
 extern crate regex;
 
 use std::io::{File, MemWriter, stdout};
+pub use rustache::Rustache;
+pub use template::Template;
+pub use parser::Parser;
+use std::io::File;
 
 // Helpers
 fn get_template(template_path: &str) -> String {
@@ -50,3 +54,7 @@ fn should_retrieve_file() {
 
     assert_eq!(retrieved_template, Ok(expected));
 }
+
+mod rustache;
+mod template;
+mod parser;
