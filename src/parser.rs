@@ -10,7 +10,8 @@ use std::io::{File, MemWriter, stdout};
 struct Token<'a> {
     pos: uint,
     name: &'a str,
-    tag_type: Tag<'a> 
+    tag_type: Tag<'a>,
+    data: &'a str
 }
 
 impl<'a> Token<'a> {
@@ -18,7 +19,8 @@ impl<'a> Token<'a> {
         Token {
             pos: pos,
             name: name,
-            tag_type: tag_type
+            tag_type: tag_type,
+            data: ""
         }
     }
 }
@@ -42,7 +44,7 @@ impl<'a> Parser<'a> {
             input: input
         }
     }
-    
+
     // Parse a single string tag
     fn parse_string_tag<'a >(input: &str, token: &Token) -> Vec<Token<'a>> {
         let mut result: Vec<Token> = Vec::new();
@@ -54,8 +56,8 @@ impl<'a> Parser<'a> {
         result
     }
 
-    pub fn parse<'a>(source: Vec<Token>) -> HashMap<String, Vec<Token<'a>>> {
-        let tag_map: HashMap<String, Vec<Token>> = HashMap::new();
+    pub fn parse<'a>(source: Vec<Token>) -> HashMap<&str, Vec<Token<'a>>> {
+        let tag_map: HashMap<&str, Vec<Token>> = HashMap::new();
         for token in source.iter() {
             tag_map.insert(token.name, token);
         }
