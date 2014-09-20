@@ -24,7 +24,7 @@ fn get_template(template_path: &str) -> String {
         Ok(string) =>  string,
     };
 
-    Ok(template_str)
+    template_str
 }
 
 
@@ -54,6 +54,6 @@ fn should_retrieve_file() {
     assert_eq!(retrieved_template, Ok(expected));
 }
 
-mod rustache;
-mod template;
 mod parser;
+mod template;
+mod rustache;
