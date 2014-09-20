@@ -17,7 +17,7 @@ fn get_template(template_path: &str) -> String {
 
     // read file to string 
     let template_str: String = match file.read_to_string() {
-        Err(why) => fail!("Couldn't read {}: {}", display, why.desc),
+        Err(why)   => fail!("Couldn't read {}: {}", display, why.desc),
         Ok(string) =>  string,
     };
 
