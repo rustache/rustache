@@ -1,8 +1,11 @@
 //! A simple parser for parsing rustache files.
 //!
 //! Can parse parse opening and closing rustaches and text nodes.
+extern crate regex_macros;
+extern crate regex;
 
 use std::collections::hashmap::HashMap;
+use std::io::{File, MemWriter, stdout};
 
 struct Token<'a> {
     pos: uint,
@@ -28,12 +31,12 @@ impl<'a> Token<'a> {
     Section,
 }
 
-pub struct Parser {
+pub struct Parser<'a> {
     pub input: String,
-    pub token_map: HashMap<String, Vec<Token>>
+    pub token_map: HashMap<String, Vec<Token<'a>>>
 }
 
-impl Parser {
+impl<'a> Parser<'a> {
     pub fn parse<'a>(source: Vec<Token>) -> HashMap<String, Vec<Token<'a>>> {
         let tag_map: HashMap<String, Vec<Token>> = HashMap::new();
         for token in source.iter() {
@@ -79,6 +82,37 @@ impl Parser {
     }
 
 
+}
+
+fn get_template(template_path: &str) -> String {
+    let path = Path::new(template_path);
+    let display = path.display();
+
+    let mut file = match File::open(&path) {
+        Err(why) => fail!("Couldn't open {}: {}", display, why.desc),
+        Ok(file) => file,
+    };
+
+    // read file to string 
+    let template_str: String = match file.read_to_string() {
+        Err(why)   => fail!("Couldn't read {}: {}", display, why.desc),
+        Ok(string) =>  string,
+    };
+
+    template_str
+}
+
+#[test]
+fn should_retrieve_file() {
+    let path = "src/test_templates/sample.html";
+    let expected = String::from_str("<div>");
+    let retrieved_template = get_template(path);
+
+    // for testing a stream - not working yet.
+    // let passed_template: &str = retrieved_template.as_slice();
+    // render_template_with_data(&stream, passed_template);
+
+    assert_eq!(retrieved_template, Ok(expected));
 }
 
 // #[test]
