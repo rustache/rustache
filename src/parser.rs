@@ -1,9 +1,6 @@
 //! A simple parser for parsing rustache files.
 //!
 //! Can parse parse opening and closing rustaches and text nodes.
-extern crate regex_macros;
-extern crate regex;
-
 use std::collections::hashmap::HashMap;
 use std::io::{File, MemWriter, stdout};
 
