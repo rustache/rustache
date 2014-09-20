@@ -2,64 +2,92 @@
 //!
 //! Can parse parse opening and closing rustaches and text nodes.
 
+#![feature(phase)]
+#[phase(plugin)]
+extern crate regex_macros;
+extern crate regex;
 use std::collections::hashmap::HashMap;
 
-// Parse an HTML template and returns a TagMap
-pub fn parse(source: String) -> HashMap {
-    let tag_map: HashMap<String, String> = HashMap::new();
-    tag_map.insert(source);
+// Parse an HTML template and returns a HashMap of the tags 
+pub fn parse(source: Vec<Token>) -> HashMap {
+    let tag_map: HashMap<String, Vec<Token>> = HashMap::new();
+    for token in source.iter() {
+        tag_map.insert(token);
+    }
     tag_map
 }
 
-struct Parser {
+// Parse a single string tag
+fn parse_string_tag(input: &str, token: &Token) -> Vec<Token> {
+    let mut result: Vec<Token> = Vec::new();
+    let tokens = Parser::find_token_matches(input);
+    for token in tokens {
+        let (pos, name, tag_type) = token;
+        Token::new(pos, name, tag_type);
+    }
+    result
+}
+
+struct Token<'a> {
     pos: uint,
+    name: &'a str,
+    tag_type: &'a Tag 
+}
+
+impl Token {
+    fn new(pos: uint, name: &str, tag_type: Tag) -> Token {
+        Token {
+            pos: pos,
+            name: name,
+            tag_type: tag_type
+        }
+    }
+}
+
+
+ pub enum Tag<'a> {
+    Unescaped,
+    Variable,
+    Truthy,
+    Falsy, 
+    List,
+    Lambda,
+    Inverted,
+    Comment,
+    Partial,
+    Section
+}
+
+pub struct Parser {
     input: String
 }
 
 impl Parser {
+    // Capture all regex matches for rustache tags and return them as a vector of
+    // string slices after parsing their tag types. Results will be used by the 
+    //parser in order to create the TagMap.
+    fn find_token_matches(input: &str) -> Vec<(uint, &str, &str)>{
+        let mut result = Vec::new();
+        let re = regex!(r"(\{\{*\S?\s?[\w\s]*\s?\S?\}\})");
+        for cap in re.captures_iter(input) {
+            let (start, end) = cap.pos(1).unwrap();
+            let mut name = cap.at(1);
+            let mut tag_type  = match name.char_at(2) {
+                '&' => Unescaped,
+                '{' => Unescaped,
+                '!' => Comment,
+                '>' => Partial,
+                '#' => Section,
+                _   => Partial
+            };
 
-    // Read the next character without consuming it
-    fn next_char(&self) -> char {
-        self.input.as_slice().char_at(self.pos)
-    }
-
-    // Do the next characters start with a given string?
-    fn starts_with(&self, string: &str) -> bool {
-        self.input.as_slice().slice_from(self.pos).starts_with(string)
-    }
-
-    // Return true if all input is consumed 
-    fn is_all_input_consumed(&self) -> bool {
-        self.pos >= self.input.len()
-    }
-
-    // Return the current character and advance to the next character
-    fn consume_char(&mut self) -> char {
-        let range = self.input.as_slice().char_range_at(self.pos);
-        self.pos = range.next;
-        range.ch
-    }
-
-    // Consume characters until `test` returns false
-    fn consume_while(&mut self, test: |char| -> bool) -> String {
-        let mut result = String::new();
-        while !self.is_all_input_consumed() && test(self.next_char()) {
-            result.push_char(self.consume_char());
+            let mut token = (start, name, tag_type);
+            result.push(token);
         }
+
         result
     }
 
-    // Consume and discard zero or more whitespace characters 
-    fn consume_whitespace(&mut self) {
-        self.consume_while(|c| c.is_whitespace());
-    }
 
-    // Parse a single string tag
-    fn parse_string_tag(&mut self) -> String {
-        match self.next_char() {
-            "{{" => self.parse_element(),
-            _    => self.parse_text() 
-        }
-    }
 }
 
