@@ -3,12 +3,17 @@
 //! Can parse parse opening and closing rustaches and text nodes.
 
 use std::collections::hashmap::HashMap;
+use std::io::{File, MemWriter, stdout};
+
+pub struct Parser<'a> {
+    pub input: String,
+    pub token_map: HashMap<String, Vec<Token<'a>>>
+}
 
 struct Token<'a> {
     pos: uint,
     name: &'a str,
     tag_type: Tag<'a>,
-    data: &'a str
 }
 
 impl<'a> Token<'a> {
@@ -22,18 +27,18 @@ impl<'a> Token<'a> {
     }
 }
 
- pub enum Tag<'a> {
+enum Tag<'a> {
     Unescaped,
     Inverted,
     Comment,
     Partial,
-    Section,
+    Start,
+    End,
 }
 
-pub struct Parser<'a> {
-    pub input: String,
-    pub token_map: HashMap<String, Vec<Token<'a>>>
-}
+struct TokenMap<'a>;
+
+struct DataMap<'a>;
 
 impl<'a> Parser<'a> {
     fn new(input: String) -> Parser<'a> {
@@ -43,11 +48,11 @@ impl<'a> Parser<'a> {
     }
 
     // Parse a single string tag
-    fn parse_string_tag<'a >(input: &str, token: &Token) -> Vec<Token<'a>> {
+    fn parse_string_tag<'a >(input: &str) -> Vec<Token<'a>> {
         let mut result: Vec<Token> = Vec::new();
-        let tokens = Parser::find_token_matches(input);
-        for token in tokens {
-            let (pos, name, tag_type) = token;
+        let tags = Parser::find_token_matches(input);
+        for tag in tags {
+            let (pos, name, tag_type) = tag;
             Token::new(pos, name, tag_type);
         }
         result
@@ -60,11 +65,6 @@ impl<'a> Parser<'a> {
         }
         tag_map
     }
-
-    pub fn insert_item_at_key(&self, key: Token<'a>) {
-        self.token_map.insert()
-    }
-
 
     // Capture all regex matches for mustache tags and return them as a vector of
     // tuples containing position, name and tagtype. Results will be used by the 
@@ -80,7 +80,8 @@ impl<'a> Parser<'a> {
                 '{' => Unescaped,
                 '!' => Comment,
                 '>' => Partial,
-                '#' => Section,
+                '#' => Start,
+                '/' => End,
                 '^' => Inverted,
                 _   => Partial
             };
@@ -93,6 +94,38 @@ impl<'a> Parser<'a> {
 
 
 }
+
+fn get_template(template_path: &str) -> String {
+    let path = Path::new(template_path);
+    let display = path.display();
+
+    let mut file = match File::open(&path) {
+        Err(why) => fail!("Couldn't open {}: {}", display, why.desc),
+        Ok(file) => file,
+    };
+
+    // read file to string 
+    let template_str: String = match file.read_to_string() {
+        Err(why)   => fail!("Couldn't read {}: {}", display, why.desc),
+        Ok(string) =>  string,
+    };
+
+    template_str
+}
+
+#[test]
+fn should_retrieve_file() {
+    let path = "src/test_templates/sample.html";
+    let expected = String::from_str("<div>");
+    let retrieved_template = get_template(path);
+
+    // for testing a stream - not working yet.
+    // let passed_template: &str = retrieved_template.as_slice();
+    // render_template_with_data(&stream, passed_template);
+
+    assert_eq!(retrieved_template, Ok(expected));
+}
+
 
 // #[test]
 // fn test_token_matches() {
