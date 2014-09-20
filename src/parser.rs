@@ -29,7 +29,8 @@ impl<'a> Token<'a> {
 }
 
 pub struct Parser {
-    pub input: String
+    pub input: String,
+    pub token_map: HashMap<String, Vec<Token>>
 }
 
 impl Parser {
