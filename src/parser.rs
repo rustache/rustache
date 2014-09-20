@@ -37,14 +37,12 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    pub fn parse<'a>(source: Vec<Token>) -> HashMap<String, Vec<Token<'a>>> {
-        let tag_map: HashMap<String, Vec<Token>> = HashMap::new();
-        for token in source.iter() {
-            tag_map.insert(token.name, token);
+    fn new(input: String) -> Parser<'a> {
+        Parser {
+            input: input
         }
-        tag_map
     }
-
+    
     // Parse a single string tag
     fn parse_string_tag<'a >(input: &str, token: &Token) -> Vec<Token<'a>> {
         let mut result: Vec<Token> = Vec::new();
@@ -55,6 +53,19 @@ impl<'a> Parser<'a> {
         }
         result
     }
+
+    pub fn parse<'a>(source: Vec<Token>) -> HashMap<String, Vec<Token<'a>>> {
+        let tag_map: HashMap<String, Vec<Token>> = HashMap::new();
+        for token in source.iter() {
+            tag_map.insert(token.name, token);
+        }
+        tag_map
+    }
+
+    pub fn insert_item_at_key(&self, key: Token<'a>) {
+        self.token_map.insert()
+    }
+
 
     // Capture all regex matches for mustache tags and return them as a vector of
     // tuples containing position, name and tagtype. Results will be used by the 
