@@ -1,15 +1,29 @@
-pub struct Template;
+use std::collections::hashmap::HashMap;
+use std::io::{File};
+use parser::{Node};
 
-fn render_template_with_data<W: Writer>(writer: &mut W, data: &str) {
-    writer.write_str(data).unwrap();
+pub struct Template<'a>;
+
+impl<'a> Template<'a> {
+    pub fn new() -> Template<'a> {
+        Template
+    }
+
+    pub fn render_data<'a>(data: HashMap<&'a str, &'a str>, nodes: &'a Vec<Node<'a>>) -> String {
+        let mut output = String::new();
+        for node in nodes.iter() {
+            if !data.contains_key(&node.val.as_slice()) {
+                output = output.append(node.val.as_slice());
+            } else {
+                output = output.append(data[node.val.as_slice()]);
+            }
+        }
+
+        output
+    }
+
+    pub fn write_to_file(data: &str, path: &str) {
+        let mut file = File::create(&Path::new(path));
+        file.write(data.as_bytes());
+    }
 }
-
-// TODO: find out how to get around the limitation of traits in test-function signatures.
-// this does not work.
-// #[test]
-// fn should_render_template() {
-//     let fake_template:&str = "<div>";
-//     render_test_helper(fake_template);
-// }
-
-

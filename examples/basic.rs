@@ -1,17 +1,9 @@
-#![crate_name = "rustache"]
+extern crate rustache;
 
-#![feature(phase)]
-#[phase(plugin)]
-extern crate regex_macros;
-extern crate regex;
-
+use rustache::{Build, Template, Parser};
 use std::collections::hashmap::HashMap;
-pub use build::Build;
-pub use template::Template;
-pub use parser::Parser;
 
-#[test]
-fn basic_test() {
+fn main() {
     let mut data_map: HashMap<&str, &str> = HashMap::new();
     data_map.insert("{{ value1 }}", "Bob");
     data_map.insert("{{ value2 }}", "Tom");
@@ -26,9 +18,4 @@ fn basic_test() {
     let output = Template::render_data(data, &tags);
 
     Template::write_to_file(output.as_slice(), out_path);
-    assert!(true);
 }
-
-mod parser;
-mod build;
-mod template;
