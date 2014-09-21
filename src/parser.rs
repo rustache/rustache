@@ -2,11 +2,9 @@
 //!
 //! Can parse parse opening and closing rustaches and text nodes.
 
-use std::collections::hashmap::HashMap;
 use std::collections::hashmap::HashSet;
 use std::io::{File};
 
-#[deriving(Show)]
 pub struct Node<'a> {
     pub val: String,
     pub node_type: Tag<'a>
@@ -21,25 +19,19 @@ impl<'a> Node<'a> {
     }
 }
 
-#[deriving(Show)]
 pub enum Tag<'a> {
     Text,
     Value,
 }
 
-#[deriving(Show)]
-pub enum TagType<'a> {
-    Standard
-}
-
 pub struct Parser<'a>;
 
 impl<'a> Parser<'a> {
-    pub fn new(input: String) -> Parser<'a> {
+    pub fn new() -> Parser<'a> {
         Parser
     }
 
-    fn read_template(template_path: &str) -> String {
+    pub fn read_template(template_path: &str) -> String {
         let path = Path::new(template_path);
         let display = path.display();
 
@@ -57,7 +49,7 @@ impl<'a> Parser<'a> {
         template_str
     }
 
-    fn tag_lines<'a>(file: String) -> Vec<Node<'a>> {
+    pub fn tag_lines<'a>(file: String) -> Vec<Node<'a>> {
         let mut nodes: Vec<Node> = Vec::new();
         let line_regex = regex!("\n");
         let mustache_regex = regex!(r"\{\{(\s?[\w\s]*\s?)\}\}");
@@ -74,7 +66,7 @@ impl<'a> Parser<'a> {
         nodes
     }
 
-    fn create_token_map_from_tags<'a>(nodes: &'a Vec<Node>) -> HashSet<&'a str> {
+    pub fn create_token_map_from_tags<'a>(nodes: &'a Vec<Node>) -> HashSet<&'a str> {
         let mut tag_map: HashSet<&str> = HashSet::new();
         for node in nodes.iter() {
             match node.node_type {

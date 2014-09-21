@@ -1,5 +1,4 @@
 use std::collections::hashmap::HashMap;
-use std::collections::hashmap::HashSet;
 use std::io::{File};
 use parser::{Node};
 
@@ -9,10 +8,11 @@ impl Template {
     pub fn render_data<'a>(data: HashMap<&'a str, &'a str>, nodes: &'a Vec<Node<'a>>) -> String{
         let mut output = String::new();
         for node in nodes.iter() {
-            match node.node_type {
-                Text  => output = output.append(node.val.as_slice()),
-                Value => output = output.append(data[node.val.as_slice()])
-            };
+            // match node.node_type {
+                // Text  => output = output.append(node.val.as_slice()),
+                // Value => output = output.append(data[node.val.as_slice()])
+            // };
+            println!("{}", node.val);
         }
 
         output
