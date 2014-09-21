@@ -79,3 +79,10 @@ impl<'a> Parser<'a> {
         tag_map
     }
 }
+
+#[test]
+fn read_template_should_return_a_stringified_file() {
+    let result = Parser::read_template("examples/template_files/basic_sample.html");
+    println!("{}", result);
+    assert!(false);
+}
