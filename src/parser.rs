@@ -24,6 +24,7 @@ pub enum Tag<'a> {
     Value,
 }
 
+#[deriving(Show)]
 pub struct Parser<'a>;
 
 impl<'a> Parser<'a> {

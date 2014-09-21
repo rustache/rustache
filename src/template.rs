@@ -22,7 +22,7 @@ impl<'a> Template<'a> {
         output
     }
 
-    pub fn write_to_file(data: &str, path: &str) {
+    pub fn write_to_mem(data: &str, path: &str) {
         let mut file = File::create(&Path::new(path));
         file.write(data.as_bytes());
     }
