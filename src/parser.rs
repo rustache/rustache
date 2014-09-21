@@ -18,7 +18,7 @@ impl<'a> Node<'a> {
         }
     }
 }
-
+#[deriving(Show, PartialEq, Eq)]
 pub enum Tag<'a> {
     Text,
     Value,
