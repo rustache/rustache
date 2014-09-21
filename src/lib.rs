@@ -10,7 +10,7 @@ pub use template::Template;
 pub use parser::Parser;
 
 #[test]
-fn basic_test() {
+fn basic_end_to_end_test() {
     use std::collections::hashmap::HashMap;
 
     let mut data_map: HashMap<&str, &str> = HashMap::new();

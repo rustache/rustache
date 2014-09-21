@@ -83,6 +83,6 @@ impl<'a> Parser<'a> {
 #[test]
 fn read_template_should_return_a_stringified_file() {
     let result = Parser::read_template("examples/template_files/basic_sample.html");
-    println!("{}", result);
-    assert!(false);
+    let expected = File::open(&Path::new("examples/template_files/basic_sample.html")).read_to_string().unwrap();
+    assert_eq!(expected, result);
 }
