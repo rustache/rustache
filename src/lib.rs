@@ -3,10 +3,10 @@
 extern crate regex_macros;
 extern crate regex;
 
-pub use rustache::Rustache;
+pub use build::Build;
 pub use template::Template;
 pub use parser::Parser;
 
 mod parser;
+mod build;
 mod template;
-mod rustache;
