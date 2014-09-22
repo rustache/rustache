@@ -11,25 +11,6 @@ pub enum Node {
     Value(String)
 }
 
-// pub struct Node<'a> {
-//     pub val: String,
-//     pub node_type: Tag<'a>
-// }
-
-// impl<'a> Node<'a> {
-//     pub fn new(val: String, tag: Tag) -> Node<'a> {
-//         Node {
-//             val: val,
-//             node_type: tag
-//         }
-//     }
-// }
-// #[deriving(Show, PartialEq, Eq)]
-// pub enum Tag<'a> {
-//     Text,
-//     Value,
-// }
-
 #[deriving(Show)]
 pub struct Parser<'a>;
 
@@ -46,29 +27,7 @@ impl<'a> Parser<'a> {
         lines
     }
 
-    // pub fn tag_lines<'a>(lines: Vec<String>) -> Vec<Node<'a>> {
-    //     let mut nodes: Vec<Node> = Vec::new();
-    //     let re = regex!(r"\{\{\S?(\s?[\w\s]*\s?\S?)\}\}");
-    //     for line in lines.iter() {
-    //         if re.is_match(line.as_slice()) {
-    //             for cap in re.captures_iter(line.as_slice()) {
-    //                 let (s, e) = cap.pos(0).unwrap();
-    //                 let start = Node::new(line.as_slice().slice_to(s).trim().to_string(), Text);
-    //                 nodes.push(start);
-    //                 let tag = Node::new(cap.at(1).trim().to_string(), Value);
-    //                 nodes.push(tag);
-    //                 let end = Node::new(line.as_slice().slice_from(e).trim().to_string(), Text);
-    //                 nodes.push(end);
-    //             }
-    //         } else {
-    //             let node = Node::new(line.as_slice().trim().to_string(), Text);
-    //             nodes.push(node);
-    //         }
-    //     }
-    //     nodes
-    // }
-
-    pub fn tokenize_line(line: &str) {
+    pub fn tokenize_line(line: &str) -> Vec<Node> {
         let mut nodes: Vec<Node> = vec![];
         let mut open_pos = 0u;
         let mut close_pos = 0u;
@@ -87,28 +46,35 @@ impl<'a> Parser<'a> {
         if (close_pos < len) {
             nodes.push(Static(line.slice_from(close_pos).to_string()));
         }
-        for node in nodes.iter() {
-            println!("{}", node);
-        }
 
+        nodes
     }
 
-    // pub fn create_token_map_from_tags<'a>(nodes: &'a Vec<Node>) -> HashSet<&'a str> {
-    //     let mut tag_map: HashSet<&str> = HashSet::new();
-    //     for node in nodes.iter() {
-    //         match node.node_type {
-    //             Text => continue,
-    //             Value  => tag_map.insert(node.val.as_slice())
-    //         };        
-    //     }
+    pub fn create_token_map_from_tags<'a>(nodes: Vec<Node>) -> HashSet<String> {
+        let mut tag_map: HashSet<String> = HashSet::new();
+        for node in nodes.iter() {
+            match *node {
+                Value(ref text)  => tag_map.insert(text.clone()),
+                Static(ref text) => continue,
+            };        
+        }
 
-    //     tag_map
-    // }
+        tag_map
+    }
 }
 
 #[test]
 fn test_tokenize() {
-    let test: &str = "Not{{!tag }}Yep{{#tag2}}";
+    let test: &str = "Not a tag {{ tag }}.  Yep {{ tag }}";
     Parser::tokenize_line(test);
+    assert!(false);
+}
+
+#[test]
+fn test_token_mapper() {
+    let test: &str = "Not a tag {{ tag1 }}.  Yep {{ tag2 }}";
+    let nodes = Parser::tokenize_line(test);
+    let set = Parser::create_token_map_from_tags(nodes);
+    println!("{}", set);
     assert!(false);
 }
