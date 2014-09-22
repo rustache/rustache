@@ -9,7 +9,7 @@ impl<'a> Template<'a> {
         Template
     }
 
-    pub fn render_data<'a, W: Writer>(writer: &mut W,  data: HashMap<&'a str, &'a str>, nodes: &'a Vec<Node>) {
+    pub fn render_data<'a, W: Writer>(writer: &mut W,  data: HashMap<&'a str, &'a str>, nodes: Vec<Node>) {
         for node in nodes.iter() {
             match *node {
                 Value(text)  => {
