@@ -9,6 +9,10 @@ use std::io::{File, BufferedReader};
 pub enum Node {
     Static(String),
     Value(String),
+    OTag(Option<String>),
+    CTag(Option<String>),
+    Inverted(String),
+    Unescaped(String),
 }
 
 #[deriving(Show)]
@@ -42,12 +46,12 @@ impl<'a> Parser<'a> {
                 let val = line.slice(open_pos + 2u, close_pos - 2u);
                 match val.char_at(0) {
                     '!' => continue, // comment, skip over
-                    '#' => continue, // section
-                    '^' => continue, // inverted
+                    '#' => nodes.push(OTag(Some(val.slice_from(1).trim().to_string()))), // OTAG
+                    '/' => nodes.push(CTag(Some(val.slice_from(1).trim().to_string()))), // CTAG
+                    '^' => nodes.push(Inverted(val.slice_from(1).trim().to_string())), // inverted
                     '>' => continue, // partial
-                    '&' => continue, // unescaped literal
+                    '&' => nodes.push(Unescaped(val.slice_from(1).trim().to_string())), // unescaped literal
                     '{' => continue, // unescaped literal
-                    ' ' => nodes.push(Value(val.slice_from(1).trim().to_string())),
                     _ => nodes.push(Value(val.trim().to_string()))
 
                 } 
@@ -67,6 +71,10 @@ impl<'a> Parser<'a> {
             match *node {
                 Value(ref text)  => tag_map.insert(text.clone()),
                 Static(ref text) => continue,
+                OTag(ref opt) => continue,
+                CTag(ref opt) => continue,
+                Inverted(ref text)  => continue,
+                Unescaped(ref text)  => continue,
             };        
         }
 
@@ -83,7 +91,7 @@ impl<'a> Parser<'a> {
 
 #[test]
 fn test_token_mapper() {
-    let test: &str = "I'm a tag {{ tag1 }}.  So am I {{ tag2 }}";
+    let test: &str = "Static tag!{{normal}} {{! comment }} {{# tag }} {{/ tag }} {{^ inverted }} {{& unescaped }}";
     let nodes = Parser::tokenize_line(test);
     for node in nodes.iter() {
         println!("{}", node);
