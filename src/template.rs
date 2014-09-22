@@ -1,5 +1,5 @@
 use std::collections::hashmap::HashMap;
-use std::io::{File};
+use std::io::{BufferedWriter, File};
 use parser::{Node, Tag};
 
 pub struct Template<'a>;
@@ -9,17 +9,15 @@ impl<'a> Template<'a> {
         Template
     }
 
-    pub fn render_data<'a>(data: HashMap<&'a str, &'a str>, nodes: &'a Vec<Node>) -> String {
+    pub fn render_data<'a, W: Writer>(writer: &mut W,  data: HashMap<&'a str, &'a str>, nodes: &'a Vec<Node>) {
         let mut output = String::new();
         for node in nodes.iter() {
             if !data.contains_key(&node.val.as_slice()) {
-                output = output.append(node.val.as_slice());
+                writer.write_str(node.val.as_slice());
             } else {
-                output = output.append(data[node.val.as_slice()]);
+                writer.write_str(data[node.val.as_slice()]);
             }
         }
-
-        output
     }
 
     pub fn write_to_mem(data: &str, path: &str) {
