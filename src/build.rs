@@ -10,7 +10,11 @@ impl<'a> Build<'a> {
     pub fn create_data_map<'a>(tags: HashSet<&'a str>, data: HashMap<&'a str, &'a str>) -> HashMap<&'a str, &'a str> {
         let mut value_map: HashMap<&str, &str> = HashMap::new();
         for &tag in tags.iter() {
-            value_map.insert(tag, data[tag]);
+            if data.contains_key(&tag) {
+                value_map.insert(tag, data[tag]);
+            } else {
+                value_map.insert(tag, "");
+            }
         }
         value_map
     }
