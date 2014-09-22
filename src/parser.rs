@@ -43,7 +43,7 @@ impl<'a> Parser<'a> {
 
     pub fn tag_lines<'a>(lines: Vec<String>) -> Vec<Node<'a>> {
         let mut nodes: Vec<Node> = Vec::new();
-        let re = regex!(r"\{\{(\S?\s?[\w\s]*\s?\S?)\}\}");
+        let re = regex!(r"\{\{\S?(\s?[\w\s]*\s?\S?)\}\}");
         for line in lines.iter() {
             if re.is_match(line.as_slice()) {
                 for cap in re.captures_iter(line.as_slice()) {
