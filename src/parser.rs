@@ -8,7 +8,7 @@ use std::io::{File, BufferedReader};
 #[deriving(Show)]
 pub enum Node {
     Static(String),
-    Value(String)
+    Value(String),
 }
 
 #[deriving(Show)]
@@ -39,7 +39,18 @@ impl<'a> Parser<'a> {
             }
             if c == '}' && i < len - 1 && line.char_at(i+1) == '}' {
                 close_pos = i+2;
-                nodes.push(Value(line.slice(open_pos, close_pos).to_string()));
+                let val = line.slice(open_pos + 2u, close_pos - 2u);
+                match val.char_at(0) {
+                    '!' => continue, // comment, skip over
+                    '#' => continue, // section
+                    '^' => continue, // inverted
+                    '>' => continue, // partial
+                    '&' => continue, // unescaped literal
+                    '{' => continue, // unescaped literal
+                    ' ' => nodes.push(Value(val.slice_from(1).trim().to_string())),
+                    _ => nodes.push(Value(val.trim().to_string()))
+
+                } 
             }
             
         }
@@ -63,17 +74,20 @@ impl<'a> Parser<'a> {
     }
 }
 
-#[test]
-fn test_tokenize() {
-    let test: &str = "Not a tag {{ tag }}.  Yep {{ tag }}";
-    Parser::tokenize_line(test);
-    assert!(false);
-}
+// #[test]
+// fn test_tokenize() {
+//     let test: &str = "Not a tag {{ tag }}.  Yep {{ tag }}";
+//     Parser::tokenize_line(test);
+//     assert!(false);
+// }
 
 #[test]
 fn test_token_mapper() {
-    let test: &str = "Not a tag {{ tag1 }}.  Yep {{ tag2 }}";
+    let test: &str = "I'm a tag {{ tag1 }}.  So am I {{ tag2 }}";
     let nodes = Parser::tokenize_line(test);
+    for node in nodes.iter() {
+        println!("{}", node);
+    }
     let set = Parser::create_token_map_from_tags(nodes);
     println!("{}", set);
     assert!(false);
