@@ -1,4 +1,4 @@
-box: jabbrass/Rust-Cargo@0.0.4
+box: jabbrass/Rust-Cargo@0.0.5
 build:
-  steps:
-    - jabbrass/rust-cargo-test@0.0.1
+steps:
+- jabbrass/rust-cargo-test@0.0.3
