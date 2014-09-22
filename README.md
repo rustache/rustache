@@ -1,3 +1,3 @@
 Rustache
 ====
-[![wercker status](https://app.wercker.com/status/48e9404a698fb49b85fb01c75fa3c211/m "wercker status")](https://app.wercker.com/project/bykey/48e9404a698fb49b85fb01c75fa3c211)
+[![wercker status](https://app.wercker.com/status/82a0e23dbd1d93c6746683df33f32e41/m "wercker status")](https://app.wercker.com/project/bykey/82a0e23dbd1d93c6746683df33f32e41)
