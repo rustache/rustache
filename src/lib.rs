@@ -26,11 +26,10 @@ fn basic_end_to_end_test() {
     let data = Build::create_data_map(tokens, data_map);
     let output = Template::render_data(data, &tags);
 
-    Template::write_to_mem(output.as_slice(), out_path);
+    // Template::write_to_mem(output.as_slice(), out_path);
     let mut expected: String = String::new();
     expected = expected.append("<html><body><div><span>Bob</span></div><div><span>Tom</span></div><div><b>Joe</b><a></a></div></body></html>");
-    println!("{}", output == expected);
-    assert!(true);
+    assert_eq!(output, expected);
 }
 
 mod parser;
