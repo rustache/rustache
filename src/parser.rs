@@ -23,6 +23,16 @@ impl<'a> Parser<'a> {
         Parser
     }
 
+    pub fn read_to_bytes(template_path: &str) -> Vec<u8> {
+        let path = Path::new(template_path);
+        let contents = match File::open(&path).read_to_end() {
+            Ok(bytes) => bytes,
+            Err(err) => fail!("Could not read the file {}", err),
+        };
+
+        contents
+    }
+
     pub fn read_template(template_path: &str) -> Vec<String> {
         let path = Path::new(template_path);
         let mut file = BufferedReader::new(File::open(&path));
