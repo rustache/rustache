@@ -9,7 +9,6 @@ use std::io::{File, BufferedReader};
 pub enum Node {
     Static(String),
     Value(String),
-
 }
 
 #[deriving(Show)]
@@ -52,7 +51,6 @@ impl<'a> Parser<'a> {
                     _ => nodes.push(Value(val.trim().to_string()))
 
                 } 
-                // nodes.push(Value(val.to_string()));
             }
             
         }
