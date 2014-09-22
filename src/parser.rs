@@ -5,6 +5,7 @@
 use std::collections::hashmap::HashSet;
 use std::io::{File, BufferedReader};
 
+/// Node is a section of a compiled rustache string
 #[deriving(Show)]
 pub struct Node<'a> {
     pub val: String,
@@ -25,6 +26,7 @@ pub enum Tag<'a> {
     Value,
 }
 
+/// `Parser` parses a string into a series of `Node`s
 #[deriving(Show)]
 pub struct Parser<'a>;
 
@@ -33,6 +35,7 @@ impl<'a> Parser<'a> {
         Parser
     }
 
+    /// Reads a file template and returns a vector of all the strings in the template
     pub fn read_template(template_path: &str) -> Vec<String> {
         let path = Path::new(template_path);
         let mut file = BufferedReader::new(File::open(&path));
@@ -41,6 +44,8 @@ impl<'a> Parser<'a> {
         lines
     }
 
+    /// Returns a vector of nodes, each with a String value and a node_type,
+    /// from the vector of Strings passed in from read_template
     pub fn tag_lines<'a>(lines: Vec<String>) -> Vec<Node<'a>> {
         let mut nodes: Vec<Node> = Vec::new();
         let re = regex!(r"\{\{\S?(\s?[\w\s]*\s?\S?)\}\}");
@@ -63,6 +68,7 @@ impl<'a> Parser<'a> {
         nodes
     }
 
+    /// Returns a HashSet consisting of the values of the nodes
     pub fn create_token_map_from_tags<'a>(nodes: &'a Vec<Node>) -> HashSet<&'a str> {
         let mut tag_map: HashSet<&str> = HashSet::new();
         for node in nodes.iter() {
