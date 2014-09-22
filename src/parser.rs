@@ -3,8 +3,9 @@
 //! Can parse parse opening and closing rustaches and text nodes.
 
 use std::collections::hashmap::HashSet;
-use std::io::{File};
+use std::io::{File, BufferedReader};
 
+#[deriving(Show)]
 pub struct Node<'a> {
     pub val: String,
     pub node_type: Tag<'a>
@@ -24,6 +25,7 @@ pub enum Tag<'a> {
     Value,
 }
 
+#[deriving(Show)]
 pub struct Parser<'a>;
 
 impl<'a> Parser<'a> {
@@ -31,38 +33,33 @@ impl<'a> Parser<'a> {
         Parser
     }
 
-    pub fn read_template(template_path: &str) -> String {
+    pub fn read_template(template_path: &str) -> Vec<String> {
         let path = Path::new(template_path);
-        let display = path.display();
+        let mut file = BufferedReader::new(File::open(&path));
+        let lines: Vec<String> = file.lines().map(|x| x.unwrap()).collect();
 
-        let mut file = match File::open(&path) {
-            Err(why) => fail!("Couldn't open {}: {}", display, why.desc),
-            Ok(file) => file,
-        };
-
-        // read file to string 
-        let template_str: String = match file.read_to_string() {
-            Err(why)   => fail!("Couldn't read {}: {}", display, why.desc),
-            Ok(string) =>  string,
-        };
-
-        template_str
+        lines
     }
 
-    pub fn tag_lines<'a>(file: String) -> Vec<Node<'a>> {
+    pub fn tag_lines<'a>(lines: Vec<String>) -> Vec<Node<'a>> {
         let mut nodes: Vec<Node> = Vec::new();
-        let line_regex = regex!("\n");
-        let mustache_regex = regex!(r"\{\{(\s?[\w\s]*\s?)\}\}");
-        let lines: Vec<&str> = line_regex.split(file.as_slice()).collect();
+        let re = regex!(r"\{\{\S?(\s?[\w\s]*\s?\S?)\}\}");
         for line in lines.iter() {
-            let val = mustache_regex.is_match(*line);
-            let node = match val {
-                true  => Node::new(line.trim().to_string(), Value),
-                false => Node::new(line.trim().to_string(), Text)
-            };
-            nodes.push(node);
+            if re.is_match(line.as_slice()) {
+                for cap in re.captures_iter(line.as_slice()) {
+                    let (s, e) = cap.pos(0).unwrap();
+                    let start = Node::new(line.as_slice().slice_to(s).trim().to_string(), Text);
+                    nodes.push(start);
+                    let tag = Node::new(cap.at(1).trim().to_string(), Value);
+                    nodes.push(tag);
+                    let end = Node::new(line.as_slice().slice_from(e).trim().to_string(), Text);
+                    nodes.push(end);
+                }
+            } else {
+                let node = Node::new(line.as_slice().trim().to_string(), Text);
+                nodes.push(node);
+            }
         }
-
         nodes
     }
 
