@@ -62,7 +62,7 @@ impl<'a> Parser<'a> {
             }
             
         }
-        if (close_pos < len) {
+        if close_pos < len {
             nodes.push(Static(line.slice_from(close_pos).to_string()));
         }
 

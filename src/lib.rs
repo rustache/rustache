@@ -5,36 +5,14 @@ use std::fmt;
 
 pub use build::Builder;
 pub use template::Template;
-pub use parser::Parser;
+pub use parser::{Parser, Node};
 
+#[deriving(Show, PartialEq)]
 pub enum Data<'a> {
-    String(String),
-    Boolean(bool),
+    Static(String),
+    Bool(bool),
     Vector(Vec<Data<'a>>),
     Map(HashMap<String, Data<'a>>)
-}
-
-impl<'a> PartialEq for Data<'a> {
-    fn eq(&self, other: &Data<'a>) -> bool {
-        match (self, other) {
-            (&String(ref val0), &String(ref val1)) => val0 == val1,
-            (&Boolean(ref val0), &Boolean(ref val1)) => val0 == val1,
-            (&Vector(ref val0), &Vector(ref val1)) => val0 == val1,
-            (&Map(ref val0), &Map(ref val1)) => val0 == val1,
-            (_, _) => false
-        }
-    }
-}
-
-impl<'a> fmt::Show for Data<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            String(ref val) => write!(f, "String({})", val),
-            Boolean(val)    => write!(f, "Boolean({})", val),
-            Vector(ref val) => write!(f, "Vector({})", val),
-            Map(ref val)    => write!(f, "Map({})", val) 
-        }
-    }
 }
 
 // #[test]

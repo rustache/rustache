@@ -1,6 +1,6 @@
 pub use std::collections::{HashSet, HashMap};
 
-use super::{Data, String, Boolean, Vector, Map};
+use super::{Data, Static, Bool, Vector, Map};
 
 pub struct Builder<'a> {
     data: HashMap<String, Data<'a>>,
