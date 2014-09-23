@@ -58,7 +58,7 @@ fn basic_end_to_end_test() {
     let data = Builder::create_data_map(tokens, data_map);
 
     // write to memwriter stream
-    Template::render_data(&mut mem_wr, data, tags.clone());
+    Template::render_data(&mut mem_wr, &data, &tags);
 
     // unwrap bytes
     let output_bytes = mem_wr.unwrap();
