@@ -12,7 +12,7 @@ impl<'a> Template<'a> {
 
     pub fn render_data<'a, W: Writer>(writer: &mut W,  
                                       data: HashMap<String, String>, 
-                                      nodes: &'a Vec<Node>) {
+                                      nodes: Vec<Node>) {
         let mut tmp: &str = "";
         for node in nodes.iter() {
             tmp = "";
@@ -50,11 +50,11 @@ mod template_tests {
         // let mut buf = vec![0, ..256];
         let mut w = MemWriter::new();
         let mut data_map: HashMap<String, String> = HashMap::new();
-        let tags = Parser::tokenize_line("<h1>{{ value1 }}</h1>");
+        let tags = Parser::tokenize("<h1>{{ value1 }}</h1>");
 
         data_map.insert("value1".to_string(), "The heading".to_string());
 
-        Template::render_data(&mut w, data_map, &tags);
+        Template::render_data(&mut w, data_map, tags);
         assert_eq!("<h1>The heading</h1>".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
     }
 }

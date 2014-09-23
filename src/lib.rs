@@ -15,39 +15,69 @@ pub enum Data<'a> {
     Map(HashMap<String, Data<'a>>)
 }
 
+
 // #[test]
 // fn basic_end_to_end_test() {
     // use std::collections::hashmap::HashMap;
     // use std::io::MemWriter;
     // use std::str;
 
-    // let mut mem_wr = MemWriter::new();
-    // let mut data_map: HashMap<&str, &str> = HashMap::new();
+impl<'a> PartialEq for Data<'a> {
+    fn eq(&self, other: &Data<'a>) -> bool {
+        match (self, other) {
+            (&Text(ref val0), &Text(ref val1)) => val0 == val1,
+            (&Boolean(ref val0), &Boolean(ref val1)) => val0 == val1,
+            (&Vector(ref val0), &Vector(ref val1)) => val0 == val1,
+            (&Map(ref val0), &Map(ref val1)) => val0 == val1,
+            (_, _) => false
+        }
+    }
+}
 
-    // data_map.insert("value1", "Bob");
-    // data_map.insert("value2", "Tom");
-    // data_map.insert("value3", "Joe");
+impl<'a> fmt::Show for Data<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Text(ref val) => write!(f, "String({})", val),
+            Boolean(val)    => write!(f, "Boolean({})", val),
+            Vector(ref val) => write!(f, "Vector({})", val),
+            Map(ref val)    => write!(f, "Map({})", val) 
+        }
+    }
+}
 
-    // let in_path = "examples/template_files/basic_sample.html";
-    // let out_path = "examples/template_files/basic_output.html";
-    // let in_data = Parser::read_template(in_path);
-    // let tags = Parser::tag_lines(in_data);
-    // let tokens = Parser::create_token_map_from_tags(&tags);
-    // let data = Build::create_data_map(tokens, data_map);
+#[test]
+fn basic_end_to_end_test() {
+    use std::collections::hashmap::HashMap;
+    use std::io::MemWriter;
+    use std::str;
 
-    // // write to memwriter stream
-    // Template::render_data(&mut mem_wr, data, &tags);
+    let mut mem_wr = MemWriter::new();
+    let mut data_map: HashMap<&str, &str> = HashMap::new();
 
-    // // unwrap bytes
-    // let output_bytes = mem_wr.unwrap();
+    data_map.insert("value1", "Bob");
+    data_map.insert("value2", "Tom");
+    data_map.insert("value3", "Joe");
 
-    // // bytes to string
-    // let output = str::from_utf8(output_bytes.as_slice()).unwrap().to_string();
+    let in_path = "examples/template_files/basic_sample.html";
+    let out_path = "examples/template_files/basic_output.html";
+    let in_data = Parser::read_template(in_path);
+    let tags = Parser::tokenize(in_data.as_slice());
+    let tokens = Parser::create_map_from_tokens(tags.clone());
+    let data = Build::create_data_map(tokens, data_map);
 
-    // let mut expected: String = String::new();
-    // expected = expected.append("<html><body><div><span>Bob</span></div><div><span>Tom</span></div><div><b>Joe</b><a></a></div></body></html>");
-    // assert_eq!(output, expected);
-// }
+    // write to memwriter stream
+    Template::render_data(&mut mem_wr, data, tags.clone());
+
+    // unwrap bytes
+    let output_bytes = mem_wr.unwrap();
+
+    // bytes to string
+    let output = str::from_utf8(output_bytes.as_slice()).unwrap().to_string();
+
+    let mut expected: String = String::new();
+    expected = expected.append("<html><body><div><span>Bob</span></div><div><span>Tom</span></div><div><b>Joe</b><a></a></div></body></html>");
+    assert_eq!(output, expected);
+}
 
 mod parser;
 mod build;
