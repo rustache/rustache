@@ -5,11 +5,11 @@ use std::io::{File, BufferedReader};
 
 #[deriving(Show, PartialEq, Eq, Clone)]
 pub enum Token {
-    Static(&'static str),
-    Value(&'static str),
+    Text(&'static str),
+    Variable(&'static str),
     OTag(&'static str, bool), // bool denotes whether it is an inverted section tag
     CTag(&'static str),
-    Unescaped(&'static str),
+    Raw(&'static str),
 }
 
 pub struct Compiler<'a> {
@@ -37,7 +37,7 @@ impl<'a> Compiler<'a> {
             if c == '{' && self.contents.char_at(i+1) == '{' {
                 open_pos = i;
                 if open_pos != close_pos {
-                    self.tokens.push(Static(self.contents.slice(close_pos, open_pos)));
+                    self.tokens.push(Text(self.contents.slice(close_pos, open_pos)));
                 }
                 i += 1;
             }
@@ -50,9 +50,9 @@ impl<'a> Compiler<'a> {
                     '/' => self.tokens.push(CTag(val.slice_from(1).trim())), // Section CTAG
                     '^' => self.tokens.push(OTag(val.slice_from(1).trim(), true)), // Inverted Section
                     '>' => continue, // partial
-                    '&' => self.tokens.push(Unescaped(val.slice_from(1).trim())), // Unescaped
+                    '&' => self.tokens.push(Raw(val.slice_from(1).trim())), // Unescaped
                     '{' => continue, // unescaped literal
-                    _ => self.tokens.push(Value(val.trim()))
+                    _ => self.tokens.push(Variable(val.trim()))
 
                 }
                 i += 2;
@@ -60,7 +60,7 @@ impl<'a> Compiler<'a> {
             
         }
         if close_pos < len {
-            self.tokens.push(Static(self.contents.slice_from(close_pos)));
+            self.tokens.push(Text(self.contents.slice_from(close_pos)));
         }
     }
 }
