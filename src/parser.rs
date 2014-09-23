@@ -5,7 +5,7 @@
 use std::collections::hashmap::HashSet;
 use std::io::{File, BufferedReader};
 
-#[deriving(Show)]
+#[deriving(Show, PartialEq, Eq)]
 pub enum Node {
     Static(String),
     Value(String),
@@ -86,21 +86,25 @@ impl<'a> Parser<'a> {
     }
 }
 
-// #[test]
-// fn test_tokenize() {
-//     let test: &str = "Not a tag {{ tag }}.  Yep {{ tag }}";
-//     Parser::tokenize_line(test);
-//     assert!(false);
-// }
+#[test]
+fn tokenize_should_map_strings() {
+    let test: &str = "Static tag!{{normal}}{{! comment }}!{{# tag }} {{/ tag }} {{^ inverted }} {{& unescaped }}";
+    let nodes = Parser::tokenize_line(test);
+    //should contain static blocks
+    assert_eq!(nodes.contains(&Static("Static tag!".to_string())), true);
+    //should not contain comment blocks
+    assert_eq!(nodes.contains(&Value("comment".to_string())), false);
+    //should contain open and close blocks
+    assert_eq!(nodes.contains(&OTag(Some("tag".to_string()))), true);
+    //should not contain unescaped blocks
+    assert_eq!(nodes.contains(&Unescaped("unescaped".to_string())), true);
+}
 
 #[test]
-fn test_token_mapper() {
-    let test: &str = "Static tag!{{normal}}{{! comment }}!{{# tag }} {{/ tag }} {{^      inverted }} {{& unescaped }}";
-    let nodes = Parser::tokenize_line(test);
-    for node in nodes.iter() {
-        println!("{}", node);
-    }
+fn mapper_should_create_a_set_of_useable_variables() {
+    let nodes = vec![Static("Static tag!".to_string()), Value("comment".to_string()), OTag(Some("tag".to_string()))];
     let set = Parser::create_token_map_from_tags(nodes);
-    println!("{}", set);
-    assert!(false);
+    
+    // should only contain value nodes
+    assert!(set.contains(&"comment".to_string()));
 }
