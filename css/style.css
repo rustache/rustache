@@ -1,0 +1,55 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: 'Source Sans Pro';
+  background: #fafafa;
+}
+h1,h2,h3,h4, h5 {
+  font-weight: normal;
+}
+h4.subtitle {
+  margin: 5px 0;
+}
+h5.notready {
+  margin: 0 0 20px;
+  color: red;
+  font-size: 13px;
+}
+/*.navigation {
+  top: 0;
+  left: 0;
+  right: 0;
+  display: block;
+  position: fixed;
+  height: 45px;
+  background: white;
+}*/
+.content {
+  width: 80%;
+  margin: 0 auto;
+}
+.jumbotron {
+  padding: 20px 0;
+  text-align: center;
+  background: white;
+}
+object {
+  margin: 50px 0;
+}
+.intro {
+  width: 315px;
+  margin: 20px auto;
+  padding-left: 5px;
+}
+.example {
+  font-size: 12px;
+  font-family: 'Source Code Pro'
+}
+
+
+/* hljs */
+.hljs {
+  background: none;
+}
