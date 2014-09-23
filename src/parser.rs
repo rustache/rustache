@@ -5,7 +5,7 @@
 use std::collections::hashmap::HashSet;
 use std::io::{File, BufferedReader};
 
-#[deriving(Show, PartialEq, Eq)]
+#[deriving(Show, PartialEq, Eq, Clone)]
 pub enum Node {
     Static(String),
     Value(String),
@@ -23,15 +23,25 @@ impl<'a> Parser<'a> {
         Parser
     }
 
-    pub fn read_template(template_path: &str) -> Vec<String> {
+    pub fn read_template(template_path: &str) -> String {
         let path = Path::new(template_path);
-        let mut file = BufferedReader::new(File::open(&path));
-        let lines: Vec<String> = file.lines().map(|x| x.unwrap()).collect();
 
-        lines
+        // Open the file path
+        let mut file = match File::open(&path) {
+            Err(why) => fail!("{}", why.desc),
+            Ok(file) => file,
+        };
+
+        // Read the file contents into a string
+        let contents = match file.read_to_string() {
+            Err(why) => fail!("{}", why.desc),
+            Ok(text) => text,
+        };
+
+        contents
     }
 
-    pub fn tokenize_line(line: &str) -> Vec<Node> {
+    pub fn tokenize(line: &str) -> Vec<Node> {
         let mut nodes: Vec<Node> = vec![];
         let mut open_pos = 0u;
         let mut close_pos = 0u;
@@ -40,7 +50,7 @@ impl<'a> Parser<'a> {
             if c == '{' && line.char_at(i+1) == '{' {
                 open_pos = i;
                 if open_pos != close_pos {
-                nodes.push(Static(line.slice(close_pos, open_pos).to_string()));
+                    nodes.push(Static(line.slice(close_pos, open_pos).to_string()));
                 }
                 i += 1;
             }
@@ -69,7 +79,7 @@ impl<'a> Parser<'a> {
         nodes
     }
 
-    pub fn create_token_map_from_tags<'a>(nodes: Vec<Node>) -> HashSet<String> {
+    pub fn create_map_from_tokens<'a>(nodes: Vec<Node>) -> HashSet<String> {
         let mut tag_map: HashSet<String> = HashSet::new();
         for node in nodes.iter() {
             match *node {
@@ -89,7 +99,7 @@ impl<'a> Parser<'a> {
 #[test]
 fn tokenize_should_map_strings() {
     let test: &str = "Static tag!{{normal}}{{! comment }}!{{# tag }} {{/ tag }} {{^ inverted }} {{& unescaped }}";
-    let nodes = Parser::tokenize_line(test);
+    let nodes = Parser::tokenize(test);
     //should contain static blocks
     assert_eq!(nodes.contains(&Static("Static tag!".to_string())), true);
     //should not contain comment blocks
@@ -103,8 +113,8 @@ fn tokenize_should_map_strings() {
 #[test]
 fn mapper_should_create_a_set_of_useable_variables() {
     let nodes = vec![Static("Static tag!".to_string()), Value("comment".to_string()), OTag(Some("tag".to_string()))];
-    let set = Parser::create_token_map_from_tags(nodes);
-    
+    let set = Parser::create_map_from_tokens(nodes);
+
     // should only contain value nodes
     assert!(set.contains(&"comment".to_string()));
 }
