@@ -13,6 +13,18 @@ impl<'a> Builder<'a> {
         }
     }
 
+    pub fn insert_static<K: StrAllocating, V: StrAllocating>(self, key: K, value: V) -> Builder<'a> {
+        let Builder { mut data } = self;
+        data.insert(key.into_string(), Static(value.into_string()));
+        Builder { data: data }
+    }
+
+    pub fn insert_bool<K: StrAllocating>(self, key: K, value: bool) -> Builder<'a> {
+        let Builder { mut data } = self;
+        data.insert(key.into_string(), Bool(value));
+        Builder { data: data }
+    }
+
     pub fn create_data_map<'a>(tags: HashSet<String>, data: HashMap<&'a str, &'a str>) -> HashMap<String, String> {
         let mut value_map = HashMap::new();
 
