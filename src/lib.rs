@@ -3,13 +3,13 @@
 use std::collections::HashMap;
 use std::fmt;
 
-pub use build::Build;
+pub use build::Builder;
 pub use template::Template;
-pub use parser::Parser;
+pub use parser::{Parser, Node};
 
 pub enum Data<'a> {
-    Text(String),
-    Boolean(bool),
+    Static(String),
+    Bool(bool),
     Vector(Vec<Data<'a>>),
     Map(HashMap<String, Data<'a>>)
 }
@@ -17,8 +17,8 @@ pub enum Data<'a> {
 impl<'a> PartialEq for Data<'a> {
     fn eq(&self, other: &Data<'a>) -> bool {
         match (self, other) {
-            (&Text(ref val0), &Text(ref val1)) => val0 == val1,
-            (&Boolean(ref val0), &Boolean(ref val1)) => val0 == val1,
+            (&Static(ref val0), &Static(ref val1)) => val0 == val1,
+            (&Bool(ref val0), &Bool(ref val1)) => val0 == val1,
             (&Vector(ref val0), &Vector(ref val1)) => val0 == val1,
             (&Map(ref val0), &Map(ref val1)) => val0 == val1,
             (_, _) => false
@@ -29,8 +29,8 @@ impl<'a> PartialEq for Data<'a> {
 impl<'a> fmt::Show for Data<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Text(ref val) => write!(f, "String({})", val),
-            Boolean(val)    => write!(f, "Boolean({})", val),
+            Static(ref val) => write!(f, "String({})", val),
+            Bool(val)    => write!(f, "Boolean({})", val),
             Vector(ref val) => write!(f, "Vector({})", val),
             Map(ref val)    => write!(f, "Map({})", val) 
         }
@@ -55,7 +55,7 @@ fn basic_end_to_end_test() {
     let in_data = Parser::read_template(in_path);
     let tags = Parser::tokenize(in_data.as_slice());
     let tokens = Parser::create_map_from_tokens(tags.clone());
-    let data = Build::create_data_map(tokens, data_map);
+    let data = Builder::create_data_map(tokens, data_map);
 
     // write to memwriter stream
     Template::render_data(&mut mem_wr, data, tags.clone());

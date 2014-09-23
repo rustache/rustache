@@ -11,8 +11,8 @@ impl<'a> Template<'a> {
 
 
     pub fn render_data<'a, W: Writer>(writer: &mut W,  
-                                        data: HashMap<String, String>, 
-                                       nodes: Vec<Node>) {
+                                      data: HashMap<String, String>, 
+                                      nodes: Vec<Node>) {
         let mut tmp: &str = "";
         for node in nodes.iter() {
             tmp = "";

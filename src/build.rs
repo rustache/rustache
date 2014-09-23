@@ -1,10 +1,16 @@
 pub use std::collections::{HashSet, HashMap};
 
-pub struct Build<'a>;
+use super::{Data, Static, Bool, Vector, Map};
 
-impl<'a> Build<'a> {
-    pub fn new() -> Build<'a> {
-        Build
+pub struct Builder<'a> {
+    data: HashMap<String, Data<'a>>,
+}
+
+impl<'a> Builder<'a> {
+    pub fn new() -> Builder<'a> {
+        Builder {
+            data: HashMap::new()
+        }
     }
 
     pub fn create_data_map<'a>(tags: HashSet<String>, data: HashMap<&'a str, &'a str>) -> HashMap<String, String> {
