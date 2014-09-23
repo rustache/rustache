@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 use std::fmt;
 
-pub use build::Build;
+pub use build::Builder;
 pub use template::Template;
 pub use parser::Parser;
 
