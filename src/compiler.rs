@@ -1,9 +1,7 @@
 // The compiler compiles any template file into a list of
 // parser usable tokens
 
-use std::io::{File, BufferedReader};
-
-#[deriving(Show, PartialEq, Eq, Clone)]
+#[deriving(Show, PartialEq, Eq)]
 pub enum Token {
     Text(&'static str),
     Variable(&'static str),
