@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 use std::fmt;
 
-pub use build::Builder;
+pub use build::{MapBuilder, VecBuilder};
 pub use template::Template;
 pub use parser::{Parser, Node};
 
