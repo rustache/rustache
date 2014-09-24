@@ -3,7 +3,6 @@
 // //! Can parse parse opening and closing rustaches and text nodes.
 
 // use std::collections::hashmap::HashSet;
-// use std::io::{File, BufferedReader};
 use compiler::{Token, Text, Variable, OTag, CTag, Raw};
 use std::mem;
 
@@ -75,9 +74,48 @@ impl<'a> Parser<'a> {
                 },
             }
         }
+
+        // I cant completely understand this...
+        // list.iter().enumerate().map(|(pos, elem)| (pos == list.len() - 1, elem)).scan(None, |&mut ctag_state, (is_final, elem)| {
+        //     match *ctag_state {
+        //         Some(ref closing_name, ref mut children, ref inverted) => match elem {
+        //             CTag(name) if name == *closing_name {
+        //                 Some(Section(name, self.parse_nodes(children), inverted))
+        //             },
+        //             child if !is_final => { children.push(child); None },
+        //         },
+        //         None => match elem {
+        //             Text(text) => Some(Static(text)),
+        //             /* others omitted */
+        //             OTag(name, inverted) => {
+        //                 *ctag_state = (name, vec![], inverted);
+        //                 None
+        //             },
+        //             CTag(_) => None
+        //         }
+        //     }
+        // }).collect();
+
         nodes
     }
 }
+
+//     pub fn create_map_from_tokens<'a>(nodes: Vec<Node>) -> HashSet<String> {
+//         let mut tag_map: HashSet<String> = HashSet::new();
+//         for node in nodes.iter() {
+//             match *node {
+//                 Value(ref text)  => tag_map.insert(text.clone()),
+//                 Static(ref text) => continue,
+//                 OTag(ref opt) => continue,
+//                 CTag(ref opt) => continue,
+//                 Inverted(ref text)  => continue,
+//                 Unescaped(ref text)  => continue,
+//             };        
+//         }
+
+//         tag_map
+//     }
+// }
 
 #[test]
 fn test_parser() {
