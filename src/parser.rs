@@ -79,41 +79,6 @@ impl<'a> Parser<'a> {
     }
 }
 
-//     pub fn read_template(template_path: &str) -> String {
-//         let path = Path::new(template_path);
-
-//         // Open the file path
-//         let mut file = match File::open(&path) {
-//             Err(why) => fail!("{}", why.desc),
-//             Ok(file) => file,
-//         };
-
-//         // Read the file contents into a string
-//         let contents = match file.read_to_string() {
-//             Err(why) => fail!("{}", why.desc),
-//             Ok(text) => text,
-//         };
-
-//         contents
-//     }
-
-//     pub fn create_map_from_tokens<'a>(nodes: Vec<Node>) -> HashSet<String> {
-//         let mut tag_map: HashSet<String> = HashSet::new();
-//         for node in nodes.iter() {
-//             match *node {
-//                 Value(ref text)  => tag_map.insert(text.clone()),
-//                 Static(ref text) => continue,
-//                 OTag(ref opt) => continue,
-//                 CTag(ref opt) => continue,
-//                 Inverted(ref text)  => continue,
-//                 Unescaped(ref text)  => continue,
-//             };        
-//         }
-
-//         tag_map
-//     }
-// }
-
 #[test]
 fn test_parser() {
     use compiler::Compiler;

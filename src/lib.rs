@@ -2,6 +2,7 @@
 
 use std::collections::HashMap;
 use std::fmt;
+use std::io::File;
 
 pub use build::{HashBuilder, VecBuilder};
 pub use template::Template;
@@ -37,42 +38,28 @@ impl<'a> fmt::Show for Data<'a> {
     }
 }
 
-/*#[test]
-fn basic_end_to_end_test() {
-    use std::collections::hashmap::HashMap;
-    use std::io::MemWriter;
-    use std::str;
+pub struct Read;
 
-    let mut mem_wr = MemWriter::new();
-    // we'll want data_map to eventually look like: 
-    // let mut data_map: HashMap<&str, Data<'a>>
-    let mut data_map: HashMap<&str, &str> = HashMap::new();
+impl Read {
+    pub fn read_file(template_path: &str) -> String {
+        let path = Path::new(template_path);
+        // Open the file path
+        let mut file = match File::open(&path) {
+            Err(why) => fail!("{}", why.desc),
+            Ok(file) => file,
+        };
 
-    data_map.insert("value1", "Bob");
-    data_map.insert("value2", "Tom");
-    data_map.insert("value3", "Joe");
+        // Read the file contents into a string
+        let contents = match file.read_to_string() {
+            Err(why) => fail!("{}", why.desc),
+            Ok(text) => text,
+        };
 
-    let in_path = "examples/template_files/basic_sample.html";
-    let out_path = "examples/template_files/basic_output.html";
-    let in_data = Parser::read_template(in_path);
-    let tags = Parser::tokenize(in_data.as_slice());
-    let tokens = Parser::create_map_from_tokens(tags.clone());
-    // let data = Builder::normalize_data_map(tokens, data_map);
+        contents
+    }
+}
 
-    // write to memwriter stream
-    Template::render_data(&mut mem_wr, &data, &tags);
-
-    // unwrap bytes
-    let output_bytes = mem_wr.unwrap();
-
-    // bytes to string
-    let output = str::from_utf8(output_bytes.as_slice()).unwrap().to_string();
-
-    let mut expected: String = String::new();
-    expected = expected.append("<html><body><div><span>Bob</span></div><div><span>Tom</span></div><div><b>Joe</b><a></a></div></body></html>");
-    assert_eq!(output, expected);
-}*/
-
+mod compiler;
 mod parser;
 mod build;
 mod template;
