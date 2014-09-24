@@ -142,6 +142,19 @@ impl<'a> Parser<'a> {
 //     }
 // }
 
+#[test]
+fn test_parser() {
+    use compiler::Compiler;
+
+    let contents = "Static String {{ token }} {{# open }}{{ tag }}{{/ open }}";
+    let compiler = Compiler::new(contents);
+    let parser = Parser::new(&compiler.tokens);
+    for node in parser.nodes.iter() {
+        println!("{}", node);
+    }
+    assert!(false);
+}
+
 // #[test]
 // fn tokenize_should_map_strings() {
 //     let test: &str = "Static tag!{{normal}}{{! comment }}!{{# tag }} {{/ tag }} {{^ inverted }} {{& unescaped }}";
