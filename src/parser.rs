@@ -1,7 +1,3 @@
-// //! A simple parser for parsing rustache files.
-// //!
-// //! Can parse parse opening and closing rustaches and text nodes.
-
 // use std::collections::hashmap::HashSet;
 use compiler::{Token, Text, Variable, OTag, CTag, Raw};
 use std::mem;
@@ -33,68 +29,39 @@ impl<'a> Parser<'a> {
 
     fn parse_nodes(&self, list: &'a Vec<Token>) -> Vec<Node> {
         let mut nodes: Vec<Node> = vec![];
-        let len = list.len();
-        for i in range(0, len) {
-            match list[i] {
+        let mut il = list.iter().enumerate();
+        for (i, token) in il {
+            match *token {
                 Text(text)           => nodes.push(Static(text)),
                 Variable(name)       => nodes.push(Value(name)),
                 Raw(name)            => nodes.push(Unescaped(name)),
                 OTag(name, inverted) => {
                     let mut children: Vec<Token> = vec![];
-                    // iterate through the rest of the list (adding to children)
-                    // until the closing tag is found
-                    // for elem in list.iter().fold().flat_map().collect() {
-                    for j in range(i, len) {
-                        let elem = list[j];
-                        match elem {
+                    for (j, item) in list.slice_from(i).iter().enumerate() {
+                        match *item {
                             CTag(title) => {
                                 if title == name {
-                                    // advance the iterator past the child nodes
                                     nodes.push(Section(name, self.parse_nodes(&children), inverted));
                                     break;
                                 } else {
-                                    children.push(elem);
+                                    children.push(*item);
                                     continue;
                                 }
                             },
                             _           => {
-                                // if j == len - 1 {
-                                    // fail!("Incorrect syntax in template");
-                                // }
-                                children.push(elem);
+                                children.push(*item);
                                 continue;
                             }
                         }
+                        il.next();
                     }
                 },
                 CTag(name)           => {
-                    // If this is triggered, its a closing tag that is present without
-                    // an opening tag.  Representing bad syntax, error or ignore?
+                    continue;
                     fail!("Incorrect syntax in template, {} closed without being opened", name);
                 },
             }
         }
-
-        // I cant completely understand this...
-        // list.iter().enumerate().map(|(pos, elem)| (pos == list.len() - 1, elem)).scan(None, |&mut ctag_state, (is_final, elem)| {
-        //     match *ctag_state {
-        //         Some(ref closing_name, ref mut children, ref inverted) => match elem {
-        //             CTag(name) if name == *closing_name {
-        //                 Some(Section(name, self.parse_nodes(children), inverted))
-        //             },
-        //             child if !is_final => { children.push(child); None },
-        //         },
-        //         None => match elem {
-        //             Text(text) => Some(Static(text)),
-        //             /* others omitted */
-        //             OTag(name, inverted) => {
-        //                 *ctag_state = (name, vec![], inverted);
-        //                 None
-        //             },
-        //             CTag(_) => None
-        //         }
-        //     }
-        // }).collect();
 
         nodes
     }
@@ -129,20 +96,6 @@ fn test_parser() {
     }
     assert!(false);
 }
-
-// #[test]
-// fn tokenize_should_map_strings() {
-//     let test: &str = "Static tag!{{normal}}{{! comment }}!{{# tag }} {{/ tag }} {{^ inverted }} {{& unescaped }}";
-//     let nodes = Parser::tokenize(test);
-//     //should contain static blocks
-//     assert_eq!(nodes.contains(&Static("Static tag!".to_string())), true);
-//     //should not contain comment blocks
-//     assert_eq!(nodes.contains(&Value("comment".to_string())), false);
-//     //should contain open and close blocks
-//     assert_eq!(nodes.contains(&OTag(Some("tag".to_string()))), true);
-//     //should not contain unescaped blocks
-//     assert_eq!(nodes.contains(&Unescaped("unescaped".to_string())), true);
-// }
 
 // #[test]
 // fn mapper_should_create_a_set_of_useable_variables() {
