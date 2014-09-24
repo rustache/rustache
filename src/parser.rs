@@ -48,6 +48,7 @@ impl<'a> Parser<'a> {
                         match list[j] {
                             CTag(title) => {
                                 if title == name {
+                                    // advance the iterator past the child nodes
                                     i = j;
                                     nodes.push(Section(name, self.parse_nodes(&children), inverted));
                                     break;
@@ -57,6 +58,9 @@ impl<'a> Parser<'a> {
                                 }
                             },
                             _           => {
+                                if j == len - 1 {
+                                    fail!("Incorrect syntax in template");
+                                }
                                 children.push(list[j]);
                                 continue;
                             }
@@ -113,7 +117,7 @@ impl<'a> Parser<'a> {
 fn test_parser() {
     use compiler::Compiler;
 
-    let contents = "Static String {{ token }} {{# open }}{{ tag }}{{/ open }}";
+    let contents = "Static String {{ token }} {{# open }}{{ tag }}{{/ df }}";
     let compiler = Compiler::new(contents);
     let parser = Parser::new(&compiler.tokens);
     for node in parser.nodes.iter() {
