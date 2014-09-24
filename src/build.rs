@@ -1,48 +1,48 @@
-pub use std::collections::{HashSet, HashMap};
+pub use std::collections::HashMap;
 
-use super::{Data, Static, Bool, Vector, Map};
+use super::{Data, Static, Bool, Vector, Hash};
 
-/// `MapBuilder` is a helper type that constructs `Data` types in a HashMap
-pub struct MapBuilder<'a> {
+/// `HashBuilder` is a helper type that constructs `Data` types in a HashMap
+pub struct HashBuilder<'a> {
     data: HashMap<String, Data<'a>>
 }
 
-impl<'a> MapBuilder<'a> {
-    pub fn new() -> MapBuilder<'a> {
-        MapBuilder {
+impl<'a> HashBuilder<'a> {
+    pub fn new() -> HashBuilder<'a> {
+        HashBuilder {
             data: HashMap::new()
         }
     }
 
-    pub fn insert_static<K: StrAllocating, V: StrAllocating>(self, key: K, value: V) -> MapBuilder<'a> {
-        let MapBuilder { mut data } = self;
+    pub fn insert_static<K: StrAllocating, V: StrAllocating>(self, key: K, value: V) -> HashBuilder<'a> {
+        let HashBuilder { mut data } = self;
         data.insert(key.into_string(), Static(value.into_string()));
-        MapBuilder { data: data }
+        HashBuilder { data: data }
     }
 
-    pub fn insert_bool<K: StrAllocating>(self, key: K, value: bool) -> MapBuilder<'a> {
-        let MapBuilder { mut data } = self;
+    pub fn insert_bool<K: StrAllocating>(self, key: K, value: bool) -> HashBuilder<'a> {
+        let HashBuilder { mut data } = self;
         data.insert(key.into_string(), Bool(value));
-        MapBuilder { data: data }
+        HashBuilder { data: data }
     }
 
-    pub fn insert_vec<K: StrAllocating>(self, key: K, f: |VecBuilder<'a>| -> VecBuilder<'a>) -> MapBuilder<'a> {
-        let MapBuilder { mut data } = self;
+    pub fn insert_vector<K: StrAllocating>(self, key: K, f: |VecBuilder<'a>| -> VecBuilder<'a>) -> HashBuilder<'a> {
+        let HashBuilder { mut data } = self;
         let builder = f(VecBuilder::new());
         data.insert(key.into_string(), builder.build());
-        MapBuilder { data: data }
+        HashBuilder { data: data }
     }  
 
-    pub fn insert_map<K: StrAllocating>(self, key: K, f: |MapBuilder<'a>| -> MapBuilder<'a>) -> MapBuilder<'a> {
-        let MapBuilder { mut data } = self;
-        let builder = f(MapBuilder::new());
+    pub fn insert_hash<K: StrAllocating>(self, key: K, f: |HashBuilder<'a>| -> HashBuilder<'a>) -> HashBuilder<'a> {
+        let HashBuilder { mut data } = self;
+        let builder = f(HashBuilder::new());
         data.insert(key.into_string(), builder.build());
-        MapBuilder { data: data }
+        HashBuilder { data: data }
     }
 
     /// Return the built `Data`
     pub fn build(self) -> Data<'a> {
-        Map(self.data)
+        Hash(self.data)
     }
 
 }
@@ -71,16 +71,16 @@ impl<'a> VecBuilder<'a> {
         VecBuilder { data: data }
     }
 
-    pub fn push_vec(self, f: |VecBuilder<'a>| -> VecBuilder<'a>) -> VecBuilder<'a> {
+    pub fn push_vector(self, f: |VecBuilder<'a>| -> VecBuilder<'a>) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         let builder = f(VecBuilder::new());
         data.push(builder.build());
         VecBuilder { data: data }
     }
 
-    pub fn push_map(self, f: |MapBuilder<'a>| -> MapBuilder<'a>) -> VecBuilder<'a> {
+    pub fn push_hash(self, f: |HashBuilder<'a>| -> HashBuilder<'a>) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
-        let builder = f(MapBuilder::new());
+        let builder = f(HashBuilder::new());
         data.push(builder.build());
         VecBuilder { data: data }
     }
@@ -111,3 +111,49 @@ impl<'a> VecBuilder<'a> {
 
         value_map
     }*/
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+
+    use super::{HashBuilder, VecBuilder};
+    use super::super::{Static, Bool, Vector, Hash};
+
+    #[test]
+    fn test_new_builders() {
+        assert_eq!(HashBuilder::new().build(), Hash(HashMap::new()));
+        assert_eq!(VecBuilder::new().build(), Vector(Vec::new()));
+    }
+
+    #[test]
+    fn test_builders() {
+        let mut hearthstone = HashMap::new();
+        hearthstone.insert("name".to_string(), Static("Hearthstone: Heroes of Warcraft".to_string()));
+        hearthstone.insert("release_date".to_string(), Static("December, 2014".to_string()));
+
+        let mut hash = HashMap::new();
+        hash.insert("first_name".to_string(), Static("Anduin".to_string()));
+        hash.insert("last_name".to_string(), Static("Wrynn".to_string()));
+        hash.insert("class".to_string(), Static("Priest".to_string()));
+        hash.insert("died".to_string(), Bool(false));
+        hash.insert("class_cards".to_string(), Vector(vec!(
+            Static("Prophet Velen".to_string()),
+            Hash(hearthstone))));
+
+        assert_eq!(HashBuilder::new().insert_static("first_name", "Anduin")
+            .insert_static("last_name", "Wrynn")
+            .insert_static("class", "Priest")
+            .insert_bool("died", false)
+            .insert_vector("class_cards", |builder| {
+                builder
+                    .push_static("Prophet Velen")
+                    .push_hash(|builder| {
+                        builder
+                            .insert_static("name", "Hearthstone: Heroes of Warcraft")
+                            .insert_static("release_date", "December, 2014")
+                    })
+            })
+            .build(),
+            Hash(hash));
+    }
+}
