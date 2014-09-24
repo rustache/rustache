@@ -92,6 +92,7 @@ impl<'a> VecBuilder<'a> {
 
 
 /*    pub fn normalize_data_map<'a>(tags: HashMap<&'a str, Data<'a>>, data: HashMap<&'a str, Data<'a>>) -> HashMap<&'a str, Data<'a>> {
+
         let mut value_map = HashMap::new();
 
         for tag in tags.into_iter() {
