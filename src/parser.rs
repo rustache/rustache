@@ -34,33 +34,38 @@ impl<'a> Parser<'a> {
 
     fn parse_nodes(&self, list: &'a Vec<Token>) -> Vec<Node> {
         let mut nodes: Vec<Node> = vec![];
-        for (i, token) in list.iter().enumerate() {
-            match *token {
+        let len = list.len();
+        for mut i in range(0, len) {
+            match list[i] {
                 Text(text)           => nodes.push(Static(text)),
                 Variable(name)       => nodes.push(Value(name)),
                 Raw(name)            => nodes.push(Unescaped(name)),
                 OTag(name, inverted) => {
                     let mut children: Vec<Token> = vec![];
-                    // iterate through the rest of the stack (adding to children)
-                    for (j, tok) in list.slice_from(i).iter().enumerate() {
-                        match *tok {
+                    // iterate through the rest of the list (adding to children)
+                    // until the closing tag is found
+                    for j in range(i, len) {
+                        match list[j] {
                             CTag(title) => {
                                 if title == name {
+                                    i = j;
                                     nodes.push(Section(name, self.parse_nodes(&children), inverted));
+                                    break;
                                 } else {
-                                    children.push(*tok);
+                                    children.push(list[j]);
                                     continue;
                                 }
                             },
                             _           => {
-                                children.push(*tok);
+                                children.push(list[j]);
                                 continue;
                             }
                         }
                     }
                 },
                 CTag(name)           => {
-                    // pop from the stack
+                    // If this is triggered, its a closing tag that is present without
+                    // an opening tag.  Representing bad syntax, error or ignore?
                     continue;
                 },
             }
@@ -85,44 +90,6 @@ impl<'a> Parser<'a> {
 //         };
 
 //         contents
-//     }
-
-//     pub fn tokenize(line: &str) -> Vec<Node> {
-//         let mut nodes: Vec<Node> = vec![];
-//         let mut open_pos = 0u;
-//         let mut close_pos = 0u;
-//         let len = line.len();
-//         for (mut i, c) in line.chars().enumerate() {
-//             if c == '{' && line.char_at(i+1) == '{' {
-//                 open_pos = i;
-//                 if open_pos != close_pos {
-//                     nodes.push(Static(line.slice(close_pos, open_pos).to_string()));
-//                 }
-//                 i += 1;
-//             }
-//             if c == '}' && i < len - 1 && line.char_at(i+1) == '}' {
-//                 close_pos = i + 2;
-//                 let val = line.slice(open_pos + 2u, close_pos - 2u);
-//                 match val.char_at(0) {
-//                     '!' => continue, // comment, skip over
-//                     '#' => nodes.push(OTag(Some(val.slice_from(1).trim().to_string()))), // OTAG
-//                     '/' => nodes.push(CTag(Some(val.slice_from(1).trim().to_string()))), // CTAG
-//                     '^' => nodes.push(Inverted(val.slice_from(1).trim().to_string())), // inverted
-//                     '>' => continue, // partial
-//                     '&' => nodes.push(Unescaped(val.slice_from(1).trim().to_string())), // unescaped literal
-//                     '{' => continue, // unescaped literal
-//                     _ => nodes.push(Value(val.trim().to_string()))
-
-//                 }
-//                 i += 2;
-//             }
-            
-//         }
-//         if close_pos < len {
-//             nodes.push(Static(line.slice_from(close_pos).to_string()));
-//         }
-
-//         nodes
 //     }
 
 //     pub fn create_map_from_tokens<'a>(nodes: Vec<Node>) -> HashSet<String> {
