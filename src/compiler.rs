@@ -72,6 +72,3 @@ fn basic_compiler_test() {
     let expected = vec![static_token, value_token];
     assert_eq!(expected, compiler.tokens);
 }
-
-
-
