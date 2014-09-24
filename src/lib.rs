@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 use std::fmt;
 
-pub use build::Builder;
+pub use build::{MapBuilder, VecBuilder};
 pub use template::Template;
 pub use parser::{Parser, Node};
 
@@ -44,6 +44,8 @@ fn basic_end_to_end_test() {
     use std::str;
 
     let mut mem_wr = MemWriter::new();
+    // we'll want data_map to eventually look like: 
+    // let mut data_map: HashMap<&str, Data<'a>>
     let mut data_map: HashMap<&str, &str> = HashMap::new();
 
     data_map.insert("value1", "Bob");
@@ -55,7 +57,7 @@ fn basic_end_to_end_test() {
     let in_data = Parser::read_template(in_path);
     let tags = Parser::tokenize(in_data.as_slice());
     let tokens = Parser::create_map_from_tokens(tags.clone());
-    let data = Builder::create_data_map(tokens, data_map);
+    let data = Builder::normalize_data_map(tokens, data_map);
 
     // write to memwriter stream
     Template::render_data(&mut mem_wr, &data, &tags);
