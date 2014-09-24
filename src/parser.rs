@@ -35,7 +35,7 @@ impl<'a> Parser<'a> {
     fn parse_nodes(&self, list: &'a Vec<Token>) -> Vec<Node> {
         let mut nodes: Vec<Node> = vec![];
         let len = list.len();
-        for mut i in range(0, len) {
+        for i in range(0, len) {
             match list[i] {
                 Text(text)           => nodes.push(Static(text)),
                 Variable(name)       => nodes.push(Value(name)),
@@ -44,24 +44,25 @@ impl<'a> Parser<'a> {
                     let mut children: Vec<Token> = vec![];
                     // iterate through the rest of the list (adding to children)
                     // until the closing tag is found
+                    // for elem in list.iter().fold().flat_map().collect() {
                     for j in range(i, len) {
-                        match list[j] {
+                        let elem = list[j];
+                        match elem {
                             CTag(title) => {
                                 if title == name {
                                     // advance the iterator past the child nodes
-                                    i = j;
                                     nodes.push(Section(name, self.parse_nodes(&children), inverted));
                                     break;
                                 } else {
-                                    children.push(list[j]);
+                                    children.push(elem);
                                     continue;
                                 }
                             },
                             _           => {
-                                if j == len - 1 {
-                                    fail!("Incorrect syntax in template");
-                                }
-                                children.push(list[j]);
+                                // if j == len - 1 {
+                                    // fail!("Incorrect syntax in template");
+                                // }
+                                children.push(elem);
                                 continue;
                             }
                         }
@@ -70,7 +71,7 @@ impl<'a> Parser<'a> {
                 CTag(name)           => {
                     // If this is triggered, its a closing tag that is present without
                     // an opening tag.  Representing bad syntax, error or ignore?
-                    continue;
+                    fail!("Incorrect syntax in template, {} closed without being opened", name);
                 },
             }
         }
@@ -117,7 +118,7 @@ impl<'a> Parser<'a> {
 fn test_parser() {
     use compiler::Compiler;
 
-    let contents = "Static String {{ token }} {{# open }}{{ tag }}{{/ df }}";
+    let contents = "Static String {{ token }} {{# section }}{{ child_tag }}{{/ section }}";
     let compiler = Compiler::new(contents);
     let parser = Parser::new(&compiler.tokens);
     for node in parser.nodes.iter() {
