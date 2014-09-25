@@ -14,7 +14,7 @@ pub enum Node {
 #[deriving(Show)]
 pub struct Parser<'a> {
     tokens: &'a Vec<Token>,
-    nodes: Vec<Node>
+    pub nodes: Vec<Node>
 }
 
 impl<'a> Parser<'a> {

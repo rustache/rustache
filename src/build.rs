@@ -4,7 +4,7 @@ use super::{Data, Str, Bool, Vector, Hash};
 
 /// `HashBuilder` is a helper type that constructs `Data` types in a HashMap
 pub struct HashBuilder<'a> {
-    data: HashMap<String, Data<'a>>
+    pub data: HashMap<String, Data<'a>>
 }
 
 impl<'a> HashBuilder<'a> {
@@ -106,16 +106,16 @@ mod tests {
     #[test]
     fn test_builders() {
         let mut hearthstone = HashMap::new();
-        hearthstone.insert("name".to_string(), Static("Hearthstone: Heroes of Warcraft".to_string()));
-        hearthstone.insert("release_date".to_string(), Static("December, 2014".to_string()));
+        hearthstone.insert("name".to_string(), Str("Hearthstone: Heroes of Warcraft".to_string()));
+        hearthstone.insert("release_date".to_string(), Str("December, 2014".to_string()));
 
         let mut hash = HashMap::new();
-        hash.insert("first_name".to_string(), Static("Anduin".to_string()));
-        hash.insert("last_name".to_string(), Static("Wrynn".to_string()));
-        hash.insert("class".to_string(), Static("Priest".to_string()));
+        hash.insert("first_name".to_string(), Str("Anduin".to_string()));
+        hash.insert("last_name".to_string(), Str("Wrynn".to_string()));
+        hash.insert("class".to_string(), Str("Priest".to_string()));
         hash.insert("died".to_string(), Bool(false));
         hash.insert("class_cards".to_string(), Vector(vec!(
-            Static("Prophet Velen".to_string()),
+            Str("Prophet Velen".to_string()),
             Hash(hearthstone))));
 
         assert_eq!(HashBuilder::new().insert_string("first_name", "Anduin")
