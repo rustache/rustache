@@ -75,40 +75,7 @@ impl<'a> Parser<'a> {
                 None => break
             }
         }
-
-        // for (i, token) in list.iter().enumerate() {
-        //     match *token {
-        //         Text(text)           => nodes.push(Static(text)),
-        //         Variable(name)       => nodes.push(Value(name)),
-        //         Raw(name)            => nodes.push(Unescaped(name)),
-        //         OTag(name, inverted) => {
-        //             let mut children: Vec<Token> = vec![];
-        //             for (j, item) in list.slice_from(i).iter().enumerate() {
-        //                 match *item {
-        //                     CTag(title) => {
-        //                         if title == name {
-        //                             nodes.push(Section(name, self.parse_nodes(&children), inverted));
-        //                             break;
-        //                         } else {
-        //                             children.push(*item);
-        //                             continue;
-        //                         }
-        //                     },
-        //                     _           => {
-        //                         children.push(*item);
-        //                         continue;
-        //                     }
-        //                 }
-        //             }
-        //         },
-        //         CTag(name)           => {
-        //             continue;
-        //             fail!("Incorrect syntax in template, {} closed without being opened", name);
-        //         },
-        //         Partial(name)        => nodes.push(File(name))
-        //     }
-        // }
-
+        
         nodes
     }
 }
