@@ -1,5 +1,6 @@
 // use std::collections::hashmap::HashSet;
 use compiler::{Token, Text, Variable, OTag, CTag, Raw};
+use super::{Data, Static, Bool, Vector, Map};
 use std::mem;
 
 #[deriving(Show, PartialEq, Eq, Clone)]
@@ -65,24 +66,21 @@ impl<'a> Parser<'a> {
 
         nodes
     }
+
+    fn create_map_from_tokens<'a>(&self, nodes: Vec<Node>) -> HashMap<String, Data> {
+        let mut tag_map: HashMap<String> = HashMap::new();
+        for node in nodes.iter() {
+            match *node {
+                Static(ref text) => ,
+                Value(ref text) => ,
+                Section(ref name, ref data, ref inverted) => self.create_map_from_tokens(data),
+                Unescaped(ref name) => ,
+            }
+        }
+
+        tag_map
+    }
 }
-
-//     pub fn create_map_from_tokens<'a>(nodes: Vec<Node>) -> HashSet<String> {
-//         let mut tag_map: HashSet<String> = HashSet::new();
-//         for node in nodes.iter() {
-//             match *node {
-//                 Value(ref text)  => tag_map.insert(text.clone()),
-//                 Static(ref text) => continue,
-//                 OTag(ref opt) => continue,
-//                 CTag(ref opt) => continue,
-//                 Inverted(ref text)  => continue,
-//                 Unescaped(ref text)  => continue,
-//             };        
-//         }
-
-//         tag_map
-//     }
-// }
 
 #[test]
 fn test_parser() {
