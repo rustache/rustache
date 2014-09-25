@@ -1,9 +1,7 @@
 // The compiler compiles any template file into a list of
 // parser usable tokens
 
-use std::io::{File, BufferedReader};
-
-#[deriving(Show, PartialEq, Eq, Clone)]
+#[deriving(Show, PartialEq, Eq)]
 pub enum Token {
     Text(&'static str),
     Variable(&'static str),
@@ -13,8 +11,8 @@ pub enum Token {
 }
 
 pub struct Compiler<'a> {
-    contents: &'static str,
-    tokens: Vec<Token>
+    pub contents: &'static str,
+    pub tokens: Vec<Token>
 }
 
 impl<'a> Compiler<'a> {
@@ -69,11 +67,8 @@ impl<'a> Compiler<'a> {
 fn basic_compiler_test() {
     let contents = "Static String {{ token }}";
     let compiler = Compiler::new(contents);
-    let static_token = Static("Static String ");
-    let value_token = Value("token");
+    let static_token = Text("Static String ");
+    let value_token = Variable("token");
     let expected = vec![static_token, value_token];
     assert_eq!(expected, compiler.tokens);
 }
-
-
-
