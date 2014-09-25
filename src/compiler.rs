@@ -8,6 +8,7 @@ pub enum Token {
     OTag(&'static str, bool), // bool denotes whether it is an inverted section tag
     CTag(&'static str),
     Raw(&'static str),
+    Partial(&'static str)
 }
 
 pub struct Compiler<'a> {
@@ -47,10 +48,10 @@ impl<'a> Compiler<'a> {
                     '#' => self.tokens.push(OTag(val.slice_from(1).trim(), false)), // Section OTAG
                     '/' => self.tokens.push(CTag(val.slice_from(1).trim())), // Section CTAG
                     '^' => self.tokens.push(OTag(val.slice_from(1).trim(), true)), // Inverted Section
-                    '>' => continue, // partial
+                    '>' => self.tokens.push(Partial(val.slice_from(1).trim())), // partial
                     '&' => self.tokens.push(Raw(val.slice_from(1).trim())), // Unescaped
                     '{' => continue, // unescaped literal
-                    _ => self.tokens.push(Variable(val.trim()))
+                    _   => self.tokens.push(Variable(val.trim()))
 
                 }
                 i += 2;
@@ -65,10 +66,18 @@ impl<'a> Compiler<'a> {
 
 #[test]
 fn basic_compiler_test() {
-    let contents = "Static String {{ token }}";
+    let contents = "Static{{ token }}{{> partial }}";
     let compiler = Compiler::new(contents);
-    let static_token = Text("Static String ");
+    let static_token = Text("Static");
     let value_token = Variable("token");
-    let expected = vec![static_token, value_token];
+    let partial_token = Partial("partial");
+    let expected = vec![static_token, value_token, partial_token];
+    for token in compiler.tokens.iter() {
+        println!("{}", token);
+    }
+    for token in expected.iter() {
+        println!("{}", token);
+    }
+
     assert_eq!(expected, compiler.tokens);
 }
