@@ -1,6 +1,6 @@
 pub use std::collections::HashMap;
 
-use super::{Data, Static, Bool, Vector, Hash};
+use super::{Data, Str, Bool, Vector, Hash};
 
 /// `HashBuilder` is a helper type that constructs `Data` types in a HashMap
 pub struct HashBuilder<'a> {
@@ -14,9 +14,9 @@ impl<'a> HashBuilder<'a> {
         }
     }
 
-    pub fn insert_static<K: StrAllocating, V: StrAllocating>(self, key: K, value: V) -> HashBuilder<'a> {
+    pub fn insert_string<K: StrAllocating, V: StrAllocating>(self, key: K, value: V) -> HashBuilder<'a> {
         let HashBuilder { mut data } = self;
-        data.insert(key.into_string(), Static(value.into_string()));
+        data.insert(key.into_string(), Str(value.into_string()));
         HashBuilder { data: data }
     }
 
@@ -59,9 +59,9 @@ impl<'a> VecBuilder<'a> {
         }
     }
 
-    pub fn push_static<T: StrAllocating>(self, value: T) -> VecBuilder<'a> {
+    pub fn push_string<T: StrAllocating>(self, value: T) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
-        data.push(Static(value.into_string()));
+        data.push(Str(value.into_string()));
         VecBuilder { data: data }
     }
 
@@ -90,34 +90,12 @@ impl<'a> VecBuilder<'a> {
     }
 }
 
-
-/*    pub fn normalize_data_map<'a>(tags: HashMap<&'a str, Data<'a>>, data: HashMap<&'a str, Data<'a>>) -> HashMap<&'a str, Data<'a>> {
-
-        let mut value_map = HashMap::new();
-
-        for tag in tags.into_iter() {
-            let datum = data.find_equiv(&tag.as_slice())  // -> Option<'a V>
-            // if data.find_equiv() finds Some, we'll want to perform a match on the returned Data
-            // if data.find_equiv() finds None, return a default String
-                            .unwrap_or(&Static("".to_string()))
-                            .to_string();
-            match datum {
-                Static => ,
-                Bool   => ,
-                Vector => ,
-                Map    =>
-            }
-        }
-
-        value_map
-    }*/
-
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
 
     use super::{HashBuilder, VecBuilder};
-    use super::super::{Static, Bool, Vector, Hash};
+    use super::super::{Str, Bool, Vector, Hash};
 
     #[test]
     fn test_new_builders() {
@@ -140,17 +118,17 @@ mod tests {
             Static("Prophet Velen".to_string()),
             Hash(hearthstone))));
 
-        assert_eq!(HashBuilder::new().insert_static("first_name", "Anduin")
-            .insert_static("last_name", "Wrynn")
-            .insert_static("class", "Priest")
+        assert_eq!(HashBuilder::new().insert_string("first_name", "Anduin")
+            .insert_string("last_name", "Wrynn")
+            .insert_string("class", "Priest")
             .insert_bool("died", false)
             .insert_vector("class_cards", |builder| {
                 builder
-                    .push_static("Prophet Velen")
+                    .push_string("Prophet Velen")
                     .push_hash(|builder| {
                         builder
-                            .insert_static("name", "Hearthstone: Heroes of Warcraft")
-                            .insert_static("release_date", "December, 2014")
+                            .insert_string("name", "Hearthstone: Heroes of Warcraft")
+                            .insert_string("release_date", "December, 2014")
                     })
             })
             .build(),

@@ -30,13 +30,13 @@ impl<'a> Template<'a> {
             tmp.truncate(0);
             match *node {
                 Unescaped(ref text)  => {
-                    if data.contains_key(text) {
+                    if data.contains_key(&text.to_string()) {
                         let ref val = data[text.to_string()];
                         tmp.push_str(val.as_slice());
                     }
                 }
                 Value(ref text) => {
-                    if data.contains_key(text) {
+                    if data.contains_key(&text.to_string()) {
                         let val = data[text.to_string()].as_slice();
                         tmp = *Template::escape_html(val);
                     }
