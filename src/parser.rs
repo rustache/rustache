@@ -1,6 +1,5 @@
 // use std::collections::hashmap::HashSet;
 use compiler::{Token, Text, Variable, OTag, CTag, Raw};
-use super::{Data, Static, Bool, Vector, Map};
 use std::mem;
 
 #[deriving(Show, PartialEq, Eq, Clone)]
@@ -66,20 +65,6 @@ impl<'a> Parser<'a> {
 
         nodes
     }
-
-    fn create_map_from_tokens<'a>(&self, nodes: Vec<Node>) -> HashMap<String, Data> {
-        let mut tag_map: HashMap<String> = HashMap::new();
-        for node in nodes.iter() {
-            match *node {
-                Static(ref text) => ,
-                Value(ref text) => ,
-                Section(ref name, ref data, ref inverted) => self.create_map_from_tokens(data),
-                Unescaped(ref name) => ,
-            }
-        }
-
-        tag_map
-    }
 }
 
 #[test]
@@ -94,12 +79,3 @@ fn test_parser() {
     }
     assert!(false);
 }
-
-// #[test]
-// fn mapper_should_create_a_set_of_useable_variables() {
-//     let nodes = vec![Static("Static tag!".to_string()), Value("comment".to_string()), OTag(Some("tag".to_string()))];
-//     let set = Parser::create_map_from_tokens(nodes);
-
-//     // should only contain value nodes
-//     assert!(set.contains(&"comment".to_string()));
-// }
