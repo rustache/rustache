@@ -58,7 +58,7 @@ mod template_tests {
     use std::collections::hashmap::HashMap;
     use std::io::MemWriter;
 
-    use parser::Parser::tokenize;
+    use parser::Parser;
     use template::Template;
     use std::str;
 
