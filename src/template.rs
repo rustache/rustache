@@ -99,11 +99,11 @@ impl<'a> Template<'a> {
                 }
 
                 Static(ref key) => {
-                     tmp.push_str(key.as_slice());
+                    tmp.push_str(key.as_slice());
+                    writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
                 }
                 _ => continue
             }
-            writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
         }
     }
 }
