@@ -1,6 +1,6 @@
 pub use std::collections::HashMap;
 
-use super::{Data, Static, Bool, Vector, Hash};
+use super::{Data, Str, Bool, Vector, Hash};
 
 /// `HashBuilder` is a helper type that constructs `Data` types in a HashMap
 pub struct HashBuilder<'a> {
@@ -16,7 +16,7 @@ impl<'a> HashBuilder<'a> {
 
     pub fn insert_string<K: StrAllocating, V: StrAllocating>(self, key: K, value: V) -> HashBuilder<'a> {
         let HashBuilder { mut data } = self;
-        data.insert(key.into_string(), Static(value.into_string()));
+        data.insert(key.into_string(), Str(value.into_string()));
         HashBuilder { data: data }
     }
 
@@ -61,7 +61,7 @@ impl<'a> VecBuilder<'a> {
 
     pub fn push_string<T: StrAllocating>(self, value: T) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
-        data.push(Static(value.into_string()));
+        data.push(Str(value.into_string()));
         VecBuilder { data: data }
     }
 
@@ -95,7 +95,7 @@ mod tests {
     use std::collections::HashMap;
 
     use super::{HashBuilder, VecBuilder};
-    use super::super::{Static, Bool, Vector, Hash};
+    use super::super::{Str, Bool, Vector, Hash};
 
     #[test]
     fn test_new_builders() {
