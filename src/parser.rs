@@ -1,5 +1,5 @@
 // use std::collections::hashmap::HashSet;
-use compiler::{Token, Text, Variable, OTag, CTag, Raw};
+use compiler::{Token, Text, Variable, OTag, CTag, Raw, Partial};
 use std::mem;
 
 #[deriving(Show, PartialEq, Eq, Clone)]
@@ -8,6 +8,7 @@ pub enum Node {
     Value(&'static str),
     Section(&'static str, Vec<Node>, bool), // (name, children, inverted)
     Unescaped(&'static str),
+    File(&'static str)
 }
 
 #[deriving(Show)]
@@ -29,39 +30,84 @@ impl<'a> Parser<'a> {
 
     fn parse_nodes(&self, list: &'a Vec<Token>) -> Vec<Node> {
         let mut nodes: Vec<Node> = vec![];
-        let mut il = list.iter().enumerate();
-        for (i, token) in il {
-            match *token {
-                Text(text)           => nodes.push(Static(text)),
-                Variable(name)       => nodes.push(Value(name)),
-                Raw(name)            => nodes.push(Unescaped(name)),
-                OTag(name, inverted) => {
-                    let mut children: Vec<Token> = vec![];
-                    for (j, item) in list.slice_from(i).iter().enumerate() {
-                        match *item {
-                            CTag(title) => {
-                                if title == name {
-                                    nodes.push(Section(name, self.parse_nodes(&children), inverted));
-                                    break;
-                                } else {
-                                    children.push(*item);
-                                    continue;
+
+        let mut it = list.iter().enumerate();
+        loop {
+            match it.next() {
+                Some((i, &token)) => {
+                    match token {
+                        Text(text)           => nodes.push(Static(text)),
+                        Variable(name)       => nodes.push(Value(name)),
+                        Raw(name)            => nodes.push(Unescaped(name)),
+                        Partial(name)        => nodes.push(File(name)),
+                        CTag(name)           => {
+                            continue;
+                            // fail!("Incorrect syntax in template, {} closed without being opened", name);
+                        },
+                        OTag(name, inverted) => {
+                            let mut children: Vec<Token> = vec![];
+                            let mut count = 0u;
+                            for item in list.slice_from(i + 1).iter() {
+                                count += 1;
+                                match *item {
+                                    CTag(title) => {
+                                        if title == name {
+                                            nodes.push(Section(name, self.parse_nodes(&children).clone(), inverted));
+                                            break;
+                                        } else {
+                                            children.push(*item);
+                                            continue;
+                                        }
+                                    },
+                                    _           => {
+                                        children.push(*item);
+                                        continue;
+                                    }
                                 }
-                            },
-                            _           => {
-                                children.push(*item);
-                                continue;
                             }
-                        }
-                        il.next();
+                            while count > 1 {
+                                it.next();
+                                count -= 1;
+                            }
+                        },
                     }
                 },
-                CTag(name)           => {
-                    continue;
-                    fail!("Incorrect syntax in template, {} closed without being opened", name);
-                },
+                None => break
             }
         }
+
+        // for (i, token) in list.iter().enumerate() {
+        //     match *token {
+        //         Text(text)           => nodes.push(Static(text)),
+        //         Variable(name)       => nodes.push(Value(name)),
+        //         Raw(name)            => nodes.push(Unescaped(name)),
+        //         OTag(name, inverted) => {
+        //             let mut children: Vec<Token> = vec![];
+        //             for (j, item) in list.slice_from(i).iter().enumerate() {
+        //                 match *item {
+        //                     CTag(title) => {
+        //                         if title == name {
+        //                             nodes.push(Section(name, self.parse_nodes(&children), inverted));
+        //                             break;
+        //                         } else {
+        //                             children.push(*item);
+        //                             continue;
+        //                         }
+        //                     },
+        //                     _           => {
+        //                         children.push(*item);
+        //                         continue;
+        //                     }
+        //                 }
+        //             }
+        //         },
+        //         CTag(name)           => {
+        //             continue;
+        //             fail!("Incorrect syntax in template, {} closed without being opened", name);
+        //         },
+        //         Partial(name)        => nodes.push(File(name))
+        //     }
+        // }
 
         nodes
     }
@@ -71,11 +117,13 @@ impl<'a> Parser<'a> {
 fn test_parser() {
     use compiler::Compiler;
 
-    let contents = "Static String {{ token }} {{# section }}{{ child_tag }}{{/ section }}";
+    let contents = "Static String {{ token }}{{# section }}{{ child_tag }}{{/ section }}{{> new }}";
     let compiler = Compiler::new(contents);
     let parser = Parser::new(&compiler.tokens);
-    for node in parser.nodes.iter() {
-        println!("{}", node);
-    }
-    assert!(true);
+    let static_node  = Static("Static String ");
+    let value_node   = Value("token");
+    let section_node = Section("section", vec![Value("child_tag")], false);
+    let file_node    = File("new");
+    let expected: Vec<Node> = vec![static_node, value_node, section_node, file_node];
+    assert_eq!(expected, parser.nodes);
 }
