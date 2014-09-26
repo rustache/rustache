@@ -165,4 +165,58 @@ mod template_tests {
         Template::render_data(&mut w, &data, &parser);
         assert_eq!("<h1>The heading</h1>".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
     }
+
+    #[test]
+    fn test_unescaped_node_correct_string_data() {
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("<h1>{{ value1 }}</h1>");
+        let parser = Parser::new(&compiler.tokens);
+        let data = HashBuilder::new().insert_string("value1", "The heading");
+
+        Template::render_data(&mut w, &data, &parser);
+
+        assert_eq!("<h1>The heading</h1>".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+    }
+
+    #[test]
+    fn test_unescaped_node_correct_bool_data() {
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("{{ value1 }}");
+        let parser = Parser::new(&compiler.tokens);
+        let data = HashBuilder::new().insert_bool("value1", true);
+
+        Template::render_data(&mut w, &data, &parser);
+
+        assert_eq!("true".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+    }
+
+    #[test]
+    #[should_fail]
+    fn test_unescaped_node_incorrect_vector_data() {
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("<h1>{{ value1 }}</h1>");
+        let parser = Parser::new(&compiler.tokens);
+        let mut data = HashBuilder::new();
+
+        data = data.insert_vector("value1", |builder| {
+            builder.push_string("Prophet Velen")
+        });
+
+        Template::render_data(&mut w, &data, &parser);
+    }
+
+    #[test]
+    #[should_fail]
+    fn test_unescaped_node_incorrect_hash_data() {
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("<h1>{{ value1 }}</h1>");
+        let parser = Parser::new(&compiler.tokens);
+        let mut data = HashBuilder::new();
+
+        data = data.insert_hash("value1", |builder| {
+            builder.insert_string("name", "Hearthstone: Heroes of Warcraft")
+        });
+
+        Template::render_data(&mut w, &data, &parser);
+    }
 }
