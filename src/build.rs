@@ -8,24 +8,53 @@ pub struct HashBuilder<'a> {
 }
 
 impl<'a> HashBuilder<'a> {
+    /// Create a new `HashBuilder` instance
     pub fn new() -> HashBuilder<'a> {
         HashBuilder {
             data: HashMap::new()
         }
     }
 
+    /// Add a `String` to the `HashBuilder`
+    ///
+    /// ```rust
+    /// use rustache::HashBuilder;
+    /// let data = HashBuilder::new()
+    ///     .insert_string("game", "Hearthstone: Heroes of Warcraft")
+    ///     .build();
+    /// ```
     pub fn insert_string<K: StrAllocating, V: StrAllocating>(self, key: K, value: V) -> HashBuilder<'a> {
         let HashBuilder { mut data } = self;
         data.insert(key.into_string(), Strng(value.into_string()));
         HashBuilder { data: data }
     }
 
+    /// Add a `Boolean` to the `HashBuilder`
+    ///
+    /// ```rust
+    /// use rustache::HashBuilder;
+    /// let data = HashBuilder::new()
+    ///     .insert_bool("playing", true)
+    ///     .build();
+    /// ```
     pub fn insert_bool<K: StrAllocating>(self, key: K, value: bool) -> HashBuilder<'a> {
         let HashBuilder { mut data } = self;
         data.insert(key.into_string(), Bool(value));
         HashBuilder { data: data }
     }
 
+    /// Add a `Vector` to the `HashBuilder`
+    ///
+    /// ```rust
+    /// use rustache::HashBuilder;
+    /// let data = HashBuilder::new()
+    ///     .insert_vector("classes", |builder| {
+    ///         builder
+    ///             .push_string("Mage".to_string())
+    ///             .push_string("Druid".to_string())
+    ///     })
+    ///     .build();   
+    /// ```
     pub fn insert_vector<K: StrAllocating>(self, key: K, f: |VecBuilder<'a>| -> VecBuilder<'a>) -> HashBuilder<'a> {
         let HashBuilder { mut data } = self;
         let builder = f(VecBuilder::new());
@@ -33,6 +62,23 @@ impl<'a> HashBuilder<'a> {
         HashBuilder { data: data }
     }  
 
+    /// Add a `Hash` to the `HashBuilder`
+    /// 
+    /// ```rust
+    /// use rustache::HashBuilder;
+    /// let data = HashBuilder::new()
+    ///     .insert_hash("hero1", |builder| {
+    ///         builder
+    ///             .insert_string("first_name", "Anduin")
+    ///             .insert_string("last_name", "Wrynn")
+    ///     })
+    ///     .insert_hash("hero2", |builder| {
+    ///         builder
+    ///             .insert_string("first_name", "Jaina")
+    ///             .insert_string("last_name", "Proudmoore")    
+    ///     })
+    ///     .build();
+    /// ```
     pub fn insert_hash<K: StrAllocating>(self, key: K, f: |HashBuilder<'a>| -> HashBuilder<'a>) -> HashBuilder<'a> {
         let HashBuilder { mut data } = self;
         let builder = f(HashBuilder::new());
@@ -53,24 +99,55 @@ pub struct VecBuilder<'a> {
 }
 
 impl<'a> VecBuilder<'a> {
+    /// Create a new `VecBuilder` instance
     pub fn new() -> VecBuilder<'a> {
         VecBuilder {
             data: Vec::new()
         }
     }
 
+    /// Add a `String` to the `VecBuilder`
+    ///
+    /// ```rust
+    /// use rustache::VecBuilder;
+    /// let data = VecBuilder::new()
+    ///     .push_string("Mage")
+    ///     .push_string("Druid")
+    ///     .build();
+    /// ```
     pub fn push_string<T: StrAllocating>(self, value: T) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         data.push(Strng(value.into_string()));
         VecBuilder { data: data }
     }
 
+    /// Add a `Boolean` to the `VecBuilder`
+    ///
+    /// ```rust
+    /// use rustache::VecBuilder;
+    /// let data = VecBuilder::new()
+    ///     .push_bool(true)
+    ///     .push_bool(false)
+    ///     .build();
+    /// ```
     pub fn push_bool(self, value: bool) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         data.push(Bool(value));
         VecBuilder { data: data }
     }
 
+    /// Add a `Vector` to the `VecBuilder`
+    ///
+    /// ```rust
+    /// use rustache::VecBuilder;
+    /// let data = VecBuilder::new()
+    ///     .push_vector(|builder| {
+    ///         builder
+    ///             .push_string("Anduin Wrynn".to_string())
+    ///             .push_string("Jaina Proudmoore".to_string())
+    ///     })
+    ///     .build();
+    /// ```
     pub fn push_vector(self, f: |VecBuilder<'a>| -> VecBuilder<'a>) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         let builder = f(VecBuilder::new());
@@ -78,6 +155,23 @@ impl<'a> VecBuilder<'a> {
         VecBuilder { data: data }
     }
 
+    /// Add a `Hash` to the `VecBuilder`
+    ///
+    /// ```rust
+    /// use rustache::VecBuilder;
+    /// let data = VecBuilder::new()
+    ///     .push_hash(|builder| {
+    ///         builder
+    ///             .insert_string("first_name".to_string(), "Garrosh".to_string())
+    ///             .insert_string("last_name".to_string(), "Hellscream".to_string())       
+    ///     })
+    ///     .push_hash(|builder| {
+    ///         builder
+    ///             .insert_string("first_name".to_string(), "Malfurion".to_string())
+    ///             .insert_string("last_name".to_string(), "Stormrage".to_string())    
+    ///     })
+    ///     .build();
+    /// ```
     pub fn push_hash(self, f: |HashBuilder<'a>| -> HashBuilder<'a>) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         let builder = f(HashBuilder::new());
@@ -95,7 +189,7 @@ mod tests {
     use std::collections::HashMap;
 
     use super::{HashBuilder, VecBuilder};
-    use super::super::{Str, Bool, Vector, Hash};
+    use super::super::{Strng, Bool, Vector, Hash};
 
     #[test]
     fn test_new_builders() {
@@ -115,7 +209,7 @@ mod tests {
         hash.insert("class".to_string(), Strng("Priest".to_string()));
         hash.insert("died".to_string(), Bool(false));
         hash.insert("class_cards".to_string(), Vector(vec!(
-            Str("Prophet Velen".to_string()),
+            Strng("Prophet Velen".to_string()),
             Hash(hearthstone))));
 
         assert_eq!(HashBuilder::new().insert_string("first_name", "Anduin")
