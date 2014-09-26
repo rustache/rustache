@@ -1,6 +1,5 @@
 
 use std::path::Path;
-use std::collections::hashmap::HashMap;
 use parser::{Parser, Node, Value, Static, Unescaped, Section, File};
 use super::{Data, Strng, Bool, Vector, Hash, Read};
 use build::HashBuilder;
@@ -267,7 +266,7 @@ mod template_tests {
         let parser = Parser::new(&compiler.tokens);
 
         Template::render_data(&mut w, &data, &parser);
-        assert_eq!("<h1>The heading</h1>".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+        assert_eq!("<h1>The heading</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
@@ -279,7 +278,7 @@ mod template_tests {
 
         Template::render_data(&mut w, &data, &parser);
 
-        assert_eq!("<h1>heading</h1>".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+        assert_eq!("<h1>heading</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
@@ -293,7 +292,7 @@ mod template_tests {
 
         Template::render_data(&mut w, &data, &parser);
 
-        assert_eq!(a1.to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+        assert_eq!(a1.to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
@@ -305,7 +304,7 @@ mod template_tests {
 
         Template::render_data(&mut w, &data, &parser);
 
-        assert_eq!("<h1>false</h1>".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+        assert_eq!("<h1>false</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
@@ -317,7 +316,7 @@ mod template_tests {
 
         Template::render_data(&mut w, &data, &parser);
 
-        assert_eq!("<h1>true</h1>".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+        assert_eq!("<h1>true</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
 
@@ -333,7 +332,7 @@ mod template_tests {
 
         Template::render_data(&mut w, &data, &parser);
 
-        assert_eq!("<Section Value>".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+        assert_eq!("<Section Value>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
@@ -348,7 +347,7 @@ mod template_tests {
 
         Template::render_data(&mut w, &data, &parser);
 
-        assert_eq!("&lt;Section Value&gt;".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+        assert_eq!("&lt;Section Value&gt;".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
@@ -368,7 +367,7 @@ mod template_tests {
 
         Template::render_data(&mut w, &data, &parser);
 
-        assert_eq!("tomrobertjoe".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+        assert_eq!("tomrobertjoe".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
@@ -390,7 +389,7 @@ mod template_tests {
             });
 
         Template::render_data(&mut w, &data, &parser);
-        assert_eq!("tomrobertjoe".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+        assert_eq!("tomrobertjoe".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }    
 
     #[test]
@@ -404,7 +403,7 @@ mod template_tests {
 
         Template::render_data(&mut w, &data, &parser);
 
-        assert_eq!(a1.to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+        assert_eq!(a1.to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
@@ -416,7 +415,7 @@ mod template_tests {
 
         Template::render_data(&mut w, &data, &parser);
 
-        assert_eq!("<h1>heading<h1>".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+        assert_eq!("<h1>heading<h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
@@ -428,7 +427,7 @@ mod template_tests {
 
         Template::render_data(&mut w, &data, &parser);
 
-        assert_eq!("false".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+        assert_eq!("false".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
@@ -440,22 +439,7 @@ mod template_tests {
 
         Template::render_data(&mut w, &data, &parser);
 
-        assert_eq!("true".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
-    }
-
-    #[test]
-    #[should_fail]
-    fn test_value_node_incorrect_vector_data() {
-        let mut w = MemWriter::new();
-        let compiler = Compiler::new("<h1>{{ value1 }}</h1>");
-        let parser = Parser::new(&compiler.tokens);
-        let mut data = HashBuilder::new();
-
-        data = data.insert_vector("value1", |builder| {
-            builder.push_string("Prophet Velen")
-        });
-
-        Template::render_data(&mut w, &data, &parser);
+        assert_eq!("true".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
@@ -463,14 +447,14 @@ mod template_tests {
         let mut w = MemWriter::new();
         let compiler = Compiler::new("A wise woman once said: {{> hopper_quote.partial }}");
         let parser = Parser::new(&compiler.tokens);
-        let mut data = HashBuilder::new().insert_string("author", "Grace Hopper")
-                                         .set_partials_path("test_data");
+        let data = HashBuilder::new().insert_string("author", "Grace Hopper")
+                                     .set_partials_path("test_data");
 
         let mut s: String = String::new();
         s.push_str("A wise woman once said: It's easier to get forgiveness than permission.-Grace Hopper");
 
         Template::render_data(&mut w, &data, &parser);
-        assert_eq!(s, str::from_utf8_owned(w.unwrap()).unwrap());
+        assert_eq!(s, String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
@@ -478,14 +462,14 @@ mod template_tests {
         let mut w = MemWriter::new();
         let compiler = Compiler::new("A wise woman once said: {{> hopper_quote.partial }} something else {{ extra }}");
         let parser = Parser::new(&compiler.tokens);
-        let mut data = HashBuilder::new().insert_string("author", "Grace Hopper")
-                                         .insert_string("extra", "extra data")
-                                         .set_partials_path("test_data");
+        let data = HashBuilder::new().insert_string("author", "Grace Hopper")
+                                     .insert_string("extra", "extra data")
+                                     .set_partials_path("test_data");
 
         let mut s: String = String::new();
         s.push_str("A wise woman once said: It's easier to get forgiveness than permission.-Grace Hopper something else extra data");
 
         Template::render_data(&mut w, &data, &parser);
-        assert_eq!(s, str::from_utf8_owned(w.unwrap()).unwrap());
+        assert_eq!(s, String::from_utf8(w.unwrap()).unwrap());
     }
 }
