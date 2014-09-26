@@ -40,13 +40,13 @@ impl<'a> Template<'a> {
             },
             Vector(ref list) => {
                 for item in list.iter() {
-                    Template::handle_unescaped_node(item, "".to_string(), writer);
+                    Template::handle_unescaped_node(item, key.to_string(), writer);
                 }
             },
             Hash(ref hash) => {
                 if hash.contains_key(&key) {
                     let ref tmp = hash[key];
-                    Template::handle_unescaped_node(tmp, "".to_string(), writer);
+                    Template::handle_unescaped_node(tmp, key.to_string(), writer);
                 }
             }
         }
@@ -109,7 +109,15 @@ impl<'a> Template<'a> {
                 Section(ref key, ref children, ref inverted) => {
                     match inverted {
                         &false => {
-                            Template::handle_section_node(children, data, writer);
+                            println!("sending to section {}, {}", children, data);
+                            match *data {
+                                Hash(ref hash) => {
+                                    Template::handle_section_node(children, &hash[key.to_string()], writer);        
+                                }
+                                _ => {
+                                    Template::handle_section_node(children, data, writer);
+                                }
+                            }
                         },
                         &true => {
                             Template::handle_inverted_node(children, writer);
@@ -290,6 +298,29 @@ mod template_tests {
                         .push_string("tom")
                         .push_string("robert")
                         .push_string("joe")
+                })
+            });
+
+        Template::render_data(&mut w, &data, &parser);
+
+        assert_eq!("tomrobertjoe".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+    }
+
+    #[test]
+    fn test_excessively_nested_data() {
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("{{# hr }}{{# people }}{{ name }}{{/ people }}{{/ hr }}");
+        let parser = Parser::new(&compiler.tokens);
+        let data = HashBuilder::new()
+            .insert_hash("hr", |builder| {
+                builder.insert_hash("people", |builder| {
+                    builder
+                        .insert_vector("name", |builder| {
+                            builder
+                                .push_string("tom")
+                                .push_string("robert")
+                                .push_string("joe")
+                    })
                 })
             });
 
