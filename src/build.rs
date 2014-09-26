@@ -8,24 +8,53 @@ pub struct HashBuilder<'a> {
 }
 
 impl<'a> HashBuilder<'a> {
+    /// Create a new `HashBuilder` instance
     pub fn new() -> HashBuilder<'a> {
         HashBuilder {
             data: HashMap::new()
         }
     }
 
+    /// Add a `String` to the `HashBuilder`
+    ///
+    /// ```rust
+    /// use rustache::HashBuilder;
+    /// let data = HashBuilder::new()
+    ///     .insert_string("game", "Hearthstone: Heroes of Warcraft")
+    ///     .build();
+    /// ```
     pub fn insert_string<K: StrAllocating, V: StrAllocating>(self, key: K, value: V) -> HashBuilder<'a> {
         let HashBuilder { mut data } = self;
         data.insert(key.into_string(), Strng(value.into_string()));
         HashBuilder { data: data }
     }
 
+    /// Add a `Boolean` to the `HashBuilder`
+    ///
+    /// ```rust
+    /// use rustache::HashBuilder;
+    /// let data = HashBuilder::new()
+    ///     .insert_bool("playing", true)
+    ///     .build();
+    /// ```
     pub fn insert_bool<K: StrAllocating>(self, key: K, value: bool) -> HashBuilder<'a> {
         let HashBuilder { mut data } = self;
         data.insert(key.into_string(), Bool(value));
         HashBuilder { data: data }
     }
 
+    /// Add a `Vector` to the `HashBuilder`
+    ///
+    /// ```rust
+    /// use rustache::HashBuilder;
+    /// let data = HashBuilder::new()
+    ///     .insert_vec("classes", |builder| {
+    ///         builder
+    ///             .push_string("Mage")
+    ///             .push_string("Druid")
+    ///     })
+    ///     .build();   
+    /// ```
     pub fn insert_vector<K: StrAllocating>(self, key: K, f: |VecBuilder<'a>| -> VecBuilder<'a>) -> HashBuilder<'a> {
         let HashBuilder { mut data } = self;
         let builder = f(VecBuilder::new());
@@ -33,6 +62,23 @@ impl<'a> HashBuilder<'a> {
         HashBuilder { data: data }
     }  
 
+    /// Add a `Hash` to the `HashBuilder`
+    /// 
+    /// ```rust
+    /// use rustache::HashBuilder;
+    /// let data = HashBuilder::new()
+    ///     .insert_hash("hero1", |builder| {
+    ///         builder
+    ///             .insert_string("first_name", "Anduin")
+    ///             .insert_string("last_name", "Wrynn")
+    ///     })
+    ///     .insert_hash("hero2", |builder| {
+    ///         builder
+    ///             .insert_string("first_name", "Jaina")
+    ///             .insert_string("last_name", "Proudmoore")    
+    ///     })
+    ///     .build();
+    /// ```
     pub fn insert_hash<K: StrAllocating>(self, key: K, f: |HashBuilder<'a>| -> HashBuilder<'a>) -> HashBuilder<'a> {
         let HashBuilder { mut data } = self;
         let builder = f(HashBuilder::new());
