@@ -2,22 +2,22 @@ use compiler::{Token, Text, Variable, OTag, CTag, Raw, Partial};
 use std::mem;
 
 #[deriving(Show, PartialEq, Eq, Clone)]
-pub enum Node {
-    Static(&'static str),
-    Value(&'static str),
-    Section(&'static str, Vec<Node>, bool), // (name, children, inverted)
-    Unescaped(&'static str),
-    File(&'static str)
+pub enum Node<'a> {
+    Static(&'a str),
+    Value(&'a str),
+    Section(&'a str, Vec<Node<'a>>, bool), // (name, children, inverted)
+    Unescaped(&'a str),
+    File(&'a str)
 }
 
 #[deriving(Show)]
 pub struct Parser<'a> {
-    tokens: &'a Vec<Token>,
-    pub nodes: Vec<Node>
+    tokens: &'a Vec<Token<'a>>,
+    pub nodes: Vec<Node<'a>>
 }
 
 impl<'a> Parser<'a> {
-    pub fn new<'a>(tokens: &'a Vec<Token>) -> Parser<'a> {
+    pub fn new<'a>(tokens: &'a Vec<Token<'a>>) -> Parser<'a> {
         let mut parser = Parser {
             tokens: tokens,
             nodes: vec![]
@@ -27,7 +27,7 @@ impl<'a> Parser<'a> {
         parser
     }
 
-    fn parse_nodes(&self, list: &'a Vec<Token>) -> Vec<Node> {
+    fn parse_nodes<'a>(&self, list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
         let mut nodes: Vec<Node> = vec![];
 
         let mut it = list.iter().enumerate();

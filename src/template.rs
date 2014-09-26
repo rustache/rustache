@@ -1,7 +1,9 @@
-use parser::{Parser, Node, Value, Static, Unescaped, Section, File};
-use super::{Data, Strng, Bool, Vector, Hash};
-use build::HashBuilder;
 
+use std::path::Path;
+use parser::{Parser, Node, Value, Static, Unescaped, Section, File};
+use super::{Data, Strng, Bool, Vector, Hash, Read};
+use build::HashBuilder;
+use compiler::Compiler;
 
 pub struct Template<'a>;
 
@@ -131,7 +133,40 @@ impl<'a> Template<'a> {
         }
     }
 
-    pub fn render_data<'a, W: Writer>(writer: &mut W, datastore: &HashBuilder, parser: &Parser) {
+
+
+    //     // `join` merges a path with a byte container using the OS specific
+    // // separator, and returns the new path
+    // let new_path = path.join("a").join("b");
+
+    // // Convert the path into a string slice
+    // match new_path.as_str() {
+    //     None => fail!("new path is not a valid UTF-8 sequence"),
+    //     Some(s) => println!("new path is {}", s),
+    // }
+
+
+
+   fn handle_partial_file_node<'a, W: Writer>(pathname: &str,
+                                              filename: &str, 
+                                                  data: &HashBuilder, 
+                                                writer: &mut W) {
+        let tmp = Path::new(pathname).join(filename);
+        match tmp.as_str() {
+            None => fail!("path is not a valid UTF-8 sequence"),
+            Some(path) => {
+
+                let file = Read::read_file(path);
+                let compiler = Compiler::new(file.as_slice());
+                let parser = Parser::new(&compiler.tokens);
+
+                Template::render_data(writer, data, &parser);
+            }
+        }
+    }
+
+ 
+    fn render_data<'a, W: Writer>(writer: &mut W, datastore: &HashBuilder, parser: &Parser) {
         let mut tmp: String = String::new();
         for node in parser.nodes.iter() {
             tmp.truncate(0);
@@ -150,9 +185,8 @@ impl<'a> Template<'a> {
                         Template::handle_value_node(val, "".to_string(), writer);
                     }
                 }
-
-                Static(ref key) => {
-                    tmp.push_str(*key);
+                Static(key) => {
+                    tmp.push_str(key);
                     writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
                 }
                 Section(ref key, ref children, ref inverted) => {
@@ -170,7 +204,10 @@ impl<'a> Template<'a> {
                         }
                     }
                 }
-                _ => continue
+                File(name) => {
+                    let path = datastore.partials_path;
+                    Template::handle_partial_file_node(path, name, datastore, writer);
+                }
             }
         }
     }
@@ -229,32 +266,59 @@ mod template_tests {
         let parser = Parser::new(&compiler.tokens);
 
         Template::render_data(&mut w, &data, &parser);
-        assert_eq!("<h1>The heading</h1>".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+        assert_eq!("<h1>The heading</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
     fn test_unescaped_node_correct_string_data() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("<h1>{{ value1 }}</h1>");
+        let compiler = Compiler::new("<h1>{{& value1 }}</h1>");
         let parser = Parser::new(&compiler.tokens);
-        let data = HashBuilder::new().insert_string("value1", "The heading");
+        let data = HashBuilder::new().insert_string("value1", "heading");
 
         Template::render_data(&mut w, &data, &parser);
 
-        assert_eq!("<h1>The heading</h1>".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+        assert_eq!("<h1>heading</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
-    fn test_unescaped_node_correct_bool_data() {
+    fn test_unescaped_node_correct_html_string_data() {
+        let s1 = "a < b > c & d \"spam\"\'";
+        let a1 = "<h1>a < b > c & d \"spam\"\'</h1>";
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("{{ value1 }}");
+        let compiler = Compiler::new("<h1>{{& value1 }}</h1>");
+        let parser = Parser::new(&compiler.tokens);
+        let data = HashBuilder::new().insert_string("value1", s1);
+
+        Template::render_data(&mut w, &data, &parser);
+
+        assert_eq!(a1.to_string(), String::from_utf8(w.unwrap()).unwrap());
+    }
+
+    #[test]
+    fn test_unescaped_node_correct_bool_false_data() {
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("<h1>{{& value1 }}</h1>");
+        let parser = Parser::new(&compiler.tokens);
+        let data = HashBuilder::new().insert_bool("value1", false);
+
+        Template::render_data(&mut w, &data, &parser);
+
+        assert_eq!("<h1>false</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    }
+
+    #[test]
+    fn test_unescaped_node_correct_bool_true_data() {
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("<h1>{{& value1 }}</h1>");
         let parser = Parser::new(&compiler.tokens);
         let data = HashBuilder::new().insert_bool("value1", true);
 
         Template::render_data(&mut w, &data, &parser);
 
-        assert_eq!("true".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+        assert_eq!("<h1>true</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
+
 
     #[test]
     fn test_section_unescaped_string_data() {
@@ -268,7 +332,7 @@ mod template_tests {
 
         Template::render_data(&mut w, &data, &parser);
 
-        assert_eq!("<Section Value>".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+        assert_eq!("<Section Value>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
@@ -283,7 +347,7 @@ mod template_tests {
 
         Template::render_data(&mut w, &data, &parser);
 
-        assert_eq!("&lt;Section Value&gt;".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+        assert_eq!("&lt;Section Value&gt;".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
@@ -303,7 +367,7 @@ mod template_tests {
 
         Template::render_data(&mut w, &data, &parser);
 
-        assert_eq!("tomrobertjoe".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+        assert_eq!("tomrobertjoe".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
@@ -325,7 +389,87 @@ mod template_tests {
             });
 
         Template::render_data(&mut w, &data, &parser);
+        assert_eq!("tomrobertjoe".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    }    
 
-        assert_eq!("tomrobertjoe".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+    #[test]
+    fn test_value_node_correct_html_string_data() {
+        let s1 = "a < b > c & d \"spam\"\'";
+        let a1 = "a &lt; b &gt; c &amp; d &quot;spam&quot;'";
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("{{ value1 }}");
+        let parser = Parser::new(&compiler.tokens);
+        let data = HashBuilder::new().insert_string("value1", s1);
+
+        Template::render_data(&mut w, &data, &parser);
+
+        assert_eq!(a1.to_string(), String::from_utf8(w.unwrap()).unwrap());
+    }
+
+    #[test]
+    fn test_value_node_correct_string_data() {
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("<h1>{{ value1 }}<h1>");
+        let parser = Parser::new(&compiler.tokens);
+        let data = HashBuilder::new().insert_string("value1", "heading");
+
+        Template::render_data(&mut w, &data, &parser);
+
+        assert_eq!("<h1>heading<h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    }
+
+    #[test]
+    fn test_value_node_correct_false_bool_data() {
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("{{ value1 }}");
+        let parser = Parser::new(&compiler.tokens);
+        let data = HashBuilder::new().insert_bool("value1", false);
+
+        Template::render_data(&mut w, &data, &parser);
+
+        assert_eq!("false".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    }
+
+    #[test]
+    fn test_value_node_correct_true_bool_data() {
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("{{ value1 }}");
+        let parser = Parser::new(&compiler.tokens);
+        let data = HashBuilder::new().insert_bool("value1", true);
+
+        Template::render_data(&mut w, &data, &parser);
+
+        assert_eq!("true".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    }
+
+    #[test]
+    fn test_partial_node_correct_data() {
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("A wise woman once said: {{> hopper_quote.partial }}");
+        let parser = Parser::new(&compiler.tokens);
+        let data = HashBuilder::new().insert_string("author", "Grace Hopper")
+                                     .set_partials_path("test_data");
+
+        let mut s: String = String::new();
+        s.push_str("A wise woman once said: It's easier to get forgiveness than permission.-Grace Hopper");
+
+        Template::render_data(&mut w, &data, &parser);
+        assert_eq!(s, String::from_utf8(w.unwrap()).unwrap());
+    }
+
+    #[test]
+    fn test_partial_node_correct_data_with_extra() {
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("A wise woman once said: {{> hopper_quote.partial }} something else {{ extra }}");
+        let parser = Parser::new(&compiler.tokens);
+        let data = HashBuilder::new().insert_string("author", "Grace Hopper")
+                                     .insert_string("extra", "extra data")
+                                     .set_partials_path("test_data");
+
+        let mut s: String = String::new();
+        s.push_str("A wise woman once said: It's easier to get forgiveness than permission.-Grace Hopper something else extra data");
+
+        Template::render_data(&mut w, &data, &parser);
+        assert_eq!(s, String::from_utf8(w.unwrap()).unwrap());
     }
 }

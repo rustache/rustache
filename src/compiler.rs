@@ -2,23 +2,23 @@
 // parser usable tokens
 
 #[deriving(Show, PartialEq, Eq)]
-pub enum Token {
-    Text(&'static str),
-    Variable(&'static str),
-    OTag(&'static str, bool), // bool denotes whether it is an inverted section tag
-    CTag(&'static str),
-    Raw(&'static str),
-    Partial(&'static str)
+pub enum Token<'a> {
+    Text(&'a str),
+    Variable(&'a str),
+    OTag(&'a str, bool), // bool denotes whether it is an inverted section tag
+    CTag(&'a str),
+    Raw(&'a str),
+    Partial(&'a str)
 }
 
 pub struct Compiler<'a> {
-    pub contents: &'static str,
-    pub tokens: Vec<Token>
+    pub contents: &'a str,
+    pub tokens: Vec<Token<'a>>
 }
 
 impl<'a> Compiler<'a> {
     // Compiler takes in the context of a file/string to compile into tokens
-    pub fn new(contents: &'static str) -> Compiler {
+    pub fn new(contents: &'a str) -> Compiler {
         let mut compiler = Compiler {
             contents: contents,
             tokens: vec![]
