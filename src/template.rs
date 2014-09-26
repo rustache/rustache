@@ -1,6 +1,7 @@
-use parser::{Parser, Value, Static, Unescaped, Section};
+use std::collections::hashmap::HashMap;
+use parser::{Parser, Node, Value, Static, Unescaped, Section, File};
 use build::{HashBuilder};
-use super::{Data, Str, Bool, Vector, Hash};
+use super::{Data, Strng, Bool, Vector, Hash};
 
 pub struct Template<'a>;
 
@@ -26,19 +27,18 @@ impl<'a> Template<'a> {
     fn handle_unescaped_node<'a, W: Writer>(data: &Data, writer: &mut W) {
         let mut tmp: String = String::new();
         match *data {
-
-            Str(ref val) => {
+            Strng(ref val) => {
                 tmp = tmp + *val;
-            }
+            },
             Bool(val) => {
                 match val {
-                    True  => tmp.push_str("true"),
-                    False => tmp.push_str("false")
+                    true  => tmp.push_str("true"),
+                    false => tmp.push_str("false")
                 }
-            }
+            },
             Vector(_) => {
                 fail!("expecting text, found vector data");
-            }
+            },
             Hash(_) => {
                 fail!("expecting text, found hash data");
             }
@@ -52,19 +52,18 @@ impl<'a> Template<'a> {
     fn handle_value_node<'a, W: Writer>(data: &Data, writer: &mut W) {
         let mut tmp: String = String::new();
         match *data {
-
-            Str(ref val) => {
+            Strng(ref val) => {
                 tmp = *Template::escape_html(&(*val.as_slice()));
-            }
+            },
             Bool(val) => {
                 match val {
-                    True  => tmp.push_str("true"),
-                    False => tmp.push_str("false")
+                    true  => tmp.push_str("true"),
+                    false => tmp.push_str("false")
                 }
-            }
+            },
             Vector(_) => {
                 fail!("expecting text, found vector data");
-            }
+            },
             Hash(_) => {
                 fail!("expecting text, found hash data");
             }
@@ -75,9 +74,56 @@ impl<'a> Template<'a> {
         }        
     }
 
-    pub fn render_data<'a, W: Writer>(writer: &mut W,  
-                                      datastore: &HashBuilder, 
-                                      parser: &Parser) {
+    fn handle_inverted_node<'a, W:Writer>(nodes: &Vec<Node>, data: &Data, writer: &mut W) {
+        for node in nodes.iter() {
+            match *node {
+                Static(key) => {
+                    writer.write_str(key.as_slice()).ok().expect("write failed in render");
+                },
+                File(path) => {
+                    // handle partial logic here...
+                },
+                _ => {}
+            }
+        }
+    }
+
+    fn handle_section_node<'a, W: Writer>(nodes: &Vec<Node>, data: &Data, writer: &mut W) {
+        for node in nodes.iter() {
+            match *node {
+                Unescaped(key)  => {
+                    Template::handle_unescaped_node(data, writer);
+                }
+                Value(key) => {
+                    Template::handle_value_node(data, writer);
+                }
+                Static(key) => {
+                    writer.write_str(key.as_slice()).ok().expect("write failed in render");
+                }
+                Section(ref key, ref children, ref inverted) => {
+                    // let tmp = key.to_string();
+                    // match (data.contains_key(&tmp), *inverted) {
+                    //     (true, true) => {},
+                    //     (false, false) => {},
+                    //     (true, false) => {
+                    //         let ref val = data[tmp];
+                    //         Template::handle_section_node(children, val, writer);
+                    //     },
+                    //     (false, true) => {
+                    //         let ref val = data[tmp];
+                    //         Template::handle_inverted_node(children, val, writer);
+                    //     }
+                    // }
+                },
+                File(path) => {
+                    // handle partial logic here...
+                },
+                // _ => continue
+            }
+        }
+    }
+
+    pub fn render_data<'a, W: Writer>(writer: &mut W, datastore: &HashBuilder, parser: &Parser) {
         let mut tmp: String = String::new();
         for node in parser.nodes.iter() {
             tmp.truncate(0);
@@ -96,25 +142,25 @@ impl<'a> Template<'a> {
                         Template::handle_value_node(val, writer);
                     }
                 }
-                Static(ref key) => {
-                    tmp.push_str(*key);
+                Static(key) => {
+                    tmp.push_str(key);
                     writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
                 }
-                Section(ref key, ref children, ref inverted) => {
-                    match inverted {
-                        True  => {
-                            println!("Found inverted section!");
-                            let tmp = key.to_string();
-                            if datastore.data.contains_key(&tmp) {
-                                let ref val = datastore.data[tmp];
-                                for child in children.iter() {
-                                    println!("found a child: {}", child);
-                                }
-                            }
-                        },
-                        False => println!("Found false"),
-                    }
-                }
+                // Section(ref key, ref children, ref inverted) => {
+                //     let tmp = key.to_string();
+                //     match (datastore.data.contains_key(&tmp), *inverted) {
+                //         (true, true) => {},
+                //         (false, false) => {},
+                //         (true, false) => {
+                //             let ref val = datastore.data[tmp];
+                //             Template::handle_section_node(children, val, writer, false);
+                //         },
+                //         (false, true) => {
+                //             let ref val = datastore.data[tmp];
+                //             Template::handle_section_node(children, val, writer, true);
+                //         }
+                //     }
+                // }
                 _ => continue
             }
         }
