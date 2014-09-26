@@ -1,6 +1,7 @@
-use parser::{Parser, Value, Static, Unescaped};
+use parser::{Parser, Value, Static, Unescaped, Section};
 use build::{HashBuilder};
 use super::{Data, Str, Bool, Vector, Hash};
+
 pub struct Template<'a>;
 
 impl<'a> Template<'a> {
@@ -30,10 +31,9 @@ impl<'a> Template<'a> {
                 tmp = tmp + *val;
             }
             Bool(val) => {
-                if val {
-                    tmp.push_str("true");
-                } else {
-                    tmp.push_str("false");
+                match val {
+                    True  => tmp.push_str("true"),
+                    False => tmp.push_str("false")
                 }
             }
             Vector(_) => {
@@ -57,10 +57,9 @@ impl<'a> Template<'a> {
                 tmp = *Template::escape_html(&(*val.as_slice()));
             }
             Bool(val) => {
-                if val {
-                    tmp.push_str("true");
-                } else {
-                    tmp.push_str("false");
+                match val {
+                    True  => tmp.push_str("true"),
+                    False => tmp.push_str("false")
                 }
             }
             Vector(_) => {
@@ -97,10 +96,24 @@ impl<'a> Template<'a> {
                         Template::handle_value_node(val, writer);
                     }
                 }
-
                 Static(ref key) => {
-                    tmp.push_str(key.as_slice());
+                    tmp.push_str(*key);
                     writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
+                }
+                Section(ref key, ref children, ref inverted) => {
+                    match inverted {
+                        True  => {
+                            println!("Found inverted section!");
+                            let tmp = key.to_string();
+                            if datastore.data.contains_key(&tmp) {
+                                let ref val = datastore.data[tmp];
+                                for child in children.iter() {
+                                    println!("found a child: {}", child);
+                                }
+                            }
+                        },
+                        False => println!("Found false"),
+                    }
                 }
                 _ => continue
             }
