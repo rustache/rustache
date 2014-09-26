@@ -52,29 +52,32 @@ impl<'a> Template<'a> {
         }
     }
 
-    fn handle_value_node<'a, W: Writer>(data: &Data, writer: &mut W) {
+    fn handle_value_node<'a, W: Writer>(data: &Data, key: String, writer: &mut W) {
         let mut tmp: String = String::new();
         match *data {
             Strng(ref val) => {
                 tmp = *Template::escape_html(&(*val.as_slice()));
+                writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
             },
-            Bool(val) => {
+            Bool(ref val) => {
                 match val {
-                    true  => tmp.push_str("true"),
-                    false => tmp.push_str("false")
+                    &true  => tmp.push_str("true"),
+                    &false => tmp.push_str("false")
+                }
+                writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
+            },
+            Vector(ref list) => {
+                for item in list.iter() {
+                    Template::handle_value_node(item, "".to_string(), writer);
                 }
             },
-            Vector(_) => {
-                fail!("expecting text, found vector data");
-            },
-            Hash(_) => {
-                fail!("expecting text, found hash data");
+            Hash(ref hash) => {
+                if hash.contains_key(&key) {
+                    let ref tmp = hash[key];
+                    Template::handle_value_node(tmp, "".to_string(), writer);
+                }
             }
-        }
-
-        if tmp.len() != 0 {
-            writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
-        }        
+        }       
     }
 
     fn handle_inverted_node<'a, W:Writer>(nodes: &Vec<Node>, writer: &mut W) {
@@ -98,7 +101,7 @@ impl<'a> Template<'a> {
                     Template::handle_unescaped_node(data, key.to_string(), writer);
                 }
                 Value(key) => {
-                    Template::handle_value_node(data, writer);
+                    Template::handle_value_node(data, key.to_string(), writer);
                 }
                 Static(key) => {
                     writer.write_str(key.as_slice()).ok().expect("write failed in render");
@@ -136,7 +139,7 @@ impl<'a> Template<'a> {
                     let tmp = key.to_string();
                     if datastore.data.contains_key(&tmp) {
                         let ref val = datastore.data[tmp];
-                        Template::handle_value_node(val, writer);
+                        Template::handle_value_node(val, "".to_string(), writer);
                     }
                 }
 
@@ -246,47 +249,32 @@ mod template_tests {
     }
 
     #[test]
-    fn test_section_node_correct_string_data() {
+    fn test_section_unescaped_string_data() {
         let mut w = MemWriter::new();
         let compiler = Compiler::new("{{# value1 }}{{& value }}{{/ value1}}");
         let parser = Parser::new(&compiler.tokens);
         let data = HashBuilder::new()
             .insert_hash("value1", |builder| {
-                builder.insert_string("value", "Section Value")
+                builder.insert_string("value", "<Section Value>")
             });
 
         Template::render_data(&mut w, &data, &parser);
 
-        assert_eq!("Section Value".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+        assert_eq!("<Section Value>".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
     }
 
     #[test]
-    #[should_fail]
-    fn test_unescaped_node_incorrect_vector_data() {
+    fn test_section_value_string_data() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("<h1>{{ value1 }}</h1>");
+        let compiler = Compiler::new("{{# value1 }}{{ value }}{{/ value1}}");
         let parser = Parser::new(&compiler.tokens);
-        let mut data = HashBuilder::new();
-
-        data = data.insert_vector("value1", |builder| {
-            builder.push_string("Prophet Velen")
-        });
+        let data = HashBuilder::new()
+            .insert_hash("value1", |builder| {
+                builder.insert_string("value", "<Section Value>")
+            });
 
         Template::render_data(&mut w, &data, &parser);
-    }
 
-    #[test]
-    #[should_fail]
-    fn test_unescaped_node_incorrect_hash_data() {
-        let mut w = MemWriter::new();
-        let compiler = Compiler::new("<h1>{{ value1 }}</h1>");
-        let parser = Parser::new(&compiler.tokens);
-        let mut data = HashBuilder::new();
-
-        data = data.insert_hash("value1", |builder| {
-            builder.insert_string("name", "Hearthstone: Heroes of Warcraft")
-        });
-
-        Template::render_data(&mut w, &data, &parser);
+        assert_eq!("&lt;Section Value&gt;".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
     }
 }
