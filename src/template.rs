@@ -1,7 +1,10 @@
+
 use std::collections::hashmap::HashMap;
 use parser::{Parser, Node, Value, Static, Unescaped, Section, File};
-use build::{HashBuilder};
 use super::{Data, Strng, Bool, Vector, Hash};
+use build::HashBuilder;
+use super::{Data, Str, Bool, Vector, Hash};
+
 
 pub struct Template<'a>;
 
@@ -142,8 +145,9 @@ impl<'a> Template<'a> {
                         Template::handle_value_node(val, writer);
                     }
                 }
-                Static(key) => {
-                    tmp.push_str(key);
+
+                Static(ref key) => {
+                    tmp.push_str(*key);
                     writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
                 }
                 // Section(ref key, ref children, ref inverted) => {
@@ -166,8 +170,6 @@ impl<'a> Template<'a> {
         }
     }
 }
-
-
 
 #[cfg(test)]
 mod template_tests {
