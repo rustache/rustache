@@ -48,10 +48,10 @@ impl<'a> HashBuilder<'a> {
     /// ```rust
     /// use rustache::HashBuilder;
     /// let data = HashBuilder::new()
-    ///     .insert_vec("classes", |builder| {
+    ///     .insert_vector("classes", |builder| {
     ///         builder
-    ///             .push_string("Mage")
-    ///             .push_string("Druid")
+    ///             .push_string("Mage".to_string())
+    ///             .push_string("Druid".to_string())
     ///     })
     ///     .build();   
     /// ```
@@ -126,8 +126,8 @@ impl<'a> VecBuilder<'a> {
     /// ```rust
     /// use rustache::VecBuilder;
     /// let data = VecBuilder::new()
-    ///     .push_bool("true")
-    ///     .push_bool("false")
+    ///     .push_bool(true)
+    ///     .push_bool(false)
     ///     .build();
     /// ```
     pub fn push_bool(self, value: bool) -> VecBuilder<'a> {
@@ -143,7 +143,7 @@ impl<'a> VecBuilder<'a> {
     /// let data = VecBuilder::new()
     ///     .push_vector(|builder| {
     ///         builder
-    ///             .push_string("Anduiin Wrynn".to_string())
+    ///             .push_string("Anduin Wrynn".to_string())
     ///             .push_string("Jaina Proudmoore".to_string())
     ///     })
     ///     .build();
@@ -189,7 +189,7 @@ mod tests {
     use std::collections::HashMap;
 
     use super::{HashBuilder, VecBuilder};
-    use super::super::{Str, Bool, Vector, Hash};
+    use super::super::{Strng, Bool, Vector, Hash};
 
     #[test]
     fn test_new_builders() {
@@ -209,7 +209,7 @@ mod tests {
         hash.insert("class".to_string(), Strng("Priest".to_string()));
         hash.insert("died".to_string(), Bool(false));
         hash.insert("class_cards".to_string(), Vector(vec!(
-            Str("Prophet Velen".to_string()),
+            Strng("Prophet Velen".to_string()),
             Hash(hearthstone))));
 
         assert_eq!(HashBuilder::new().insert_string("first_name", "Anduin")
