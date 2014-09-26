@@ -1,6 +1,7 @@
 use parser::{Parser, Value, Static, Unescaped};
-use build::{HashBuilder};
+use build::HashBuilder;
 use super::{Data, Str, Bool, Vector, Hash};
+
 pub struct Template<'a>;
 
 impl<'a> Template<'a> {
@@ -99,7 +100,7 @@ impl<'a> Template<'a> {
                 }
 
                 Static(ref key) => {
-                    tmp.push_str(key.as_slice());
+                    tmp.push_str(*key);
                     writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
                 }
                 _ => continue
@@ -107,8 +108,6 @@ impl<'a> Template<'a> {
         }
     }
 }
-
-
 
 #[cfg(test)]
 mod template_tests {
