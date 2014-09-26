@@ -3,6 +3,7 @@ pub use std::collections::HashMap;
 use super::{Data, Strng, Bool, Vector, Hash};
 
 /// `HashBuilder` is a helper type that constructs `Data` types in a HashMap
+#[deriving(Show)]
 pub struct HashBuilder<'a> {
     pub data: HashMap<String, Data<'a>>,
     pub partials_path: &'a str
