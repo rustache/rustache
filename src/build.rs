@@ -99,24 +99,55 @@ pub struct VecBuilder<'a> {
 }
 
 impl<'a> VecBuilder<'a> {
+    /// Create a new `VecBuilder` instance
     pub fn new() -> VecBuilder<'a> {
         VecBuilder {
             data: Vec::new()
         }
     }
 
+    /// Add a `String` to the `VecBuilder`
+    ///
+    /// ```rust
+    /// use rustache::VecBuilder;
+    /// let data = VecBuilder::new()
+    ///     .push_string("Mage")
+    ///     .push_string("Druid")
+    ///     .build();
+    /// ```
     pub fn push_string<T: StrAllocating>(self, value: T) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         data.push(Strng(value.into_string()));
         VecBuilder { data: data }
     }
 
+    /// Add a `Boolean` to the `VecBuilder`
+    ///
+    /// ```rust
+    /// use rustache::VecBuilder;
+    /// let data = VecBuilder::new()
+    ///     .push_bool("true")
+    ///     .push_bool("false")
+    ///     .build();
+    /// ```
     pub fn push_bool(self, value: bool) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         data.push(Bool(value));
         VecBuilder { data: data }
     }
 
+    /// Add a `Vector` to the `VecBuilder`
+    ///
+    /// ```rust
+    /// use rustache::VecBuilder;
+    /// let data = VecBuilder::new()
+    ///     .push_vector(|builder| {
+    ///         builder
+    ///             .push_string("Anduiin Wrynn".to_string())
+    ///             .push_string("Jaina Proudmoore".to_string())
+    ///     })
+    ///     .build();
+    /// ```
     pub fn push_vector(self, f: |VecBuilder<'a>| -> VecBuilder<'a>) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         let builder = f(VecBuilder::new());
@@ -124,6 +155,23 @@ impl<'a> VecBuilder<'a> {
         VecBuilder { data: data }
     }
 
+    /// Add a `Hash` to the `VecBuilder`
+    ///
+    /// ```rust
+    /// use rustache::VecBuilder;
+    /// let data = VecBuilder::new()
+    ///     .push_hash(|builder| {
+    ///         builder
+    ///             .insert_string("first_name".to_string(), "Garrosh".to_string())
+    ///             .insert_string("last_name".to_string(), "Hellscream".to_string())       
+    ///     })
+    ///     .push_hash(|builder| {
+    ///         builder
+    ///             .insert_string("first_name".to_string(), "Malfurion".to_string())
+    ///             .insert_string("last_name".to_string(), "Stormrage".to_string())    
+    ///     })
+    ///     .build();
+    /// ```
     pub fn push_hash(self, f: |HashBuilder<'a>| -> HashBuilder<'a>) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         let builder = f(HashBuilder::new());
