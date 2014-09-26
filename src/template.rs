@@ -19,7 +19,7 @@ impl<'a> Template<'a> {
                 '>'  => { rv.push_str("&gt;"); }
                 '&'  => { rv.push_str("&amp;"); }
                 '"'  => { rv.push_str("&quot;"); }
-                _    => { rv.push_char(c); }
+                _    => { rv.push(c); }
             }
         }
         rv
@@ -75,7 +75,7 @@ impl<'a> Template<'a> {
         }        
     }
 
-    fn handle_inverted_node<'a, W:Writer>(nodes: &Vec<Node>, data: &Data, writer: &mut W) {
+    fn handle_inverted_node<'a, W:Writer>(nodes: &Vec<Node>, writer: &mut W) {
         for node in nodes.iter() {
             match *node {
                 Static(key) => {
@@ -102,6 +102,7 @@ impl<'a> Template<'a> {
                     writer.write_str(key.as_slice()).ok().expect("write failed in render");
                 }
                 Section(ref key, ref children, ref inverted) => {
+
                     // let tmp = key.to_string();
                     // match (data.contains_key(&tmp), *inverted) {
                     //     (true, true) => {},
@@ -148,21 +149,21 @@ impl<'a> Template<'a> {
                     tmp.push_str(*key);
                     writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
                 }
-                // Section(ref key, ref children, ref inverted) => {
-                //     let tmp = key.to_string();
-                //     match (datastore.data.contains_key(&tmp), *inverted) {
-                //         (true, true) => {},
-                //         (false, false) => {},
-                //         (true, false) => {
-                //             let ref val = datastore.data[tmp];
-                //             Template::handle_section_node(children, val, writer, false);
-                //         },
-                //         (false, true) => {
-                //             let ref val = datastore.data[tmp];
-                //             Template::handle_section_node(children, val, writer, true);
-                //         }
-                //     }
-                // }
+                Section(ref key, ref children, ref inverted) => {
+                    let tmp = key.to_string();
+                    match (datastore.data.contains_key(&tmp), *inverted) {
+                        (true, true) => {},
+                        (false, false) => {},
+                        (true, false) => {
+                            let ref val = datastore.data[tmp];
+                            Template::handle_section_node(children, val, writer);
+                        },
+                        (false, true) => {
+                            let ref val = datastore.data[tmp];
+                            Template::handle_inverted_node(children, writer);
+                        }
+                    }
+                }
                 _ => continue
             }
         }
