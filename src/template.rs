@@ -3,8 +3,6 @@ use std::collections::hashmap::HashMap;
 use parser::{Parser, Node, Value, Static, Unescaped, Section, File};
 use super::{Data, Strng, Bool, Vector, Hash};
 use build::HashBuilder;
-use super::{Data, Str, Bool, Vector, Hash};
-
 
 pub struct Template<'a>;
 
