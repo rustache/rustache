@@ -28,56 +28,105 @@ impl<'a> Compiler<'a> {
         compiler
     }
 
+    fn find_end<I: Iterator<(uint, char)>>(&self, iter: &mut I) -> uint {
+        loop {
+            match iter.next() {
+                Some((i, ch)) => { 
+                    if self.contents.char_at(i+1) == '}' {
+                        if ch == '}' {  
+                            return i;
+                        }
+                    }
+                },
+                None => { break; }
+            };
+        }
+
+        let (i,_) = iter.last().unwrap();
+
+        i
+    }
     fn create_tokens(&mut self) {
         let mut open_pos = 0u;
-        let mut close_pos = 0u;
+        let mut end_pos = 0u;
         let len = self.contents.len();
-        for (mut i, c) in self.contents.chars().enumerate() {
-            if c == '{' && self.contents.char_at(i+1) == '{' {
-                open_pos = i;
-                if open_pos != close_pos {
-                    self.tokens.push(Text(self.contents.slice(close_pos, open_pos)));
-                }
-                i += 1;
+        let mut iter = self.contents.chars().enumerate().peekable();
+        
+        loop {
+            match iter.next() {
+                Some((i, ch)) => { 
+                    if !iter.peek().is_none() {
+                        match (ch, iter.peek().unwrap()) {
+                            ('{', &(i, next_ch)) => {
+                                open_pos = i;
+                                if next_ch == '{' {
+                                    match self.contents.char_at(i+1) {
+                                        // unescaped literal
+                                        '{' => {
+                                            end_pos = self.find_end(&mut iter);
+                                            self.tokens.push(Raw(self.contents.slice(open_pos + 2, end_pos).trim()));
+                                        },
+                                        // unescaped
+                                        '&' => {
+                                            end_pos = self.find_end(&mut iter);
+                                            self.tokens.push(Raw(self.contents.slice(open_pos + 2, end_pos).trim()));
+                                        },
+                                        // section OTag
+                                        '#' => {
+                                            end_pos = self.find_end(&mut iter);
+                                            self.tokens.push(OTag(self.contents.slice(open_pos + 2, end_pos).trim(), false));
+                                        },
+                                        // inverted section
+                                        '^' => {
+                                            end_pos = self.find_end(&mut iter);
+                                            self.tokens.push(OTag(self.contents.slice(open_pos + 2, end_pos).trim(), true));
+                                        },
+                                        // section CTag
+                                        '/' => {
+                                            end_pos = self.find_end(&mut iter);
+                                            self.tokens.push(CTag(self.contents.slice(open_pos + 2, end_pos).trim()));
+                                        },
+                                        // partial
+                                        // '>' => {},
+                                        '!' => {
+                                            end_pos = self.find_end(&mut iter);
+                                        },
+                                        // variables
+                                        _ => {
+                                            end_pos = self.find_end(&mut iter);
+                                            self.tokens.push(Variable(self.contents.slice(open_pos + 1, end_pos).trim()));   
+                                        }
+                                    }
+                                }
+                            },
+                            _ => {}
+                        };
+                    }
+                },
+                None => { break; }
             }
-            if c == '}' && i < len - 1 && self.contents.char_at(i+1) == '}' {
-                close_pos = i + 2;
-                let val = self.contents.slice(open_pos + 2u, close_pos - 2u);
-                match val.char_at(0) {
-                    '!' => continue, // comment, skip over
-                    '#' => self.tokens.push(OTag(val.slice_from(1).trim(), false)), // Section OTAG
-                    '/' => self.tokens.push(CTag(val.slice_from(1).trim())), // Section CTAG
-                    '^' => self.tokens.push(OTag(val.slice_from(1).trim(), true)), // Inverted Section
-                    '>' => self.tokens.push(Partial(val.slice_from(1).trim())), // partial
-                    '&' => self.tokens.push(Raw(val.slice_from(1).trim())), // Unescaped
-                    '{' => continue, // unescaped literal
-                    _   => self.tokens.push(Variable(val.trim()))
-
-                }
-                i += 2;
-            }
-            
-        }
-        if close_pos < len {
-            self.tokens.push(Text(self.contents.slice_from(close_pos)));
         }
     }
 }
 
 #[test]
 fn basic_compiler_test() {
-    let contents = "Static{{ token }}{{> partial }}";
-    let compiler = Compiler::new(contents);
-    let static_token = Text("Static");
-    let value_token = Variable("token");
-    let partial_token = Partial("partial");
-    let expected = vec![static_token, value_token, partial_token];
-    for token in compiler.tokens.iter() {
-        println!("{}", token);
-    }
-    for token in expected.iter() {
-        println!("{}", token);
-    }
+    let contents = "this is some static text {{{ token }}}   
+                    more static text  {{&token}}} {{! comment }}
+                    {{! this is a comment}} {{#section_start}} {{^ derp }} 
+                    {{/ section_end }} {{/ section_end }} {{ just_a_var}} {{ token }}   
+                    more static text ";
+
+    let mut compiler = Compiler::new(contents);
+
+    let expected = vec![ Raw("token"), 
+                         Raw("token"), 
+                         OTag("section_start", false),
+                         OTag("derp", true),
+                         CTag("section_end"),
+                         CTag("section_end"),
+                         Variable("just_a_var"),Variable("token") 
+                        ];
 
     assert_eq!(expected, compiler.tokens);
 }
