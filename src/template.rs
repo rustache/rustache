@@ -266,7 +266,7 @@ mod template_tests {
     #[test]
     fn test_section_value_string_data() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("{{# value1 }}{{ value }}{{/ value1}}");
+        let compiler = Compiler::new("{{# value1 }}{{ value }}{{/ value1 }}");
         let parser = Parser::new(&compiler.tokens);
         let data = HashBuilder::new()
             .insert_hash("value1", |builder| {
@@ -276,5 +276,25 @@ mod template_tests {
         Template::render_data(&mut w, &data, &parser);
 
         assert_eq!("&lt;Section Value&gt;".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
+    }
+
+    #[test]
+    fn test_section_multiple_value_string_data() {
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("{{# names }}{{ name }}{{/ names }}");
+        let parser = Parser::new(&compiler.tokens);
+        let data = HashBuilder::new()
+            .insert_hash("names", |builder| {
+                builder.insert_vector("name", |builder| {
+                    builder
+                        .push_string("tom")
+                        .push_string("robert")
+                        .push_string("joe")
+                })
+            });
+
+        Template::render_data(&mut w, &data, &parser);
+
+        assert_eq!("tomrobertjoe".to_string(), str::from_utf8_owned(w.unwrap()).unwrap());
     }
 }
