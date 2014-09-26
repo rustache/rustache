@@ -102,7 +102,19 @@ impl<'a> Template<'a> {
                     writer.write_str(key.as_slice()).ok().expect("write failed in render");
                 }
                 Section(ref key, ref children, ref inverted) => {
-
+                    match *data {
+                        Vector(ref items) => {
+                            for item in items.iter() {
+                                println!("{}", item);
+                            }
+                        },
+                        Hash(ref hash) => {
+                            for item in hash.iter() {
+                                println!("{}", item);
+                            }
+                        },
+                        _ => fail!("Must be a list of hash")
+                    };
                     // let tmp = key.to_string();
                     // match (data.contains_key(&tmp), *inverted) {
                     //     (true, true) => {},
