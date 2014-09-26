@@ -1,8 +1,14 @@
+<<<<<<< HEAD
 
 use std::collections::hashmap::HashMap;
 use parser::{Parser, Node, Value, Static, Unescaped, Section, File};
 use super::{Data, Strng, Bool, Vector, Hash};
 use build::HashBuilder;
+=======
+use parser::{Parser, Value, Static, Unescaped};
+use build::HashBuilder;
+use super::{Data, Str, Bool, Vector, Hash};
+>>>>>>> d030aadb2b34d05f763ab27e9fbd180d06460216
 
 pub struct Template<'a>;
 
