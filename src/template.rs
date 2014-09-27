@@ -154,8 +154,7 @@ impl<'a> Template<'a> {
         match tmp.as_str() {
             None => fail!("path is not a valid UTF-8 sequence"),
             Some(path) => {
-
-                let file = Read::read_file(path);
+                let file = Read::read_file(tmp.clone());
                 let compiler = Compiler::new(file.as_slice());
                 let parser = Parser::new(&compiler.tokens);
 
@@ -165,7 +164,7 @@ impl<'a> Template<'a> {
     }
 
  
-    fn render_data<'a, W: Writer>(writer: &mut W, datastore: &HashBuilder, parser: &Parser) {
+    pub fn render_data<'a, W: Writer>(writer: &mut W, datastore: &HashBuilder, parser: &Parser) {
         let mut tmp: String = String::new();
         for node in parser.nodes.iter() {
             tmp.truncate(0);

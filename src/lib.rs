@@ -3,16 +3,30 @@
 use std::collections::HashMap;
 use std::fmt;
 use std::io::File;
+use template::Template;
+use compiler::Compiler;
+use parser::{Parser, Node};
 
 pub use build::{HashBuilder, VecBuilder};
-pub use template::Template;
-pub use parser::{Parser, Node};
+
+pub fn render<'a, W: Writer>(path: Path, data: &HashBuilder, writer: &mut W) {
+    let file = Read::read_file(path);
+    let compiler = Compiler::new(file.as_slice());
+    let parser = Parser::new(&compiler.tokens);
+    Template::render_data(writer, data, &parser);
+}
+
+pub fn render_text<'a, W: Writer>(input: &'a str, data: &HashBuilder, writer: &mut W) {
+    let compiler = Compiler::new(input);
+    let parser = Parser::new(&compiler.tokens);
+    Template::render_data(writer, data, &parser);
+}
 
 pub struct Read;
 
 impl Read {
-    pub fn read_file(template_path: &str) -> String {
-        let path = Path::new(template_path);
+    pub fn read_file(path: Path) -> String {
+        // let path = Path::new(template_path);
         // Open the file path
         let mut file = match File::open(&path) {
             Err(why) => fail!("{}", why.desc),
@@ -59,6 +73,8 @@ impl<'a> fmt::Show for Data<'a> {
         }
     }
 }
+
+
 
 mod compiler;
 mod parser;
