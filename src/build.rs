@@ -116,9 +116,7 @@ impl<'a> HashBuilder<'a> {
     /// Set a path to partials data
     #[inline]
     pub fn set_partials_path(self, path: &'a str) -> HashBuilder<'a> {
-        let HashBuilder { data, mut partials_path } = self;
-        partials_path = path;
-        HashBuilder { data: data, partials_path: partials_path }
+        HashBuilder { data: self.data, partials_path: path }
     }
 
     /// Return the built `Data`
@@ -301,8 +299,8 @@ mod tests {
     #[test]
     fn test_hash_func_builder() {
         // Since we can't directly compare closures, just make
-        // sure we're threading through the builder.
-        
+        // sure we're threading through the builder
+
         let mut num = 10u;
         let data = HashBuilder::new()
             .insert_func("double", |x| {
@@ -330,7 +328,7 @@ mod tests {
     #[test]
     fn test_vec_func_builder() {
         // Since we can't directly compare closures, just make
-        // sure we're threading through the builder.
+        // sure we're threading through the builder
 
         let mut num = 10u;
         let data = VecBuilder::new()
