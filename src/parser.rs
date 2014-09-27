@@ -1,7 +1,7 @@
 use compiler::{Token, Text, Variable, OTag, CTag, Raw, Partial};
 use std::mem;
 
-#[deriving(Show, PartialEq, Eq, Clone)]
+#[deriving(Clone)]
 pub enum Node<'a> {
     Static(&'a str),
     Value(&'a str),
@@ -11,7 +11,6 @@ pub enum Node<'a> {
     File(&'a str)
 }
 
-#[deriving(Show)]
 pub struct Parser<'a> {
     tokens: &'a Vec<Token<'a>>,
     pub nodes: Vec<Node<'a>>

@@ -111,7 +111,6 @@ impl<'a> Template<'a> {
                 Section(ref key, ref children, ref inverted) => {
                     match inverted {
                         &false => {
-                            println!("sending to section {}, {}", children, data);
                             match *data {
                                 Hash(ref hash) => {
                                     Template::handle_section_node(children, &hash[key.to_string()], writer);        
