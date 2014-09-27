@@ -70,13 +70,13 @@ impl<'a> Template<'a> {
             },
             Vector(ref list) => {
                 for item in list.iter() {
-                    Template::handle_value_node(item, "".to_string(), writer);
+                    Template::handle_value_node(item, key.to_string(), writer);
                 }
             },
             Hash(ref hash) => {
                 if hash.contains_key(&key) {
                     let ref tmp = hash[key];
-                    Template::handle_value_node(tmp, "".to_string(), writer);
+                    Template::handle_value_node(tmp, key.to_string(), writer);
                 }
             }
         }       

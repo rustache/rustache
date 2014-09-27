@@ -42,7 +42,7 @@ impl<'a> Compiler<'a> {
             }
             if c == '}' && i < len - 1 && self.contents.char_at(i+1) == '}' {
                 close_pos = i + 2;
-                let val = self.contents.slice(open_pos + 2u, close_pos - 2u);
+                let val = self.contents.slice(open_pos + 2, close_pos - 2);
                 match val.char_at(0) {
                     '!' => continue, // comment, skip over
                     '#' => self.tokens.push(OTag(val.slice_from(1).trim(), false)), // Section OTAG

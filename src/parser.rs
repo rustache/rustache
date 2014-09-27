@@ -1,5 +1,11 @@
+// The parser processes a list of mustache tokens created in
+// the compiler into a list of templater useable nodes.
+// Nodes contain only the necessary information to be used
+// to seek out appropriate data for injection.
+
 use compiler::{Token, Text, Variable, OTag, CTag, Raw, Partial};
 use std::mem;
+
 
 #[deriving(Clone)]
 pub enum Node<'a> {
@@ -11,6 +17,8 @@ pub enum Node<'a> {
     File(&'a str)
 }
 
+// The parser is instantiated with a list of tokens, and immediately
+// goes to work to create a node list from that list.
 pub struct Parser<'a> {
     tokens: &'a Vec<Token<'a>>,
     pub nodes: Vec<Node<'a>>
@@ -29,8 +37,8 @@ impl<'a> Parser<'a> {
 
     fn parse_nodes<'a>(&self, list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
         let mut nodes: Vec<Node> = vec![];
-
         let mut it = list.iter().enumerate();
+
         loop {
             match it.next() {
                 Some((i, &token)) => {
@@ -40,6 +48,8 @@ impl<'a> Parser<'a> {
                         Raw(name) => nodes.push(Unescaped(name)),
                         Partial(name) => nodes.push(File(name)),
                         CTag(name) => {
+                            // CTags that are processed outside of the context of a 
+                            // corresponding OTag are ignored.
                             continue;
                         },
                         OTag(name, inverted) => {
@@ -63,6 +73,9 @@ impl<'a> Parser<'a> {
                                     }
                                 }
                             }
+
+                            // Advance the iterator to the position of the CTAG.  If the 
+                            //OTag is never closed, these children will never be processed.
                             while count > 1 {
                                 it.next();
                                 count -= 1;
