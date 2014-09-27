@@ -1,9 +1,9 @@
-pub use std::collections::HashMap;
+use std::cell::RefCell;
+use std::collections::HashMap;
 
-use super::{Data, Strng, Bool, Vector, Hash};
+use super::{Data, Strng, Bool, Vector, Hash, Func};
 
 /// `HashBuilder` is a helper type that constructs `Data` types in a HashMap
-#[deriving(Show)]
 pub struct HashBuilder<'a> {
     pub data: HashMap<String, Data<'a>>,
     pub partials_path: &'a str
@@ -31,7 +31,7 @@ impl<'a> HashBuilder<'a> {
     pub fn insert_string<K: StrAllocating, V: StrAllocating>(self, key: K, value: V) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         data.insert(key.into_string(), Strng(value.into_string()));
-        HashBuilder { data: data, partials_path: self.partials_path }
+        HashBuilder { data: data, partials_path: partials_path }
     }
 
     /// Add a `Boolean` to the `HashBuilder`
@@ -46,7 +46,7 @@ impl<'a> HashBuilder<'a> {
     pub fn insert_bool<K: StrAllocating>(self, key: K, value: bool) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         data.insert(key.into_string(), Bool(value));
-        HashBuilder { data: data, partials_path: self.partials_path }
+        HashBuilder { data: data, partials_path: partials_path }
     }
 
     /// Add a `Vector` to the `HashBuilder`
@@ -66,7 +66,7 @@ impl<'a> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         let builder = f(VecBuilder::new());
         data.insert(key.into_string(), builder.build());
-        HashBuilder { data: data, partials_path: self.partials_path }
+        HashBuilder { data: data, partials_path: partials_path }
     }  
 
     /// Add a `Hash` to the `HashBuilder`
@@ -91,7 +91,26 @@ impl<'a> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         let builder = f(HashBuilder::new());
         data.insert(key.into_string(), builder.build());
-        HashBuilder { data: data, partials_path: self.partials_path }
+        HashBuilder { data: data, partials_path: partials_path }
+    }
+
+    /// Add a `Function` to the `HashBuilder`
+    ///
+    /// ```rust
+    /// use rustache::HashBuilder;
+    /// let mut num = 0;
+    /// let data = HashBuilder::new()
+    ///     .insert_func("double", |_| {
+    ///         num *= 2u;
+    ///         num.to_string()                
+    ///     })
+    ///     .build();
+    /// ```
+    #[inline]
+    pub fn insert_func<K: StrAllocating>(self, key: K, f: |String|: 'a -> String) -> HashBuilder<'a> {
+        let HashBuilder { mut data, partials_path } = self;
+        data.insert(key.into_string(), Func(RefCell::new(f)));
+        HashBuilder { data: data, partials_path: partials_path }
     }
 
     /// Set a path to partials data
@@ -200,6 +219,25 @@ impl<'a> VecBuilder<'a> {
         VecBuilder { data: data }
     }
 
+    /// Add a `Function` to the `VecBuilder`
+    ///
+    /// ```rust
+    /// use rustache::VecBuilder;
+    /// let mut num = 0;
+    /// let data = VecBuilder::new()
+    ///     .push_func(|double| {
+    ///         num *= 2u;
+    ///         num.to_string()
+    ///     })
+    ///     .build();
+    /// ```
+    #[inline]
+    pub fn push_func(self, f: |String|: 'a -> String) -> VecBuilder <'a> {
+        let VecBuilder { mut data } = self;
+        data.push(Func(RefCell::new(f)));
+        VecBuilder { data: data }
+    }
+
     /// Return the built `Data`
     #[inline]
     pub fn build(self) -> Data<'a> {
@@ -212,7 +250,7 @@ mod tests {
     use std::collections::HashMap;
 
     use super::{HashBuilder, VecBuilder};
-    use super::super::{Strng, Bool, Vector, Hash};
+    use super::super::{Strng, Bool, Vector, Hash, Func};
 
     #[test]
     fn test_new_builders() {
@@ -258,5 +296,63 @@ mod tests {
 
         assert_eq!(Hash(hash1), Hash(hash2.data));
         assert_eq!(hash2.partials_path, "/hearthstone");
+    }
+
+    #[test]
+    fn test_hash_func_builder() {
+        // Since we can't directly compare closures, just make
+        // sure we're threading through the builder.
+        
+        let mut num = 10u;
+        let data = HashBuilder::new()
+            .insert_func("double", |x| {
+                num *= 2u;
+                x + num.to_string()
+            })
+            .build();
+
+        match data {
+            Hash(m) => {
+                match *m.find_equiv(&("double")).unwrap() {
+                    Func(ref f) => {
+                        let f = &mut *f.borrow_mut();
+                        assert_eq!((*f)("double: ".to_string()), "double: 20".to_string());
+                        assert_eq!((*f)("double: ".to_string()), "double: 40".to_string());
+                        assert_eq!((*f)("double: ".to_string()), "double: 80".to_string());
+                    }
+                    _ => fail!(),
+                }
+            }
+            _ => fail!(),
+        }
+    }
+
+    #[test]
+    fn test_vec_func_builder() {
+        // Since we can't directly compare closures, just make
+        // sure we're threading through the builder.
+
+        let mut num = 10u;
+        let data = VecBuilder::new()
+            .push_func(|x| {
+                num *= 2u;
+                x + num.to_string()
+            })
+            .build();
+
+        match data {
+            Vector(m) => {
+                match m.as_slice() {
+                    [Func(ref f)] => {
+                        let f = &mut *f.borrow_mut();
+                        assert_eq!((*f)("double: ".to_string()), "double: 20".to_string());
+                        assert_eq!((*f)("double: ".to_string()), "double: 40".to_string());
+                        assert_eq!((*f)("double: ".to_string()), "double: 80".to_string());
+                    }
+                    _ => fail!(),
+                }
+            }
+            _ => fail!(),
+        }
     }
 }
