@@ -1,5 +1,5 @@
 use std::path::Path;
-use parser::{Parser, Node, Value, Static, Unescaped, Section, File};
+use parser::{Parser, Node, Value, Static, Unescaped, Section, Part};
 use super::{Data, Strng, Bool, Vector, Hash, Read};
 use build::HashBuilder;
 use compiler::Compiler;
@@ -94,7 +94,7 @@ impl<'a> Template<'a> {
                 Static(key) => {
                     writer.write_str(key.as_slice()).ok().expect("write failed in render");
                 },
-                File(path) => {
+                Part(path) => {
                     // handle partial logic here...
                 },
                 _ => {}
@@ -131,7 +131,7 @@ impl<'a> Template<'a> {
                         }
                     }
                 },
-                File(path) => {
+                Part(path) => {
                     // handle partial logic here...
                 }
             }
@@ -210,7 +210,7 @@ impl<'a> Template<'a> {
                         }
                     }
                 }
-                File(name) => {
+                Part(name) => {
                     let path = datastore.partials_path;
                     self.handle_partial_file_node(path, name, datastore, writer);
                 }

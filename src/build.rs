@@ -116,9 +116,7 @@ impl<'a> HashBuilder<'a> {
     /// Set a path to partials data
     #[inline]
     pub fn set_partials_path(self, path: &'a str) -> HashBuilder<'a> {
-        let HashBuilder { data, mut partials_path } = self;
-        partials_path = path;
-        HashBuilder { data: data, partials_path: partials_path }
+        HashBuilder { data: self.data, partials_path: path }
     }
 
     /// Return the built `Data`
