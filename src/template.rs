@@ -153,7 +153,7 @@ impl<'a> Template<'a> {
         let tmp = Path::new(pathname).join(filename);
         match tmp.as_str() {
             None => fail!("path is not a valid UTF-8 sequence"),
-            Some(path) => {
+            Some(_) => {
                 let file = Read::read_file(tmp.clone());
                 let compiler = Compiler::new(file.as_slice());
                 let parser = Parser::new(&compiler.tokens);

@@ -5,7 +5,7 @@ use std::fmt;
 use std::io::File;
 use template::Template;
 use compiler::Compiler;
-use parser::{Parser, Node};
+use parser::{Parser};
 
 pub use build::{HashBuilder, VecBuilder};
 

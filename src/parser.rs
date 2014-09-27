@@ -47,7 +47,7 @@ impl<'a> Parser<'a> {
                         Variable(name) => nodes.push(Value(name)),
                         Raw(name) => nodes.push(Unescaped(name)),
                         Partial(name) => nodes.push(File(name)),
-                        CTag(name) => {
+                        CTag(_) => {
                             // CTags that are processed outside of the context of a 
                             // corresponding OTag are ignored.
                             continue;
