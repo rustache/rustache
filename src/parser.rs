@@ -14,7 +14,7 @@ pub enum Node<'a> {
     // (name, children, inverted)
     Section(&'a str, Vec<Node<'a>>, bool),
     Unescaped(&'a str),
-    File(&'a str)
+    Part(&'a str)
 }
 
 // The parser is instantiated with a list of tokens, and immediately
@@ -46,7 +46,7 @@ impl<'a> Parser<'a> {
                         Text(text) => nodes.push(Static(text)),
                         Variable(name) => nodes.push(Value(name)),
                         Raw(name) => nodes.push(Unescaped(name)),
-                        Partial(name) => nodes.push(File(name)),
+                        Partial(name) => nodes.push(Part(name)),
                         CTag(_) => {
                             // CTags that are processed outside of the context of a 
                             // corresponding OTag are ignored.
@@ -93,17 +93,17 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 mod parser_tests {
-    use compiler::{Compiler, Token, Text, Variable, OTag, CTag, Raw, Partial};
-    use parser::{Parser, Node, Static, Value, Section, Unescaped, File};
-    use std::mem;
+    use compiler::{Compiler};
+    use parser::{Parser, Node, Static, Value, Section, Unescaped, Part};
 
     #[test]
     fn parse_static() {
-        let contents = "Static String {{ token }}{{# section }}{{ child_tag }}{{/ section }}{{> new }}";
+        let contents = "Static String ";
         let compiler = Compiler::new(contents);
         let parser = Parser::new(&compiler.tokens);
         let static_node = Static("Static String ");
         let expected: Vec<Node> = vec![static_node];
+        assert_eq!(parser.nodes, expected);
     }
 
     #[test]
@@ -113,6 +113,7 @@ mod parser_tests {
         let parser = Parser::new(&compiler.tokens);
         let value_node = Value("token");
         let expected: Vec<Node> = vec![value_node];
+        assert_eq!(parser.nodes, expected);
     }
 
     #[test]
@@ -122,6 +123,7 @@ mod parser_tests {
         let parser = Parser::new(&compiler.tokens);
         let section_node = Section("section", vec![Value("child_tag")], false);
         let expected: Vec<Node> = vec![section_node];
+        assert_eq!(parser.nodes, expected);
     }
 
     #[test]
@@ -131,6 +133,7 @@ mod parser_tests {
         let parser = Parser::new(&compiler.tokens);
         let inverted_node = Section("inverted", vec![Value("child_tag")], true);
         let expected: Vec<Node> = vec![inverted_node];
+        assert_eq!(parser.nodes, expected);
     }
 
     #[test]
@@ -140,15 +143,17 @@ mod parser_tests {
         let parser = Parser::new(&compiler.tokens);
         let undescaped_node = Unescaped("unescaped");
         let expected: Vec<Node> = vec![undescaped_node];
+        assert_eq!(parser.nodes, expected);
     }
 
     #[test]
     fn parse_partial() {
-        let contents = "Static String {{ token }}{{# section }}{{ child_tag }}{{/ section }}{{> new }}";
+        let contents = "{{> new }}";
         let compiler = Compiler::new(contents);
         let parser = Parser::new(&compiler.tokens);
-        let file_node = File("new");
+        let file_node = Part("new");
         let expected: Vec<Node> = vec![file_node];
+        assert_eq!(parser.nodes, expected);
     }
 
     #[test]
@@ -159,9 +164,9 @@ mod parser_tests {
         let static_node = Static("Static String ");
         let value_node = Value("token");
         let section_node = Section("section", vec![Value("child_tag")], false);
-        let file_node = File("new");
+        let file_node = Part("new");
         let undescaped_node = Unescaped("unescaped");
         let expected: Vec<Node> = vec![static_node, value_node, section_node, file_node, undescaped_node];
-        assert_eq!(expected, parser.nodes);
+        assert_eq!(parser.nodes, expected);
     }
 }

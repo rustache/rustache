@@ -116,9 +116,7 @@ impl<'a> HashBuilder<'a> {
     /// Set a path to partials data
     #[inline]
     pub fn set_partials_path(self, path: &'a str) -> HashBuilder<'a> {
-        let HashBuilder { data, mut partials_path } = self;
-        partials_path = path;
-        HashBuilder { data: data, partials_path: partials_path }
+        HashBuilder { data: self.data, partials_path: path }
     }
 
     /// Return the built `Data`
@@ -279,20 +277,20 @@ mod tests {
             Strng("Prophet Velen".to_string()),
             Hash(hearthstone))));
 
-        let mut hash2 = HashBuilder::new().set_partials_path("/hearthstone")
-                            .insert_string("first_name", "Anduin")
-                            .insert_string("last_name", "Wrynn")
-                            .insert_string("class", "Priest")
-                            .insert_bool("died", false)
-                            .insert_vector("class_cards", |builder| {
-                                builder
-                                    .push_string("Prophet Velen")
-                                    .push_hash(|builder| {
-                                        builder
-                                            .insert_string("name", "Hearthstone: Heroes of Warcraft")
-                                            .insert_string("release_date", "December, 2014")
-                                    })
-                            });
+        let hash2 = HashBuilder::new().set_partials_path("/hearthstone")
+                        .insert_string("first_name", "Anduin")
+                        .insert_string("last_name", "Wrynn")
+                        .insert_string("class", "Priest")
+                        .insert_bool("died", false)
+                        .insert_vector("class_cards", |builder| {
+                            builder
+                                .push_string("Prophet Velen")
+                                .push_hash(|builder| {
+                                    builder
+                                        .insert_string("name", "Hearthstone: Heroes of Warcraft")
+                                        .insert_string("release_date", "December, 2014")
+                                })
+                        });
 
         assert_eq!(Hash(hash1), Hash(hash2.data));
         assert_eq!(hash2.partials_path, "/hearthstone");

@@ -65,7 +65,7 @@ impl<'a> Compiler<'a> {
 #[test]
 fn basic_compiler_test() {
     let contents = "<div> <h1> {{ token }} {{> partial }} </h1> </div>";
-    let mut compiler = Compiler::new(contents);
+    let compiler = Compiler::new(contents);
     let expected = vec![Text("<div> <h1> "), Variable("token"), Text(" "), Partial("partial"), Text(" </h1> </div>")];
 
     assert_eq!(expected, compiler.tokens);
