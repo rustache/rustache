@@ -41,7 +41,6 @@ pub struct Read;
 
 impl Read {
     pub fn read_file(path: Path) -> String {
-        // let path = Path::new(template_path);
         // Open the file path
         let mut file = match File::open(&path) {
             Err(why) => fail!("{}", why.desc),
@@ -108,10 +107,10 @@ mod lib_tests {
             .insert_hash("people", |builder| {
                 builder.insert_vector("information", |builder| {
                     builder
-                        .push_string("<tr><td>Jarrod</td><td>Ruhland</td></tr>")
-                        .push_string("<tr><td>Sean</td><td>Chen</td></tr>")
                         .push_string("<tr><td>Fleur</td><td>Dragan</td></tr>")
+                        .push_string("<tr><td>Jarrod</td><td>Ruhland</td></tr>")
                         .push_string("<tr><td>Jim</td><td>O'Brien</td></tr>")
+                        .push_string("<tr><td>Sean</td><td>Chen</td></tr>")
                     }
                 )}
             );
