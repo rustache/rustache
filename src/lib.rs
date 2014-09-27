@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 use std::fmt;
 use std::io::File;
+use std::cell::RefCell;
 
 pub use build::{HashBuilder, VecBuilder};
 pub use template::Template;
@@ -34,7 +35,8 @@ pub enum Data<'a> {
     Strng(String),
     Bool(bool),
     Vector(Vec<Data<'a>>),
-    Hash(HashMap<String, Data<'a>>)
+    Hash(HashMap<String, Data<'a>>),
+    Func(RefCell<|String|: 'a -> String>)
 }
 
 impl<'a> PartialEq for Data<'a> {
@@ -44,6 +46,7 @@ impl<'a> PartialEq for Data<'a> {
             (&Bool(ref val0), &Bool(ref val1)) => val0 == val1,
             (&Vector(ref val0), &Vector(ref val1)) => val0 == val1,
             (&Hash(ref val0), &Hash(ref val1)) => val0 == val1,
+            (&Func(_), &Func(_)) => fail!("Can't compare closures"),
             (_, _) => false
         }
     }
@@ -52,10 +55,11 @@ impl<'a> PartialEq for Data<'a> {
 impl<'a> fmt::Show for Data<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Strng(ref val) => write!(f, "String({})", val),
-            Bool(val)    => write!(f, "Boolean({})", val),
+            Strng(ref val)  => write!(f, "String({})", val),
+            Bool(val)       => write!(f, "Boolean({})", val),
             Vector(ref val) => write!(f, "Vector({})", val),
-            Hash(ref val)    => write!(f, "Hash({})", val) 
+            Hash(ref val)   => write!(f, "Hash({})", val),
+            Func(_)         => write!(f, "Func(...)") 
         }
     }
 }

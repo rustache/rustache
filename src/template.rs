@@ -1,4 +1,3 @@
-
 use std::path::Path;
 use parser::{Parser, Node, Value, Static, Unescaped, Section, File};
 use super::{Data, Strng, Bool, Vector, Hash, Read};
@@ -50,7 +49,8 @@ impl<'a> Template<'a> {
                     let ref tmp = hash[key];
                     Template::handle_unescaped_node(tmp, key.to_string(), writer);
                 }
-            }
+            },
+            _ => return
         }
     }
 
@@ -78,7 +78,8 @@ impl<'a> Template<'a> {
                     let ref tmp = hash[key];
                     Template::handle_value_node(tmp, "".to_string(), writer);
                 }
-            }
+            },
+            _ => return
         }       
     }
 
