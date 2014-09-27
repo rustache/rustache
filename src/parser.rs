@@ -7,7 +7,7 @@ use compiler::{Token, Text, Variable, OTag, CTag, Raw, Partial};
 use std::mem;
 
 
-#[deriving(Clone)]
+#[deriving(PartialEq, Eq, Clone, Show)]
 pub enum Node<'a> {
     Static(&'a str),
     Value(&'a str),
