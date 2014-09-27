@@ -99,7 +99,7 @@ mod parser_tests {
 
     #[test]
     fn parse_static() {
-        let contents = "Static String {{ token }}{{# section }}{{ child_tag }}{{/ section }}{{> new }}";
+        let contents = "Static String ";
         let compiler = Compiler::new(contents);
         let parser = Parser::new(&compiler.tokens);
         let static_node = Static("Static String ");
@@ -149,7 +149,7 @@ mod parser_tests {
 
     #[test]
     fn parse_partial() {
-        let contents = "Static String {{ token }}{{# section }}{{ child_tag }}{{/ section }}{{> new }}";
+        let contents = "{{> new }}";
         let compiler = Compiler::new(contents);
         let parser = Parser::new(&compiler.tokens);
         let file_node = Part("new");
