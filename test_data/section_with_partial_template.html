@@ -1,0 +1,20 @@
+<html>
+  <head>
+    <title>Rustache End-To-End</title>
+  </head>
+  <body>
+    <div class="main">
+      Team Awesome:
+      <table>
+        <tr>
+          <th>First:</th>
+          <th>Last:</th>
+        {{# people }}
+          {{& information }}
+          {{> section_with_partial.partial }}
+        {{/ people }}
+      </table>
+    </div>
+    <p>{{> section_with_partial.partial }}</p>
+  </body>
+</html>
