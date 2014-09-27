@@ -19,7 +19,7 @@ impl Read {
             Ok(file) => file,
         };
 
-        // Read the file contents into a string
+        // Read the file contents into a heap allocated string
         let contents = match file.read_to_string() {
             Err(why) => fail!("{}", why.desc),
             Ok(text) => text,
