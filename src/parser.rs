@@ -93,9 +93,8 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 mod parser_tests {
-    use compiler::{Compiler, Token, Text, Variable, OTag, CTag, Raw, Partial};
+    use compiler::{Compiler};
     use parser::{Parser, Node, Static, Value, Section, Unescaped, Part};
-    use std::mem;
 
     #[test]
     fn parse_static() {
