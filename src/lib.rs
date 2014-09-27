@@ -23,17 +23,27 @@ impl Rustache {
         Rustache
     }
 
-    pub fn render<'a, W: Writer>(path: Path, data: &HashBuilder, writer: &mut W) {
-        let file = Read::read_file(path);
+
+    fn render<'a, W: Writer>(&self, path: &str, data: &HashBuilder, writer: &mut W) {
+        let file = Read::read_file(Path::new(path));
         let compiler = Compiler::new(file.as_slice());
         let parser = Parser::new(&compiler.tokens);
         Template::new().render_data(writer, data, &parser);
     }
 
-    pub fn render_text<'a, W: Writer>(input: &'a str, data: &HashBuilder, writer: &mut W) {
+    fn render_text<'a, W: Writer>(&self, input: &'a str, data: &HashBuilder, writer: &mut W) {
         let compiler = Compiler::new(input);
         let parser = Parser::new(&compiler.tokens);
         Template::new().render_data(writer, data, &parser);
+    }
+
+    fn render_json<'a, W: Writer>(&self, template_path: &str, data_path: &str, writer: &mut W) {
+        // let data = Read::read_json(Path::new(data_path));
+
+        // decode JSON @ data_path into rust object
+            // build a HashBuilder from parsing json
+
+        // self.render()
     }
 }
 
@@ -42,8 +52,9 @@ pub struct Read;
 impl Read {
     pub fn read_file(path: Path) -> String {
         // Open the file path
+        let dis = path.display();
         let mut file = match File::open(&path) {
-            Err(why) => fail!("{}", why.desc),
+            Err(why) => fail!("{} {}",dis ,why.desc),
             Ok(file) => file,
         };
 
@@ -95,14 +106,12 @@ impl<'a> fmt::Show for Data<'a> {
 mod lib_tests {
     use std::io::MemWriter;
     use std::io::File;
-
     use build::HashBuilder;
     use super::Rustache;
 
     #[test]
     fn file_end_to_end_test() {
-        let mut w = MemWriter::new();
-        let path = Path::new("test_data/index.template.html");
+        let path = "test_data/index.template.html";
         let data = HashBuilder::new()
             .insert_hash("people", |builder| {
                 builder.insert_vector("information", |builder| {
@@ -113,8 +122,11 @@ mod lib_tests {
                         .push_string("<tr><td>Sean</td><td>Chen</td></tr>")
                     }
                 )}
-            );
-        Rustache::render(path, &data, &mut w);
+            ).set_partials_path("test_data");
+            
+        let mut w = MemWriter::new();
+        let r = Rustache::new();
+        r.render(path, &data, &mut w);
 
         let mut f = File::create(&Path::new("test_data/index.html"));
         let completed = f.write(w.unwrap().as_slice());
