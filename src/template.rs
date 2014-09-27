@@ -70,13 +70,13 @@ impl<'a> Template<'a> {
             },
             Vector(ref list) => {
                 for item in list.iter() {
-                    Template::handle_value_node(item, "".to_string(), writer);
+                    Template::handle_value_node(item, key.to_string(), writer);
                 }
             },
             Hash(ref hash) => {
                 if hash.contains_key(&key) {
                     let ref tmp = hash[key];
-                    Template::handle_value_node(tmp, "".to_string(), writer);
+                    Template::handle_value_node(tmp, key.to_string(), writer);
                 }
             }
         }       
@@ -111,7 +111,6 @@ impl<'a> Template<'a> {
                 Section(ref key, ref children, ref inverted) => {
                     match inverted {
                         &false => {
-                            println!("sending to section {}, {}", children, data);
                             match *data {
                                 Hash(ref hash) => {
                                     Template::handle_section_node(children, &hash[key.to_string()], writer);        
@@ -154,9 +153,8 @@ impl<'a> Template<'a> {
         let tmp = Path::new(pathname).join(filename);
         match tmp.as_str() {
             None => fail!("path is not a valid UTF-8 sequence"),
-            Some(path) => {
-
-                let file = Read::read_file(path);
+            Some(_) => {
+                let file = Read::read_file(tmp.clone());
                 let compiler = Compiler::new(file.as_slice());
                 let parser = Parser::new(&compiler.tokens);
 
@@ -166,7 +164,7 @@ impl<'a> Template<'a> {
     }
 
  
-    fn render_data<'a, W: Writer>(writer: &mut W, datastore: &HashBuilder, parser: &Parser) {
+    pub fn render_data<'a, W: Writer>(writer: &mut W, datastore: &HashBuilder, parser: &Parser) {
         let mut tmp: String = String::new();
         for node in parser.nodes.iter() {
             tmp.truncate(0);
