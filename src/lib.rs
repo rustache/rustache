@@ -13,13 +13,13 @@ pub fn render<'a, W: Writer>(path: Path, data: &HashBuilder, writer: &mut W) {
     let file = Read::read_file(path);
     let compiler = Compiler::new(file.as_slice());
     let parser = Parser::new(&compiler.tokens);
-    Template::render_data(writer, data, &parser);
+    Template::new().render_data(writer, data, &parser);
 }
 
 pub fn render_text<'a, W: Writer>(input: &'a str, data: &HashBuilder, writer: &mut W) {
     let compiler = Compiler::new(input);
     let parser = Parser::new(&compiler.tokens);
-    Template::render_data(writer, data, &parser);
+    Template::new().render_data(writer, data, &parser);
 }
 
 pub struct Read;
