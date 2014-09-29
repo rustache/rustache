@@ -117,7 +117,7 @@ impl<'a> Template<'a> {
                 Static(key) => {
                     self.write_to_stream(writer, key.as_slice(), "render: inverted node static");
                 },
-                Part(filename) => {
+                Part(filename, _) => {
                     self.handle_partial_file_node(filename, data, writer);
                 },
                 _ => {}
@@ -128,17 +128,17 @@ impl<'a> Template<'a> {
     fn handle_section_node<'a, W: Writer>(&mut self, nodes: &Vec<Node>, data: &Data, datastore: &HashMap<String,Data>, writer: &mut W) {
         for node in nodes.iter() {
             match *node {
-                Unescaped(key)  => {
+                Unescaped(key, _)  => {
                     self.handle_unescaped_node(data, key.to_string(), writer);
                 }
-                Value(key) => {
+                Value(key, _) => {
                     self.handle_value_node(data, key.to_string(), writer);
                 }
                 Static(key) => {
                     self.write_to_stream(writer, key.as_slice(), "render: section node static");
                     //writer.write_str(key.as_slice()).ok().expect("write failed in render");
                 }
-                Section(ref key, ref children, ref inverted) => {
+                Section(ref key, ref children, ref inverted, _) => {
                     match inverted {
                         &false => {
                             match *data {
@@ -164,7 +164,7 @@ impl<'a> Template<'a> {
                         }
                     }
                 },
-                Part(path) => {
+                Part(path, _) => {
                     self.handle_partial_file_node(path, datastore, writer);
                 }
             }
@@ -202,7 +202,7 @@ impl<'a> Template<'a> {
             match *node {
                 // unescaped nodes contain tags who's data gets written
                 // out exactly as provided, no HTML escaping
-                Unescaped(key)  => {
+                Unescaped(key, _)  => {
                     let tmp = key.to_string();
                     if data.contains_key(&tmp) {
                         let ref val = data[tmp];
@@ -211,7 +211,7 @@ impl<'a> Template<'a> {
                 }
                 // value nodes contain tags who's data gets HTML escaped
                 // when it gets written out
-                Value(key) => {
+                Value(key, _) => {
                     let tmp = key.to_string();
                     if data.contains_key(&tmp) {
                         let ref val = data[tmp];
@@ -231,7 +231,7 @@ impl<'a> Template<'a> {
                 //
                 // normal section tags enclose a bit of html that will get repeated
                 // for each element found in it's data
-                Section(ref key, ref children, ref inverted) => {
+                Section(ref key, ref children, ref inverted, _) => {
                     let tmp = key.to_string();
                     match (data.contains_key(&tmp), *inverted) {
                         (true, true) => {},
@@ -248,7 +248,7 @@ impl<'a> Template<'a> {
                 }
                 // partials include external template files and compile and process them
                 // at runtime, inserting them into the document at the point the tag is found
-                Part(name) => {
+                Part(name, _) => {
                     self.handle_partial_file_node(name, data, writer);
                 }
             }
