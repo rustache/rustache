@@ -48,6 +48,9 @@ impl Rustache {
             Err(err) => fail!("Invalid JSON. {}", err)
         };
 
+        for (k, v) in data.as_object().unwrap().iter() {
+            println!("{}: {}", k, v);
+        }
         // decode JSON @ data_path into rust object
             // build a HashBuilder from parsing json
 
