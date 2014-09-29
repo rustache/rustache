@@ -1,9 +1,12 @@
 #![crate_name = "rustache"]
 
+extern crate serialize;
+
 use std::collections::HashMap;
 use std::fmt;
 use std::io::File;
 use std::cell::RefCell;
+use serialize::{json};
 
 use template::Template;
 use compiler::Compiler;
@@ -38,7 +41,12 @@ impl Rustache {
     }
 
     fn render_json<'a, W: Writer>(&self, template_path: &str, data_path: &str, writer: &mut W) {
-        // let data = Read::read_json(Path::new(data_path));
+        let data_string = Read::read_file(Path::new(data_path));
+
+        let data = match json::from_str(data_string.as_slice()) {
+            Ok(json) => json,
+            Err(err) => fail!("Invalid JSON. {}", err)
+        };
 
         // decode JSON @ data_path into rust object
             // build a HashBuilder from parsing json
@@ -47,7 +55,7 @@ impl Rustache {
     }
 }
 
-pub struct Read;
+struct Read;
 
 impl Read {
     pub fn read_file(path: Path) -> String {
@@ -108,6 +116,19 @@ mod lib_tests {
     use std::io::File;
     use build::HashBuilder;
     use super::Rustache;
+
+    #[test]
+    fn test_json_parse() {
+        let template_path = "test_data/index.template.html";
+        let data_path = "test_data/test.json";
+
+        let mut w = MemWriter::new();
+        let r = Rustache::new();
+        r.render_json(template_path, data_path, &mut w);
+
+        assert!(false);
+
+    }
 
     #[test]
     fn file_end_to_end_test() {
