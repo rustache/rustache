@@ -49,7 +49,6 @@ impl<'a> Template<'a> {
             Strng(ref val) => {
                 tmp = tmp + *val;
                 self.write_to_stream(writer, tmp.as_slice(), "render: unescaped node string fail");
-                //writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
             },
             Bool(ref val) => {
                 match val {
@@ -57,7 +56,6 @@ impl<'a> Template<'a> {
                     &false => tmp.push_str("false")
                 }
                 self.write_to_stream(writer, tmp.as_slice(), "render: unescaped node bool");
-                //writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
             },
             Vector(ref list) => {
                 for item in list.iter() {
@@ -70,11 +68,12 @@ impl<'a> Template<'a> {
                     self.handle_unescaped_node(tmp, key.to_string(), writer);
                 }
             },
-            /// Should return the String representation of the function without evaluation
-            Func(ref f) => {
+           Func(ref f) => {
                 let f = &mut *f.borrow_mut();
-                self.handle_unescaped_node(&Strng((*f)("".to_string())), key.to_string(), writer);
+                let val = (*f)("".to_string());
+                writer.write_str(val.as_slice()).ok().expect("write failed in render");
             }
+
         }
     }
 
@@ -84,7 +83,6 @@ impl<'a> Template<'a> {
             Strng(ref val) => {
                 tmp = *self.escape_html(&(*val.as_slice()));
                 self.write_to_stream(writer, tmp.as_slice(), "render: value node string");
-                //writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
             },
             Bool(ref val) => {
                 match val {
@@ -92,7 +90,6 @@ impl<'a> Template<'a> {
                     &false => tmp.push_str("false")
                 }
                 self.write_to_stream(writer, tmp.as_slice(), "render: value node bool");
-                //writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
             },
             Vector(ref list) => {
                 for item in list.iter() {
@@ -105,12 +102,11 @@ impl<'a> Template<'a> {
                     self.handle_value_node(tmp, key.to_string(), writer);
                 }
             },
-            /// Should evaluate the function and return its result
             Func(ref f) => {
                 let f = &mut *f.borrow_mut();
                 let val = (*f)("".to_string());
-                self.write_to_stream(writer, val.as_slice(), "render: value node func");
-                //writer.write_str(val.as_slice()).ok().expect("write failed in render");
+                let value = self.escape_html(val.as_slice());
+                writer.write_str(value.as_slice()).ok().expect("write failed in render");
             }
         }       
     }
@@ -120,9 +116,8 @@ impl<'a> Template<'a> {
             match *node {
                 Static(key) => {
                     self.write_to_stream(writer, key.as_slice(), "render: inverted node static");
-                    //writer.write_str(key.as_slice()).ok().expect("write failed in render");
                 },
-                Part(filename) => {
+                Part(filename, _) => {
                     self.handle_partial_file_node(filename, data, writer);
                 },
                 _ => {}
@@ -133,23 +128,31 @@ impl<'a> Template<'a> {
     fn handle_section_node<'a, W: Writer>(&mut self, nodes: &Vec<Node>, data: &Data, datastore: &HashMap<String,Data>, writer: &mut W) {
         for node in nodes.iter() {
             match *node {
-                Unescaped(key)  => {
+                Unescaped(key, _)  => {
                     self.handle_unescaped_node(data, key.to_string(), writer);
                 }
-                Value(key) => {
+                Value(key, _) => {
                     self.handle_value_node(data, key.to_string(), writer);
                 }
                 Static(key) => {
                     self.write_to_stream(writer, key.as_slice(), "render: section node static");
-                    //writer.write_str(key.as_slice()).ok().expect("write failed in render");
                 }
-                Section(ref key, ref children, ref inverted) => {
+                Section(ref key, ref children, ref inverted, _, _) => {
                     match inverted {
                         &false => {
                             match *data {
                                 Hash(ref hash) => {
                                     self.handle_section_node(children, &hash[key.to_string()], datastore, writer);        
-                                }
+                                },
+/*                                Func(ref f) => {
+                                    let f = &mut *f.borrow_mut();
+                                    let param = String::new();
+                                    for child in children.into_iter() {
+                                        param.append(child);
+                                    }
+                                    let val = (*f)(param);
+                                    val
+                                },*/
                                 _ => {
                                     self.handle_section_node(children, data, datastore, writer);
                                 }
@@ -160,7 +163,7 @@ impl<'a> Template<'a> {
                         }
                     }
                 },
-                Part(path) => {
+                Part(path, _) => {
                     self.handle_partial_file_node(path, datastore, writer);
                 }
             }
@@ -198,7 +201,7 @@ impl<'a> Template<'a> {
             match *node {
                 // unescaped nodes contain tags who's data gets written
                 // out exactly as provided, no HTML escaping
-                Unescaped(key)  => {
+                Unescaped(key, _)  => {
                     let tmp = key.to_string();
                     if data.contains_key(&tmp) {
                         let ref val = data[tmp];
@@ -207,7 +210,7 @@ impl<'a> Template<'a> {
                 }
                 // value nodes contain tags who's data gets HTML escaped
                 // when it gets written out
-                Value(key) => {
+                Value(key, _) => {
                     let tmp = key.to_string();
                     if data.contains_key(&tmp) {
                         let ref val = data[tmp];
@@ -227,7 +230,7 @@ impl<'a> Template<'a> {
                 //
                 // normal section tags enclose a bit of html that will get repeated
                 // for each element found in it's data
-                Section(ref key, ref children, ref inverted) => {
+                Section(ref key, ref children, ref inverted, _, _) => {
                     let tmp = key.to_string();
                     match (data.contains_key(&tmp), *inverted) {
                         (true, true) => {},
@@ -244,7 +247,7 @@ impl<'a> Template<'a> {
                 }
                 // partials include external template files and compile and process them
                 // at runtime, inserting them into the document at the point the tag is found
-                Part(name) => {
+                Part(name, _) => {
                     self.handle_partial_file_node(name, data, writer);
                 }
             }
@@ -471,6 +474,50 @@ mod template_tests {
     }
 
     #[test]
+    fn test_unescaped_node_lambda_data() {
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("<h1>{{& func1 }}<h1>");
+        let parser = Parser::new(&compiler.tokens);
+        let data = HashBuilder::new().insert_func("func1", |_| {
+            "heading".to_string()
+        });
+
+        Template::new().render_data(&mut w, &data, &parser);
+
+        assert_eq!("<h1>heading<h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    }
+
+    #[test]
+    fn test_value_node_lambda_data() {
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("<h1>{{ func1 }}<h1>");
+        let parser = Parser::new(&compiler.tokens);
+        let data = HashBuilder::new().insert_func("func1", |_| {
+            "heading".to_string()
+        });
+
+        Template::new().render_data(&mut w, &data, &parser);
+
+        assert_eq!("<h1>heading<h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    }
+
+    #[test]
+    fn test_value_node_correct_html_string_lambda_data() {
+        let s1 = "a < b > c & d \"spam\"\'";
+        let a1 = "a &lt; b &gt; c &amp; d &quot;spam&quot;'";
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("{{ func1 }}");
+        let parser = Parser::new(&compiler.tokens);
+        let data = HashBuilder::new().insert_func("func1", |_| {
+            s1.to_string()
+        });
+
+        Template::new().render_data(&mut w, &data, &parser);
+
+        assert_eq!(a1.to_string(), String::from_utf8(w.unwrap()).unwrap());
+    }
+
+    #[test]
     fn test_value_node_correct_false_bool_data() {
         let mut w = MemWriter::new();
         let compiler = Compiler::new("{{ value1 }}");
@@ -550,8 +597,5 @@ mod template_tests {
         let mut f = File::create(&Path::new("test_data/section_with_partial.html"));
         let completed = f.write(w.unwrap().as_slice());
         assert_eq!(completed, Ok(()));
-
-
-        //assert_eq!(s, String::from_utf8(w.unwrap()).unwrap());
     }
 }

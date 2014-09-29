@@ -12,7 +12,7 @@ pub enum Node<'a> {
     Static(&'a str),
     Value(&'a str, &'a str),
     // (name, children, inverted)
-    Section(&'a str, Vec<Node<'a>>, bool, &'a str),
+    Section(&'a str, Vec<Node<'a>>, bool, &'a str, &'a str),
     Unescaped(&'a str, &'a str),
     Part(&'a str, &'a str)
 }
@@ -58,9 +58,9 @@ impl<'a> Parser<'a> {
                             for item in list.slice_from(i + 1).iter() {
                                 count += 1;
                                 match *item {
-                                    CTag(title, raw) => {
+                                    CTag(title, temp) => {
                                         if title == name {
-                                            nodes.push(Section(name, self.parse_nodes(&children).clone(), inverted, raw));
+                                            nodes.push(Section(name, self.parse_nodes(&children).clone(), inverted, raw, temp));
                                             break;
                                         } else {
                                             children.push(*item);
@@ -121,7 +121,7 @@ mod parser_tests {
         let contents = "{{# section }}{{ child_tag }}{{/ section }}";
         let compiler = Compiler::new(contents);
         let parser = Parser::new(&compiler.tokens);
-        let section_node = Section("section", vec![Value("child_tag", "{{ child_tag }}")], false, "{{# section }}");
+        let section_node = Section("section", vec![Value("child_tag", "{{ child_tag }}")], false, "{{# section }}", "{{/ section }}");
         let expected: Vec<Node> = vec![section_node];
         assert_eq!(parser.nodes, expected);
     }
@@ -131,7 +131,7 @@ mod parser_tests {
         let contents = "{{^ inverted }}{{ child_tag }}{{/ inverted }}";
         let compiler = Compiler::new(contents);
         let parser = Parser::new(&compiler.tokens);
-        let inverted_node = Section("inverted", vec![Value("child_tag", "{{ child_tag }}")], true, "{{^ inverted }}");
+        let inverted_node = Section("inverted", vec![Value("child_tag", "{{ child_tag }}")], true, "{{^ inverted }}", "{{/ inverted }}");
         let expected: Vec<Node> = vec![inverted_node];
         assert_eq!(parser.nodes, expected);
     }
@@ -163,7 +163,7 @@ mod parser_tests {
         let parser = Parser::new(&compiler.tokens);
         let static_node = Static("Static String ");
         let value_node = Value("token", "{{ token }}");
-        let section_node = Section("section", vec![Value("child_tag", "{{ child_tag }}")], false, "{{# section }}");
+        let section_node = Section("section", vec![Value("child_tag", "{{ child_tag }}")], false, "{{# section }}", "{{/ section }}");
         let file_node = Part("new", "{{> new }}");
         let undescaped_node = Unescaped("unescaped", "{{& unescaped }}");
         let expected: Vec<Node> = vec![static_node, value_node, section_node, file_node, undescaped_node];
