@@ -49,19 +49,31 @@ impl Rustache {
             Err(err) => fail!("Invalid JSON. {}", err)
         };
         
-        Rustache::parse_json(&json);
+        let data = Rustache::parse_json(&json);
 
-        // self.render(template_path, data, &mut W);
+        self.render(template_path, &data, writer);
     }
 
-    pub fn parse_json(json: &Json) {
-        // let mut data = HashBuilder::new();
+    pub fn parse_json(json: &Json) -> HashBuilder {
+        let mut data = HashBuilder::new();
         for (k, v) in json.as_object().unwrap().iter() {
             match v {
-                &I64(num) => println!("{}: {}", k, num),
-                &U64(num) => println!("{}: {}", k, num),
-                &F64(num) => println!("{}: {}", k, num),
-                &Boolean(val) => println!("{}", val),
+                &I64(num) => {
+                    println!("{}: {}", k, num)
+                    data.insert_string(k.as_slice(), num.to_string());
+                }
+                &U64(num) => {
+                    println!("{}: {}", k, num)
+                    data.insert_string(k.as_slice(), num.to_string());
+                },
+                &F64(num) => {
+                    println!("{}: {}", k, num)
+                    data.insert_string(k.as_slice(), num.to_string());
+                },
+                &Boolean(val) => {
+                    println!("{}: {}", k, val)
+                    data.insert_bool(k.as_slice(), val);
+                },
                 &List(ref list) => {
                     for item in list.iter() {
                         if item.is_object() || item.is_list() {
@@ -75,9 +87,13 @@ impl Rustache {
                     Rustache::parse_json(v);
                 },
                 &Null => println!("Nothing here..."),
-                &String(ref text) => println!("{}: {}", k, text),
+                &String(ref text) => {
+                    data.insert_string(k.as_slice(), *text);
+                    println!("{}: {}", k, text)
+                },
             }
         }
+        data
     }
 
 }
@@ -87,9 +103,9 @@ struct Read;
 impl Read {
     pub fn read_file(path: Path) -> String {
         // Open the file path
-        let dis = path.display();
+        let display = path.display();
         let mut file = match File::open(&path) {
-            Err(why) => fail!("{} {}",dis ,why.desc),
+            Err(why) => fail!("{} {}",display ,why.desc),
             Ok(file) => file,
         };
 
