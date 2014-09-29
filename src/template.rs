@@ -56,7 +56,7 @@ impl<'a> Template<'a> {
                     self.handle_unescaped_node(tmp, key.to_string(), writer);
                 }
             },
-            /// Should return the String representation of the function, without evaluation
+            /// Should return the String representation of the function without evaluation
             Func(ref f) => {
                 let f = &mut *f.borrow_mut();
                 self.handle_unescaped_node(&Strng((*f)("".to_string())), key.to_string(), writer);
