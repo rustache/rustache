@@ -56,7 +56,6 @@ impl<'a> Template<'a> {
                     self.handle_unescaped_node(tmp, key.to_string(), writer);
                 }
             },
-            /// Should return the String representation of the function without evaluation
            Func(ref f) => {
                 let f = &mut *f.borrow_mut();
                 let val = (*f)("".to_string());
@@ -91,7 +90,6 @@ impl<'a> Template<'a> {
                     self.handle_value_node(tmp, key.to_string(), writer);
                 }
             },
-            /// Should evaluate the function and return its result
             Func(ref f) => {
                 let f = &mut *f.borrow_mut();
                 let val = (*f)("".to_string());
@@ -133,6 +131,9 @@ impl<'a> Template<'a> {
                             match *data {
                                 Hash(ref hash) => {
                                     self.handle_section_node(children, &hash[key.to_string()], datastore, writer);        
+                                },
+                                Func(ref f) => {
+                                    
                                 },
                                 _ => {
                                     self.handle_section_node(children, data, datastore, writer);
