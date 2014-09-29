@@ -299,8 +299,8 @@ mod tests {
     #[test]
     fn test_hash_func_builder() {
         // Since we can't directly compare closures, just make
-        // sure we're threading through the builder.
-        
+        // sure we're threading through the builder
+
         let mut num = 10u;
         let data = HashBuilder::new()
             .insert_func("double", |x| {
@@ -328,7 +328,7 @@ mod tests {
     #[test]
     fn test_vec_func_builder() {
         // Since we can't directly compare closures, just make
-        // sure we're threading through the builder.
+        // sure we're threading through the builder
 
         let mut num = 10u;
         let data = VecBuilder::new()
