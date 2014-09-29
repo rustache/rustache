@@ -139,20 +139,6 @@ impl<'a> Template<'a> {
         }
     }
 
-
-
-    //     // `join` merges a path with a byte container using the OS specific
-    // // separator, and returns the new path
-    // let new_path = path.join("a").join("b");
-
-    // // Convert the path into a string slice
-    // match new_path.as_str() {
-    //     None => fail!("new path is not a valid UTF-8 sequence"),
-    //     Some(s) => println!("new path is {}", s),
-    // }
-
-
-
    fn handle_partial_file_node<'a, W: Writer>(&mut self,
                                               filename: &str, 
                                                   data: &HashMap<String, Data>, 
@@ -170,11 +156,20 @@ impl<'a> Template<'a> {
         }
     }
 
+    // writer: an io::stream to write the rendered template out to
+    // data:   the internal HashBuilder data store
+    // parser: the parser object that has the parsed nodes, see src/parse.js
     pub fn render<'a, W: Writer>(&mut self, writer: &mut W, data: &HashMap<String, Data>, parser: &Parser) {
         let mut tmp: String = String::new();
+
+        // nodes are what the template file is parsed into
+        // we have to iterate through each one and handle it as
+        // the kind of node it is
         for node in parser.nodes.iter() {
             tmp.truncate(0);
             match *node {
+                // unescaped nodes contain tags who's data gets written
+                // out exactly as provided, no HTML escaping
                 Unescaped(key)  => {
                     let tmp = key.to_string();
                     if data.contains_key(&tmp) {
@@ -182,6 +177,8 @@ impl<'a> Template<'a> {
                         self.handle_unescaped_node(val, "".to_string(), writer);
                     }
                 }
+                // value nodes contain tags who's data gets HTML escaped
+                // when it gets written out
                 Value(key) => {
                     let tmp = key.to_string();
                     if data.contains_key(&tmp) {
@@ -189,10 +186,18 @@ impl<'a> Template<'a> {
                         self.handle_value_node(val, "".to_string(), writer);
                     }
                 }
+                // static nodes are the test in the template that doesn't get modified, 
+                // just gets written out character for character
                 Static(key) => {
-                    tmp.push_str(key);
-                    writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
+                    writer.write_str(key).ok().expect("write failed in render");
                 }
+                // sections come in two kinds, normal and inverted
+                //
+                // inverted are if the tag data is not there, the Static between it 
+                // and it's closing tag gets written out, otherwise the text is thrown out
+                //
+                // normal section tags enclose a bit of html that will get repeated
+                // for each element found in it's data
                 Section(ref key, ref children, ref inverted) => {
                     let tmp = key.to_string();
                     match (data.contains_key(&tmp), *inverted) {
@@ -208,6 +213,8 @@ impl<'a> Template<'a> {
                         }
                     }
                 }
+                // partials include external template files and compile and process them
+                // at runtime, inserting them into the document at the point the tag is found
                 Part(name) => {
                     self.handle_partial_file_node(name, data, writer);
                 }
@@ -215,9 +222,13 @@ impl<'a> Template<'a> {
         }
     }
 
+    // main entry point to Template
     pub fn render_data<'a, W: Writer>(&mut self, writer: &mut W, datastore: &HashBuilder<'a>, parser: &Parser) {
+        // we need to hang on to the partials path internally,
+        // if there is one, for class methods to use.
         self.partials_path.truncate(0);
         self.partials_path.push_str(datastore.partials_path);
+
         self.render(writer, &datastore.data, parser);
     }
 

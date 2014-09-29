@@ -70,3 +70,90 @@ fn basic_compiler_test() {
 
     assert_eq!(expected, compiler.tokens);
 }
+
+#[test]
+fn test_all_directives() {
+    let contents = "{{!comment}}{{#section}}{{/section}}{{^isection}}{{/isection}}{{>partial}}{{&unescaped}}{{value}}other crap";
+    let compiler = Compiler::new(contents);
+    let expected = vec![OTag("section", false), 
+                        CTag("section"),
+                        OTag("isection", true), 
+                        CTag("isection"), 
+                        Partial("partial"),
+                        Raw("unescaped"),
+                        Variable("value"),
+                        Text("other crap")];
+    assert_eq!(expected, compiler.tokens);
+}
+
+#[test]
+fn test_missing_close_on_comment() {
+    let contents = "{{!comment";
+    let compiler = Compiler::new(contents);
+    let expected = vec![Text("{{!comment")];
+    assert_eq!(expected, compiler.tokens);
+}
+
+#[test]
+fn test_missing_close_on_section_close() {
+    let contents = "{{#section}}{{/section";
+    let compiler = Compiler::new(contents);
+    let expected = vec![OTag("section", false), Text("{{/section")];
+    assert_eq!(expected, compiler.tokens);
+}
+
+#[test]
+fn test_missing_close_on_inverted_section_close() {
+    let contents = "{{^isection}}{{/isection";
+    let compiler = Compiler::new(contents);
+    let expected = vec![OTag("isection", true), Text("{{/isection")];
+    assert_eq!(expected, compiler.tokens);
+}
+
+#[test]
+fn test_missing_close_on_partial() {
+    let contents = "{{>partial";
+    let compiler = Compiler::new(contents);
+    let expected = vec![Text("{{>partial")];
+    assert_eq!(expected, compiler.tokens);    
+}
+
+#[test]
+fn test_missing_close_on_unescaped() {
+    let contents = "{{&unescaped";
+    let compiler = Compiler::new(contents);
+    let expected = vec![Text("{{&unescaped")];
+    assert_eq!(expected, compiler.tokens);
+}
+
+#[test]
+fn test_missing_close_on_partial_plus_unescaped() {
+    let contents = "{{>partial}}{{&unescaped";
+    let compiler = Compiler::new(contents);
+    let expected = vec![Partial("partial"), Text("{{&unescaped")];
+    assert_eq!(expected, compiler.tokens);
+}
+
+#[test]
+fn test_missing_close_on_value() {
+    let contents = "{{value other crap";
+    let compiler = Compiler::new(contents);
+    let expected = vec![Text("{{value other crap")];
+    assert_eq!(expected, compiler.tokens);
+}
+
+#[test]
+fn test_bad_opens() {
+    let contents = "value}} other crap";
+    let compiler = Compiler::new(contents);
+    let expected = vec![Text("value}} other crap")];
+    assert_eq!(expected, compiler.tokens);
+}
+
+#[test]
+fn test_single_braces() {
+    let contents = "value} other crap";
+    let compiler = Compiler::new(contents);
+    let expected = vec![Text("value} other crap")];
+    assert_eq!(expected, compiler.tokens);    
+}
