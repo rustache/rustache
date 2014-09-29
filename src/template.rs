@@ -146,7 +146,13 @@ impl<'a> Template<'a> {
                                     self.handle_section_node(children, &hash[key.to_string()], datastore, writer);        
                                 },
                                 Func(ref f) => {
-                                    
+                                    let f = &mut *f.borrow_mut();
+                                    let param = String::new();
+                                    for child in children.iter() {
+                                        param.append(child);
+                                    }
+                                    let val = (*f)(param);
+                                    val
                                 },
                                 _ => {
                                     self.handle_section_node(children, data, datastore, writer);
