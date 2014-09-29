@@ -136,24 +136,23 @@ impl<'a> Template<'a> {
                 }
                 Static(key) => {
                     self.write_to_stream(writer, key.as_slice(), "render: section node static");
-                    //writer.write_str(key.as_slice()).ok().expect("write failed in render");
                 }
-                Section(ref key, ref children, ref inverted, _) => {
+                Section(ref key, ref children, ref inverted, _, _) => {
                     match inverted {
                         &false => {
                             match *data {
                                 Hash(ref hash) => {
                                     self.handle_section_node(children, &hash[key.to_string()], datastore, writer);        
                                 },
-                                Func(ref f) => {
+/*                                Func(ref f) => {
                                     let f = &mut *f.borrow_mut();
                                     let param = String::new();
-                                    for child in children.iter() {
+                                    for child in children.into_iter() {
                                         param.append(child);
                                     }
                                     let val = (*f)(param);
                                     val
-                                },
+                                },*/
                                 _ => {
                                     self.handle_section_node(children, data, datastore, writer);
                                 }
@@ -231,7 +230,7 @@ impl<'a> Template<'a> {
                 //
                 // normal section tags enclose a bit of html that will get repeated
                 // for each element found in it's data
-                Section(ref key, ref children, ref inverted, _) => {
+                Section(ref key, ref children, ref inverted, _, _) => {
                     let tmp = key.to_string();
                     match (data.contains_key(&tmp), *inverted) {
                         (true, true) => {},
