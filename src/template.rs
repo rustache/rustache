@@ -17,6 +17,18 @@ impl<'a> Template<'a> {
         tmpl
     }  
 
+    fn write_to_stream<'a, W: Writer>(&self, writer: &mut W, data: &str, errstr: &str) {
+
+        let rv = writer.write_str(data);
+        match rv {
+            Err(err) => {
+                let msg = format!("{}: {}", err, errstr);
+                fail!(msg);
+            }
+            Ok(_) => { }
+        }
+    }
+
     fn escape_html(&self, input: &str) -> Box<String> {
         let mut rv = box String::new();
         for c in input.chars() {
@@ -36,14 +48,16 @@ impl<'a> Template<'a> {
         match *data {
             Strng(ref val) => {
                 tmp = tmp + *val;
-                writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
+                self.write_to_stream(writer, tmp.as_slice(), "render: unescaped node string fail");
+                //writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
             },
             Bool(ref val) => {
                 match val {
                     &true  => tmp.push_str("true"),
                     &false => tmp.push_str("false")
                 }
-                writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
+                self.write_to_stream(writer, tmp.as_slice(), "render: unescaped node bool");
+                //writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
             },
             Vector(ref list) => {
                 for item in list.iter() {
@@ -69,14 +83,16 @@ impl<'a> Template<'a> {
         match *data {
             Strng(ref val) => {
                 tmp = *self.escape_html(&(*val.as_slice()));
-                writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
+                self.write_to_stream(writer, tmp.as_slice(), "render: value node string");
+                //writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
             },
             Bool(ref val) => {
                 match val {
                     &true  => tmp.push_str("true"),
                     &false => tmp.push_str("false")
                 }
-                writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
+                self.write_to_stream(writer, tmp.as_slice(), "render: value node bool");
+                //writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
             },
             Vector(ref list) => {
                 for item in list.iter() {
@@ -92,7 +108,9 @@ impl<'a> Template<'a> {
             /// Should evaluate the function and return its result
             Func(ref f) => {
                 let f = &mut *f.borrow_mut();
-                self.handle_value_node(&Strng((*f)("".to_string())), key.to_string(), writer);
+                let val = (*f)("".to_string());
+                self.write_to_stream(writer, val.as_slice(), "render: value node func");
+                //writer.write_str(val.as_slice()).ok().expect("write failed in render");
             }
         }       
     }
@@ -101,7 +119,8 @@ impl<'a> Template<'a> {
         for node in nodes.iter() {
             match *node {
                 Static(key) => {
-                    writer.write_str(key.as_slice()).ok().expect("write failed in render");
+                    self.write_to_stream(writer, key.as_slice(), "render: inverted node static");
+                    //writer.write_str(key.as_slice()).ok().expect("write failed in render");
                 },
                 Part(filename) => {
                     self.handle_partial_file_node(filename, data, writer);
@@ -121,7 +140,8 @@ impl<'a> Template<'a> {
                     self.handle_value_node(data, key.to_string(), writer);
                 }
                 Static(key) => {
-                    writer.write_str(key.as_slice()).ok().expect("write failed in render");
+                    self.write_to_stream(writer, key.as_slice(), "render: section node static");
+                    //writer.write_str(key.as_slice()).ok().expect("write failed in render");
                 }
                 Section(ref key, ref children, ref inverted) => {
                     match inverted {
@@ -197,7 +217,8 @@ impl<'a> Template<'a> {
                 // static nodes are the test in the template that doesn't get modified, 
                 // just gets written out character for character
                 Static(key) => {
-                    writer.write_str(key).ok().expect("write failed in render");
+                    self.write_to_stream(writer, key, "render: static");
+                    //writer.write_str(key).ok().expect("write failed in render");
                 }
                 // sections come in two kinds, normal and inverted
                 //
