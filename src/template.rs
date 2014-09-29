@@ -49,7 +49,6 @@ impl<'a> Template<'a> {
             Strng(ref val) => {
                 tmp = tmp + *val;
                 self.write_to_stream(writer, tmp.as_slice(), "render: unescaped node string fail");
-                //writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
             },
             Bool(ref val) => {
                 match val {
@@ -57,7 +56,6 @@ impl<'a> Template<'a> {
                     &false => tmp.push_str("false")
                 }
                 self.write_to_stream(writer, tmp.as_slice(), "render: unescaped node bool");
-                //writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
             },
             Vector(ref list) => {
                 for item in list.iter() {
@@ -70,7 +68,6 @@ impl<'a> Template<'a> {
                     self.handle_unescaped_node(tmp, key.to_string(), writer);
                 }
             },
-            /// Should return the String representation of the function without evaluation
            Func(ref f) => {
                 let f = &mut *f.borrow_mut();
                 let val = (*f)("".to_string());
@@ -86,7 +83,6 @@ impl<'a> Template<'a> {
             Strng(ref val) => {
                 tmp = *self.escape_html(&(*val.as_slice()));
                 self.write_to_stream(writer, tmp.as_slice(), "render: value node string");
-                //writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
             },
             Bool(ref val) => {
                 match val {
@@ -94,7 +90,6 @@ impl<'a> Template<'a> {
                     &false => tmp.push_str("false")
                 }
                 self.write_to_stream(writer, tmp.as_slice(), "render: value node bool");
-                //writer.write_str(tmp.as_slice()).ok().expect("write failed in render");
             },
             Vector(ref list) => {
                 for item in list.iter() {
@@ -107,7 +102,6 @@ impl<'a> Template<'a> {
                     self.handle_value_node(tmp, key.to_string(), writer);
                 }
             },
-            /// Should evaluate the function and return its result
             Func(ref f) => {
                 let f = &mut *f.borrow_mut();
                 let val = (*f)("".to_string());
@@ -122,7 +116,6 @@ impl<'a> Template<'a> {
             match *node {
                 Static(key) => {
                     self.write_to_stream(writer, key.as_slice(), "render: inverted node static");
-                    //writer.write_str(key.as_slice()).ok().expect("write failed in render");
                 },
                 Part(filename) => {
                     self.handle_partial_file_node(filename, data, writer);
