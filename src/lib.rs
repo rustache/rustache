@@ -7,6 +7,7 @@ use std::fmt;
 use std::io::File;
 use std::cell::RefCell;
 use serialize::{json};
+use serialize::json::{Json, Boolean, Null, I64, U64, F64, String, List, Object};
 
 use template::Template;
 use compiler::Compiler;
@@ -43,19 +44,42 @@ impl Rustache {
     fn render_json<'a, W: Writer>(&self, template_path: &str, data_path: &str, writer: &mut W) {
         let data_string = Read::read_file(Path::new(data_path));
 
-        let data = match json::from_str(data_string.as_slice()) {
+        let json = match json::from_str(data_string.as_slice()) {
             Ok(json) => json,
             Err(err) => fail!("Invalid JSON. {}", err)
         };
+        
+        Rustache::parse_json(&json);
 
-        for (k, v) in data.as_object().unwrap().iter() {
-            println!("{}: {}", k, v);
-        }
-        // decode JSON @ data_path into rust object
-            // build a HashBuilder from parsing json
-
-        // self.render()
+        // self.render(template_path, data, &mut W);
     }
+
+    pub fn parse_json(json: &Json) {
+        // let mut data = HashBuilder::new();
+        for (k, v) in json.as_object().unwrap().iter() {
+            match v {
+                &I64(num) => println!("{}: {}", k, num),
+                &U64(num) => println!("{}: {}", k, num),
+                &F64(num) => println!("{}: {}", k, num),
+                &Boolean(val) => println!("{}", val),
+                &List(ref list) => {
+                    for item in list.iter() {
+                        if item.is_object() || item.is_list() {
+                            Rustache::parse_json(item);
+                        } else {
+                            println!("{}", item);
+                        }
+                    }
+                },
+                &Object(ref obj) => {
+                    Rustache::parse_json(v);
+                },
+                &Null => println!("Nothing here..."),
+                &String(ref text) => println!("{}: {}", k, text),
+            }
+        }
+    }
+
 }
 
 struct Read;

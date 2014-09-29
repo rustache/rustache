@@ -1,38 +1,21 @@
 {
-	"data":[
-		{
-			"stuff":[
-	    		{	
-	    			"onetype":[
-		        		{
-		        			"id":1,
-		        			"name":"John Doe"
-		        		},
-		        		{
-		        			"id":2,
-		        			"name":"Don Joeh"
-		        		}
-		    		]
-		    	},
-	    		{
-	    			"othertype":[
-	        			{
-	        				"id":2,
-	        				"company":"ACME"
-	        			}
-	    			]
-	    		}
-	    	]
+	"friends": [
+		{ 
+			"name":"John Doe",
+			"id":42,
+			"loser": true,
+			"enemies": ["tyler", "robert"]
 		},
 		{
-			"otherstuff":[
-		    	{
-		    		"thing": [
-		    			[1,42],
-		    			[2,2]
-		    		]
-		    	}
-		    ]
+		 	"name":"Tyler Durden",
+		 	"id":21,
+		 	"loser": false,
+		 	"enemies": ["john", "robert"]
 		}
-	]
+	],
+	"me": {
+		"name": "Robert Paulson",
+		"id": 2,
+		"company": "ACME"
+	}
 }
