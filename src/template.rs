@@ -597,8 +597,5 @@ mod template_tests {
         let mut f = File::create(&Path::new("test_data/section_with_partial.html"));
         let completed = f.write(w.unwrap().as_slice());
         assert_eq!(completed, Ok(()));
-
-
-        //assert_eq!(s, String::from_utf8(w.unwrap()).unwrap());
     }
 }
