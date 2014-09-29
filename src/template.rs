@@ -57,10 +57,12 @@ impl<'a> Template<'a> {
                 }
             },
             /// Should return the String representation of the function without evaluation
-            Func(ref f) => {
+           Func(ref f) => {
                 let f = &mut *f.borrow_mut();
-                self.handle_unescaped_node(&Strng((*f)("".to_string())), key.to_string(), writer);
+                let val = (*f)("".to_string());
+                writer.write_str(val.as_slice()).ok().expect("write failed in render");
             }
+
         }
     }
 
@@ -92,7 +94,9 @@ impl<'a> Template<'a> {
             /// Should evaluate the function and return its result
             Func(ref f) => {
                 let f = &mut *f.borrow_mut();
-                self.handle_value_node(&Strng((*f)("".to_string())), key.to_string(), writer);
+                let val = (*f)("".to_string());
+                let value = self.escape_html(val.as_slice());
+                writer.write_str(value.as_slice()).ok().expect("write failed in render");
             }
         }       
     }
@@ -129,7 +133,7 @@ impl<'a> Template<'a> {
                             match *data {
                                 Hash(ref hash) => {
                                     self.handle_section_node(children, &hash[key.to_string()], datastore, writer);        
-                                }
+                                },
                                 _ => {
                                     self.handle_section_node(children, data, datastore, writer);
                                 }
@@ -447,6 +451,50 @@ mod template_tests {
         Template::new().render_data(&mut w, &data, &parser);
 
         assert_eq!("<h1>heading<h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    }
+
+    #[test]
+    fn test_unescaped_node_lambda_data() {
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("<h1>{{& func1 }}<h1>");
+        let parser = Parser::new(&compiler.tokens);
+        let data = HashBuilder::new().insert_func("func1", |_| {
+            "heading".to_string()
+        });
+
+        Template::new().render_data(&mut w, &data, &parser);
+
+        assert_eq!("<h1>heading<h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    }
+
+    #[test]
+    fn test_value_node_lambda_data() {
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("<h1>{{ func1 }}<h1>");
+        let parser = Parser::new(&compiler.tokens);
+        let data = HashBuilder::new().insert_func("func1", |_| {
+            "heading".to_string()
+        });
+
+        Template::new().render_data(&mut w, &data, &parser);
+
+        assert_eq!("<h1>heading<h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    }
+
+    #[test]
+    fn test_value_node_correct_html_string_lambda_data() {
+        let s1 = "a < b > c & d \"spam\"\'";
+        let a1 = "a &lt; b &gt; c &amp; d &quot;spam&quot;'";
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("{{ func1 }}");
+        let parser = Parser::new(&compiler.tokens);
+        let data = HashBuilder::new().insert_func("func1", |_| {
+            s1.to_string()
+        });
+
+        Template::new().render_data(&mut w, &data, &parser);
+
+        assert_eq!(a1.to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
