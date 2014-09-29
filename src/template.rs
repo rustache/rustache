@@ -1,6 +1,6 @@
 use std::path::Path;
 use parser::{Parser, Node, Value, Static, Unescaped, Section, Part};
-use super::{Data, Strng, Bool, Vector, Hash, Read};
+use super::{Data, Strng, Bool, Vector, Hash, Func, Read};
 use build::HashBuilder;
 use compiler::Compiler;
 use std::collections::HashMap;
@@ -56,7 +56,11 @@ impl<'a> Template<'a> {
                     self.handle_unescaped_node(tmp, key.to_string(), writer);
                 }
             },
-            _ => return
+            /// Should return the String representation of the function, without evaluation
+            Func(ref f) => {
+                let f = &mut *f.borrow_mut();
+                self.handle_unescaped_node(&Strng((*f)("".to_string())), key.to_string(), writer);
+            }
         }
     }
 
@@ -85,7 +89,11 @@ impl<'a> Template<'a> {
                     self.handle_value_node(tmp, key.to_string(), writer);
                 }
             },
-            _ => return
+            /// Should evaluate the function and return its result
+            Func(ref f) => {
+                let f = &mut *f.borrow_mut();
+                self.handle_value_node(&Strng((*f)("".to_string())), key.to_string(), writer);
+            }
         }       
     }
 
