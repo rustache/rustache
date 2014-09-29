@@ -40,7 +40,7 @@ impl<'a> Compiler<'a> {
                     self.tokens.push(Text(self.contents.slice(close_pos, open_pos)));
                 }
             }
-            if c == '}' && i < len - 1 && self.contents.char_at(i+1) == '}' {
+            if c == '}' && i < len - 1 && self.contents.char_at(i+1) == '}' && self.contents.char_at(open_pos) == '{'{
                 close_pos = i + 2;
                 let val = self.contents.slice(open_pos + 2, close_pos - 2);
                 match val.char_at(0) {
@@ -95,10 +95,26 @@ fn test_missing_close_on_comment() {
 }
 
 #[test]
+fn test_working_comment() {
+    let contents = "{{!comment}}";
+    let compiler = Compiler::new(contents);
+    let expected = vec![];
+    assert_eq!(expected, compiler.tokens);
+}
+
+#[test]
 fn test_missing_close_on_section_close() {
     let contents = "{{#section}}{{/section";
     let compiler = Compiler::new(contents);
     let expected = vec![OTag("section", false), Text("{{/section")];
+    assert_eq!(expected, compiler.tokens);
+}
+
+#[test]
+fn test_working_section() {
+    let contents = "{{#section}}{{/section}}";
+    let compiler = Compiler::new(contents);
+    let expected = vec![OTag("section", false), CTag("section")];
     assert_eq!(expected, compiler.tokens);
 }
 
@@ -119,10 +135,26 @@ fn test_missing_close_on_partial() {
 }
 
 #[test]
+fn test_working_partial() {
+    let contents = "{{>partial}}";
+    let compiler = Compiler::new(contents);
+    let expected = vec![Partial("partial")];
+    assert_eq!(expected, compiler.tokens);    
+}
+
+#[test]
 fn test_missing_close_on_unescaped() {
     let contents = "{{&unescaped";
     let compiler = Compiler::new(contents);
     let expected = vec![Text("{{&unescaped")];
+    assert_eq!(expected, compiler.tokens);
+}
+
+#[test]
+fn test_working_unescape() {
+    let contents = "{{&unescaped}}";
+    let compiler = Compiler::new(contents);
+    let expected = vec![Raw("unescaped")];
     assert_eq!(expected, compiler.tokens);
 }
 
@@ -151,7 +183,15 @@ fn test_bad_opens() {
 }
 
 #[test]
-fn test_single_braces() {
+fn test_single_brace_open() {
+    let contents = "{value other crap";
+    let compiler = Compiler::new(contents);
+    let expected = vec![Text("{value other crap")];
+    assert_eq!(expected, compiler.tokens);    
+}
+
+#[test]
+fn test_single_brace_close() {
     let contents = "value} other crap";
     let compiler = Compiler::new(contents);
     let expected = vec![Text("value} other crap")];
