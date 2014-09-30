@@ -76,7 +76,6 @@ impl Rustache {
                             if item.is_object() || item.is_list() {
                                 // Rustache::parse_json(item);
                             } else {
-                                println!("{}", item);
                                 builder = builder.push_string(item.to_pretty_str());
                             }
                         }
@@ -91,7 +90,6 @@ impl Rustache {
                 },
                 &Null => {},
                 &String(ref text) => {
-                    println!("{}: {}", k, text)
                     data = data.insert_string(k.as_slice(), text.as_slice());
                 },
             }
