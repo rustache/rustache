@@ -59,40 +59,45 @@ impl Rustache {
         for (k, v) in json.as_object().unwrap().iter() {
             match v {
                 &I64(num) => {
-                    println!("{}: {}", k, num)
-                    data.insert_string(k.as_slice(), num.to_string());
+                    data = data.insert_string(k.as_slice(), num.to_string());
                 }
                 &U64(num) => {
-                    println!("{}: {}", k, num)
-                    data.insert_string(k.as_slice(), num.to_string());
+                    data = data.insert_string(k.as_slice(), num.to_string());
                 },
                 &F64(num) => {
-                    println!("{}: {}", k, num)
-                    data.insert_string(k.as_slice(), num.to_string());
+                    data = data.insert_string(k.as_slice(), num.to_string());
                 },
                 &Boolean(val) => {
-                    println!("{}: {}", k, val)
-                    data.insert_bool(k.as_slice(), val);
+                    data = data.insert_bool(k.as_slice(), val);
                 },
                 &List(ref list) => {
-                    for item in list.iter() {
-                        if item.is_object() || item.is_list() {
-                            Rustache::parse_json(item);
-                        } else {
-                            println!("{}", item);
+                    data = data.insert_vector(k.as_slice(), |mut builder| {
+                        for item in list.iter() {
+                            if item.is_object() || item.is_list() {
+                                // Rustache::parse_json(item);
+                            } else {
+                                println!("{}", item);
+                                builder = builder.push_string(item.to_pretty_str());
+                            }
                         }
-                    }
+                        builder
+                    });
                 },
                 &Object(ref obj) => {
-                    Rustache::parse_json(v);
+                    // data = data.insert_hash(k, |builder| {
+
+                    // });
+                    // Rustache::parse_json(v);
                 },
-                &Null => println!("Nothing here..."),
+                &Null => {},
                 &String(ref text) => {
-                    data.insert_string(k.as_slice(), *text);
                     println!("{}: {}", k, text)
+                    data = data.insert_string(k.as_slice(), text.as_slice());
                 },
             }
         }
+
+        println!("{}", data);
         data
     }
 
@@ -162,14 +167,16 @@ mod lib_tests {
 
     #[test]
     fn test_json_parse() {
-        let template_path = "test_data/index.template.html";
+        let template_path = "test_data/json.template.html";
         let data_path = "test_data/test.json";
 
         let mut w = MemWriter::new();
         let r = Rustache::new();
         r.render_json(template_path, data_path, &mut w);
 
-        assert!(false);
+        let mut f = File::create(&Path::new("test_data/json.html"));
+        let completed = f.write(w.unwrap().as_slice());
+        assert_eq!(completed, Ok(()));
 
     }
 

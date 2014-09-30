@@ -1,25 +1,7 @@
-// {
-// 	"friends": [
-// 		{ 
-// 			"name":"John Doe",
-// 			"id":42,
-// 			"loser": true,
-// 			"enemies": ["tyler", "robert"]
-// 		},
-// 		{
-// 		 	"name":"Tyler Durden",
-// 		 	"id":21,
-// 		 	"loser": false,
-// 		 	"enemies": ["john", "robert"]
-// 		}
-// 	],
-// 	"me": {
-// 		"name": "Robert Paulson",
-// 		"id": 2,
-// 		"company": "ACME"
-// 	}
-// }
-
 {
-	"me": "Jarrod"
+	"friends": ["tyler", "robert"],
+ 	"enemies": ["john", "robert"],
+	"name": "Robert Paulson",
+	"id": 2,
+	"company": "ACME"
 }
