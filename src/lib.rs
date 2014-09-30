@@ -54,7 +54,7 @@ impl Rustache {
         self.render(template_path, &data, writer);
     }
 
-    pub fn parse_json(json: &Json) -> HashBuilder {
+    pub fn parse_json(json: &Json) -> HashBuilder{
         let mut data = HashBuilder::new();
         for (k, v) in json.as_object().unwrap().iter() {
             match v {
@@ -95,7 +95,6 @@ impl Rustache {
             }
         }
 
-        println!("{}", data);
         data
     }
 
