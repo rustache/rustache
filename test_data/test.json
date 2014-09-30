@@ -1,0 +1,7 @@
+{
+	"friends": ["tyler", "robert"],
+ 	"enemies": ["john", "robert"],
+	"name": "Robert Paulson",
+	"id": 2,
+	"company": "ACME"
+}
