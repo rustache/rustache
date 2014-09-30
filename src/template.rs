@@ -137,22 +137,19 @@ impl<'a> Template<'a> {
                 Static(key) => {
                     self.write_to_stream(writer, key.as_slice(), "render: section node static");
                 }
-                Section(ref key, ref children, ref inverted, _, _) => {
+                Section(ref key, ref children, ref inverted, open, close) => {
                     match inverted {
                         &false => {
                             match *data {
                                 Hash(ref hash) => {
                                     self.handle_section_node(children, &hash[key.to_string()], datastore, writer);        
                                 },
-/*                                Func(ref f) => {
+                                Func(ref f) => {
                                     let f = &mut *f.borrow_mut();
-                                    let param = String::new();
-                                    for child in children.into_iter() {
-                                        param.append(child);
-                                    }
-                                    let val = (*f)(param);
-                                    val
-                                },*/
+                                    let text = self.get_section_text(children);
+                                    let val = (*f)(*text);
+                                    self.write_to_stream(writer, val.as_slice(), "render: section node function");
+                                },
                                 _ => {
                                     self.handle_section_node(children, data, datastore, writer);
                                 }
@@ -170,7 +167,26 @@ impl<'a> Template<'a> {
         }
     }
 
-   fn handle_partial_file_node<'a, W: Writer>(&mut self,
+    fn get_section_text(&self, children: &Vec<Node>) -> Box<String> {
+        let mut temp = box String::new();
+        for child in children.iter() {
+            match child {
+                &Static(text) => temp.push_str(text),
+                &Value(_, text) => temp.push_str(text),
+                &Section(_, ref children, _, open, close) => {
+                    temp.push_str(open);
+                    let rv = self.get_section_text(children);
+                    temp.push_str(rv.as_slice());
+                    temp.push_str(close);
+                },
+                &Unescaped(_, text) => temp.push_str(text),
+                &Part(_, text) => temp.push_str(text)
+            }
+        }
+        temp
+    }
+
+    fn handle_partial_file_node<'a, W: Writer>(&mut self,
                                               filename: &str, 
                                                   data: &HashMap<String, Data>, 
                                                 writer: &mut W) {
@@ -406,6 +422,21 @@ mod template_tests {
     }
 
     #[test]
+    fn test_section_func_data() {
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("{{ #wrapped }}{{ name }} is awesome.{{ /wrapped }}");
+        let parser = Parser::new(&compiler.tokens);
+        let data = HashBuilder::new()
+            .insert_func("wrapped", |_| {
+                " is awesome.".to_string()
+            });
+
+        Template::new().render_data(&mut w, &data, &parser);
+
+        assert_eq!(" is awesome.".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    }
+    
+    #[test]
     fn test_section_multiple_value_string_data() {
         let mut w = MemWriter::new();
         let compiler = Compiler::new("{{# names }}{{ name }}{{/ names }}");
@@ -474,7 +505,7 @@ mod template_tests {
     }
 
     #[test]
-    fn test_unescaped_node_lambda_data() {
+    fn test_unescaped_node_func_data() {
         let mut w = MemWriter::new();
         let compiler = Compiler::new("<h1>{{& func1 }}<h1>");
         let parser = Parser::new(&compiler.tokens);
@@ -488,7 +519,7 @@ mod template_tests {
     }
 
     #[test]
-    fn test_value_node_lambda_data() {
+    fn test_value_node_func_data() {
         let mut w = MemWriter::new();
         let compiler = Compiler::new("<h1>{{ func1 }}<h1>");
         let parser = Parser::new(&compiler.tokens);
@@ -502,7 +533,7 @@ mod template_tests {
     }
 
     #[test]
-    fn test_value_node_correct_html_string_lambda_data() {
+    fn test_value_node_correct_html_string_func_data() {
         let s1 = "a < b > c & d \"spam\"\'";
         let a1 = "a &lt; b &gt; c &amp; d &quot;spam&quot;'";
         let mut w = MemWriter::new();
