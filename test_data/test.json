@@ -3,5 +3,16 @@
  	"enemies": ["john", "robert"],
 	"name": "Robert Paulson",
 	"id": 2,
-	"company": "ACME"
+	"company": "ACME",
+	"randos": [
+		{
+			"name": "bob",
+			"favorites": {
+				"names": ["bob", "robert", "steve"],
+				"foods": ["dog", "cat", "mouse"],
+				"pokemon": "pikachu"
+			}
+		},
+		"sadfafds"
+	]
 }
