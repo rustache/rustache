@@ -3,84 +3,83 @@
 // Nodes contain only the necessary information to be used
 // to seek out appropriate data for injection.
 
-pub mod Parser {
-    use compiler::Compiler::{Token, Text, Variable, OTag, CTag, Raw, Partial};
+use compiler::{Token, Text, Variable, OTag, CTag, Raw, Partial};
 
-    #[deriving(PartialEq, Eq, Clone, Show)]
-    pub enum Node<'a> {
-        Static(&'a str),
-        Value(&'a str, &'a str),
-        // (name, children, inverted)
-        Section(&'a str, Vec<Node<'a>>, bool, &'a str, &'a str),
-        Unescaped(&'a str, &'a str),
-        Part(&'a str, &'a str)
-    }
-    pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
-        let mut nodes: Vec<Node> = vec![];
-        let mut it = list.iter().enumerate();
+#[deriving(PartialEq, Eq, Clone, Show)]
+pub enum Node<'a> {
+    Static(&'a str),
+    Value(&'a str, &'a str),
+    // (name, children, inverted)
+    Section(&'a str, Vec<Node<'a>>, bool, &'a str, &'a str),
+    Unescaped(&'a str, &'a str),
+    Part(&'a str, &'a str)
+}
+pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
+    let mut nodes: Vec<Node> = vec![];
+    let mut it = list.iter().enumerate();
 
-        loop {
-            match it.next() {
-                Some((i, &token)) => {
-                    match token {
-                        Text(text) => nodes.push(Static(text)),
-                        Variable(name, raw) => nodes.push(Value(name, raw)),
-                        Raw(name, raw) => nodes.push(Unescaped(name, raw)),
-                        Partial(name, raw) => nodes.push(Part(name, raw)),
-                        CTag(_, _) => {
-                            // CTags that are processed outside of the context of a 
-                            // corresponding OTag are ignored.
-                            continue;
-                        },
-                        OTag(name, inverted, raw) => {
-                            let mut children: Vec<Token> = vec![];
-                            let mut count = 0u;
-                            for item in list.slice_from(i + 1).iter() {
-                                count += 1;
-                                match *item {
-                                    CTag(title, temp) => {
-                                        if title == name {
-                                            nodes.push(Section(name, parse_nodes(&children).clone(), inverted, raw, temp));
-                                            break;
-                                        } else {
-                                            children.push(*item);
-                                            continue;
-                                        }
-                                    },
-                                    _ => {
+    loop {
+        match it.next() {
+            Some((i, &token)) => {
+                match token {
+                    Text(text) => nodes.push(Static(text)),
+                    Variable(name, raw) => nodes.push(Value(name, raw)),
+                    Raw(name, raw) => nodes.push(Unescaped(name, raw)),
+                    Partial(name, raw) => nodes.push(Part(name, raw)),
+                    CTag(_, _) => {
+                        // CTags that are processed outside of the context of a 
+                        // corresponding OTag are ignored.
+                        continue;
+                    },
+                    OTag(name, inverted, raw) => {
+                        let mut children: Vec<Token> = vec![];
+                        let mut count = 0u;
+                        for item in list.slice_from(i + 1).iter() {
+                            count += 1;
+                            match *item {
+                                CTag(title, temp) => {
+                                    if title == name {
+                                        nodes.push(Section(name, parse_nodes(&children).clone(), inverted, raw, temp));
+                                        break;
+                                    } else {
                                         children.push(*item);
                                         continue;
                                     }
+                                },
+                                _ => {
+                                    children.push(*item);
+                                    continue;
                                 }
                             }
+                        }
 
-                            // Advance the iterator to the position of the CTAG.  If the 
-                            //OTag is never closed, these children will never be processed.
-                            while count > 1 {
-                                it.next();
-                                count -= 1;
-                            }
-                        },
-                    }
-                },
-                None => break
-            }
+                        // Advance the iterator to the position of the CTAG.  If the 
+                        //OTag is never closed, these children will never be processed.
+                        while count > 1 {
+                            it.next();
+                            count -= 1;
+                        }
+                    },
+                }
+            },
+            None => break
         }
-
-        nodes
     }
+
+    nodes
 }
+
 
 #[cfg(test)]
 mod parser_tests {
-    use compiler::Compiler::{Token, Text, Variable, OTag, CTag, Raw, Partial};
-    use parser::Parser;
-    use parser::Parser::{Node, Static, Value, Section, Unescaped, Part};
+    use compiler::{Token, Text, Variable, OTag, CTag, Raw, Partial};
+    use parser;
+    use parser::{Node, Static, Value, Section, Unescaped, Part};
 
     #[test]
     fn parse_static() {
         let tokens: Vec<Token> = vec![Text("Static String ")];
-        let nodes = Parser::parse_nodes(&tokens);
+        let nodes = parser::parse_nodes(&tokens);
         let expected: Vec<Node> = vec![Static("Static String ")];
         assert_eq!(nodes, expected);
     }
@@ -88,7 +87,7 @@ mod parser_tests {
     #[test]
     fn parse_value() {
         let tokens: Vec<Token> = vec![Variable("token", "{{ token }}")];
-        let nodes = Parser::parse_nodes(&tokens);
+        let nodes = parser::parse_nodes(&tokens);
         let expected: Vec<Node> = vec![Value("token", "{{ token }}")];
         assert_eq!(nodes, expected);
     }
@@ -96,7 +95,7 @@ mod parser_tests {
     #[test]
     fn parse_section() {
         let tokens: Vec<Token> = vec![OTag("section", false, "{{# section }}"), Variable("child_tag", "{{ child_tag }}"), CTag("section", "{{/ section }}")];
-        let nodes = Parser::parse_nodes(&tokens);
+        let nodes = parser::parse_nodes(&tokens);
         let expected: Vec<Node> = vec![Section("section", vec![Value("child_tag", "{{ child_tag }}")], false, "{{# section }}", "{{/ section }}")];
         assert_eq!(nodes, expected);
     }
@@ -104,7 +103,7 @@ mod parser_tests {
     #[test]
     fn parse_inverted() {
         let tokens: Vec<Token> = vec![OTag("inverted", true, "{{^ inverted }}"), Variable("child_tag", "{{ child_tag }}"), CTag("inverted", "{{/ inverted }}")];
-        let nodes = Parser::parse_nodes(&tokens);
+        let nodes = parser::parse_nodes(&tokens);
         let expected: Vec<Node> = vec![Section("inverted", vec![Value("child_tag", "{{ child_tag }}")], true, "{{^ inverted }}", "{{/ inverted }}")];
         assert_eq!(nodes, expected);
     }
@@ -112,7 +111,7 @@ mod parser_tests {
     #[test]
     fn parse_unescaped() {
         let tokens: Vec<Token> = vec![Raw("unescaped", "{{& unescaped }}")];
-        let nodes = Parser::parse_nodes(&tokens);
+        let nodes = parser::parse_nodes(&tokens);
         let expected: Vec<Node> = vec![Unescaped("unescaped", "{{& unescaped }}")];
         assert_eq!(nodes, expected);
     }
@@ -120,20 +119,19 @@ mod parser_tests {
     #[test]
     fn parse_partial() {
         let tokens: Vec<Token> = vec![Partial("new","{{> new }}")];
-        let nodes = Parser::parse_nodes(&tokens);
+        let nodes = parser::parse_nodes(&tokens);
         let expected: Vec<Node> = vec![Part("new", "{{> new }}")];
         assert_eq!(nodes, expected);
     }
 
     #[test]
     fn parse_all() {
-        let contents = "Static String {{ token }}{{# section }}{{ child_tag }}{{/ section }}{{> new }}{{& unescaped }}";
         let tokens: Vec<Token> = vec![
             Text("Static String "), Variable("token", "{{ token }}"), OTag("section", false, "{{# section }}"),
             Variable("child_tag", "{{ child_tag }}"), CTag("section", "{{/ section }}"),
             Partial("new","{{> new }}"), Raw("unescaped", "{{& unescaped }}")
         ];
-        let nodes = Parser::parse_nodes(&tokens);
+        let nodes = parser::parse_nodes(&tokens);
         let static_node = Static("Static String ");
         let value_node = Value("token", "{{ token }}");
         let section_node = Section("section", vec![Value("child_tag", "{{ child_tag }}")], false, "{{# section }}", "{{/ section }}");

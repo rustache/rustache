@@ -6,10 +6,9 @@ use std::collections::HashMap;
 use std::fmt;
 use std::cell::RefCell;
 
-pub use rustache::Rustache;
 pub use build::{HashBuilder, VecBuilder};
 
-mod rustache;
+pub mod rustache;
 mod compiler;
 mod parser;
 mod build;
@@ -51,10 +50,10 @@ impl<'a> fmt::Show for Data<'a> {
 
 #[cfg(test)]
 mod lib_tests {
+    use rustache;
     use std::io::MemWriter;
     use std::io::File;
     use build::HashBuilder;
-    use rustache::Rustache;
 
     #[test]
     fn test_json_parse() {
@@ -62,7 +61,7 @@ mod lib_tests {
         let data_path = "test_data/test.json";
 
         let mut w = MemWriter::new();
-        Rustache::render_json_file(template_path, data_path, &mut w);
+        rustache::render_json_file(template_path, data_path, &mut w);
 
         let mut f = File::create(&Path::new("test_data/json.html"));
         let completed = f.write(w.unwrap().as_slice());
@@ -85,7 +84,7 @@ mod lib_tests {
             ).set_partials_path("test_data");
             
         let mut w = MemWriter::new();
-        Rustache::render(path, &data, &mut w);
+        rustache::render(path, &data, &mut w);
 
         let mut f = File::create(&Path::new("test_data/index.html"));
         let completed = f.write(w.unwrap().as_slice());
