@@ -1,9 +1,10 @@
 use std::path::Path;
 use parser::{Parser, Node, Value, Static, Unescaped, Section, Part};
-use super::{Data, Strng, Bool, Vector, Hash, Lambda, Read};
+use super::{Data, Strng, Bool, Vector, Hash, Lambda};
 use build::HashBuilder;
 use compiler::Compiler;
 use std::collections::HashMap;
+use rustache::Rustache;
 
 pub struct Template<'a> {
    partials_path: String
@@ -200,7 +201,7 @@ impl<'a> Template<'a> {
         match tmp.as_str() {
             None => fail!("path is not a valid UTF-8 sequence"),
             Some(_) => {
-                let file = Read::read_file(tmp.clone());
+                let file = Rustache::read_file(tmp.clone());
                 let compiler = Compiler::new(file.as_slice());
                 let parser = Parser::new(&compiler.tokens);
 
@@ -295,10 +296,10 @@ mod template_tests {
     use std::str;
 
     use parser::Parser;
+    use rustache::Rustache;
     use template::Template;
     use compiler::Compiler;
     use build::HashBuilder;
-    use super::super::Read;
 
     #[test]
     fn test_escape_html() {
@@ -625,7 +626,7 @@ mod template_tests {
                 )}
             );
 
-        let file = Read::read_file(Path::new("test_data/section_with_partial_template.html"));
+        let file = Rustache::read_file(Path::new("test_data/section_with_partial_template.html"));
         let compiler = Compiler::new(file.as_slice());
         let parser = Parser::new(&compiler.tokens);
 

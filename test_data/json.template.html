@@ -6,14 +6,25 @@
     <div class="main">
       Team Awesome:
     </div>
+    {{! Comment on Line 9 }}
     <div>
-      Name: {{{name}}}<br>
-      ID: {{{id}}}<br>
-      Company: {{{company}}} <br>
+      Name: {{ name }}<br>
+      ID: {{ id }}<br>
+      Company: {{ company }} <br>
     </div>
     <div>
-      <div>{{friends}}</div>
-      <div>{{enemies}}</div>
+      <div>Friends: {{& friends }}</div>
+      <div>Enemies: {{& enemies }}</div>
+    </div>
+    <div>
+      {{# randos }}
+        {{name}}<br>
+        {{# favorites }}
+          {{ names }}<br>
+          {{ foods }}<br>
+          {{ pokemon }}
+        {{/ favorites }}
+      {{/ randos }}
     </div>
   </body>
 </html>
