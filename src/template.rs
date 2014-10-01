@@ -1,3 +1,7 @@
+
+
+
+
 use std::path::Path;
 use parser::Parser;
 use parser::Parser::{Node, Value, Static, Unescaped, Section, Part};
@@ -6,7 +10,6 @@ use build::HashBuilder;
 use compiler::Compiler;
 use std::collections::HashMap;
 use rustache::Rustache;
-use std::io::stdio::stdout;
 
 pub struct Template<'a> {
    partials_path: String
@@ -142,7 +145,23 @@ impl<'a> Template<'a> {
         }
     }
 
-    fn handle_section_node<'a, W: Writer>(&mut self, nodes: &Vec<Node>, data: &Data, datastore: &HashMap<String,Data>, writer: &mut W) {
+    // nodes: the section's children
+    // data: data from section key from HashBuilder store
+    // datastore: HashBuilder data
+    // writer: io stream
+    fn handle_section_node<'a, W: Writer>(&mut self, 
+                                              nodes: &Vec<Node>, 
+                                               data: &Data, 
+                                          datastore: &HashMap<String,Data>, 
+                                             writer: &mut W) {
+        match *data {
+            Lambda(ref f) => {
+                let raw = self.get_section_text(nodes);
+                self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, *raw, writer);
+                return;
+            },
+            _ => {}
+        }
         for node in nodes.iter() {
             match *node {
                 Unescaped(key, _)  => {
@@ -161,10 +180,7 @@ impl<'a> Template<'a> {
                                 Hash(ref hash) => {
                                     self.handle_section_node(children, &hash[key.to_string()], datastore, writer);        
                                 },
-                                Lambda(ref f) => {
-                                    let raw = self.get_section_text(children);
-                                    self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, *raw, writer);
-                                },
+
                                 _ => {
                                     self.handle_section_node(children, data, datastore, writer);
                                 }
@@ -198,8 +214,6 @@ impl<'a> Template<'a> {
                 &Part(_, text) => temp.push_str(text)
             }
         }
-        stdout().write_str("TEMP");
-        stdout().write_str(temp.as_slice());
         temp
     }
 
@@ -298,10 +312,12 @@ impl<'a> Template<'a> {
     }
 
 }
+//} // end mod template
+
 
 #[cfg(test)]
 mod template_tests {
-    use std::io::stdio::stdout;
+    //use std::io::stdio::stdout;
     use std::io::File;
     use std::io::MemWriter;
     use std::str;
@@ -326,7 +342,7 @@ mod template_tests {
         Template::new().render_data(&mut w, &data, &nodes);
         assert_eq!(a1, str::from_utf8(w.get_ref()).unwrap());
 
-        w.flush();
+        w = MemWriter::new();
         data = HashBuilder::new().insert_string("value", s2);
         Template::new().render_data(&mut w, &data, &nodes);
         assert_eq!(a2, str::from_utf8(w.get_ref()).unwrap());
@@ -697,7 +713,6 @@ mod template_tests {
   //       clojure: '(def g (atom 0)) (fn [] (swap! g inc))'
   //   template: '{{lambda}} == {{{lambda}}} == {{lambda}}'
   //   expected: '1 == 2 == 3'
-
     #[test]
     fn test_spec_lambda_not_cached_on_interpolation() {
         let mut planets = vec!["Jupiter", "Earth", "Saturn"];
@@ -756,9 +771,9 @@ mod template_tests {
         let mut w = MemWriter::new();
         let tokens = Compiler::create_tokens("<{{#lambda}}{{x}}{{/lambda}}>");
         let nodes = Parser::parse_nodes(&tokens);
-        let data = HashBuilder::new().insert_lambda("lambda", |text| { stdout().write_str("OUTPUT"); 
-            stdout().write_str(text.as_slice()); 
-            if text.as_slice() == "{{x}}" { "yes".to_string() } else { "no".to_string() } });
+        let data = HashBuilder::new().insert_lambda("lambda", |text| { 
+            if text.as_slice() == "{{x}}" { "yes".to_string() } else { "no".to_string() }
+        });
 
         Template::new().render_data(&mut w, &data, &nodes);
 
@@ -784,8 +799,14 @@ mod template_tests {
         let mut w = MemWriter::new();
         let tokens = Compiler::create_tokens("<{{#lambda}}-{{/lambda}}>");
         let nodes = Parser::parse_nodes(&tokens);
-        let data = HashBuilder::new().insert_lambda("lambda", |_| { "#{text}{{planet}}#{text}".to_string() })
-                                     .insert_string("planet", "Earth");
+        let data = HashBuilder::new().insert_string("planet", "Earth")
+                                     .insert_lambda("lambda", |text| { 
+                                        let mut tmp = String::new();
+                                        tmp.push_str(text.as_slice());
+                                        tmp.push_str("{{planet}}");
+                                        tmp.push_str(text.as_slice());
+                                        return tmp;
+                                     });
 
         Template::new().render_data(&mut w, &data, &nodes);
 
@@ -793,25 +814,32 @@ mod template_tests {
 
     }
 
-    // - name: Section - Multiple Calls
-    //   desc: Lambdas used for sections should not be cached.
-    //   data:
-    //     lambda: !code
-    //       ruby:    'proc { |text| "__#{text}__" }'
-    //       perl:    'sub { "__" . $_[0] . "__" }'
-    //       js:      'function(txt) { return "__" + txt + "__" }'
-    //       php:     'return "__" . $text . "__";'
-    //       python:  'lambda text: "__%s__" % (text)'
-    //       clojure: '(fn [text] (str "__" text "__"))'
-    //   template: '{{#lambda}}FILE{{/lambda}} != {{#lambda}}LINE{{/lambda}}'
-    //   expected: '__FILE__ != __LINE__'
+    // // - name: Section - Multiple Calls
+    // //   desc: Lambdas used for sections should not be cached.
+    // //   data:
+    // //     lambda: !code
+    // //       ruby:    'proc { |text| "__#{text}__" }'
+    // //       perl:    'sub { "__" . $_[0] . "__" }'
+    // //       js:      'function(txt) { return "__" + txt + "__" }'
+    // //       php:     'return "__" . $text . "__";'
+    // //       python:  'lambda text: "__%s__" % (text)'
+    // //       clojure: '(fn [text] (str "__" text "__"))'
+    // //   template: '{{#lambda}}FILE{{/lambda}} != {{#lambda}}LINE{{/lambda}}'
+    // //   expected: '__FILE__ != __LINE__'
 
     #[test]
     fn test_spec_lambdas_for_sections_not_cached() {
         let mut w = MemWriter::new();
         let tokens = Compiler::create_tokens("{{#lambda}}FILE{{/lambda}} != {{#lambda}}LINE{{/lambda}}");
         let nodes = Parser::parse_nodes(&tokens);
-        let data = HashBuilder::new().insert_lambda("lambda", |text| { String::new().append("__").append(text.as_slice()).append("__") });
+        let data = HashBuilder::new().insert_lambda("lambda", |text| { 
+            let mut tmp = String::new();
+            tmp.push_str("__");
+            tmp.push_str(text.as_slice());
+            tmp.push_str("__");
+            return tmp;
+        });
+
 
         Template::new().render_data(&mut w, &data, &nodes);
 
