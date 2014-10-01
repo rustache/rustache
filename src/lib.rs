@@ -7,8 +7,9 @@ use std::fmt;
 use std::cell::RefCell;
 
 pub use build::{HashBuilder, VecBuilder};
+pub use rustache::{render_text};
 
-pub mod rustache;
+mod rustache;
 mod compiler;
 mod parser;
 mod build;
