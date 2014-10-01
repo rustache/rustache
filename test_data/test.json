@@ -1,4 +1,10 @@
 {
+	"test": [
+		[
+			{"name" : "bob"},
+			{"name": "joe"}
+		]
+	],
 	"friends": ["tyler", "robert"],
  	"enemies": ["john", "robert"],
 	"name": "Robert Paulson",

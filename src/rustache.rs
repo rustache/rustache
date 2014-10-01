@@ -20,7 +20,20 @@ pub mod Rustache {
         Template::new().render_data(writer, data, &parser);
     }
 
-    pub fn render_json<'a, W: Writer>(template_path: &str, data_path: &str, writer: &mut W) {
+    pub fn render_json_string<'a, W: Writer>(template: &str, data: &str, writer: &mut W) {
+        let json = match json::from_str(data) {
+            Ok(json) => json,
+            Err(err) => fail!("Invalid JSON. {}", err)
+        };
+        
+        let data = parse_json(&json);
+
+        println!("{}", data);
+
+        render(template, &data, writer);
+    }
+
+    pub fn render_json_file<'a, W: Writer>(template_path: &str, data_path: &str, writer: &mut W) {
         let data_string = read_file(Path::new(data_path));
 
         let json = match json::from_str(data_string.as_slice()) {
@@ -29,8 +42,6 @@ pub mod Rustache {
         };
         
         let data = parse_json(&json);
-
-        println!("{}", data);
 
         render(template_path, &data, writer);
     }
@@ -55,13 +66,12 @@ pub mod Rustache {
                     data = data.insert_vector(k.as_slice(), |mut builder| {
                         for item in list.iter() {
                             if item.is_object() {
-                                builder = builder.push_hash(|builder| {
+                                builder = builder.push_hash(|_| {
                                     parse_json(item)
                                 });
                             } else if item.is_list() {
-                                let vec = parse_json(item);
-                                builder = builder.push_vector(|vector| {
-                                    vector
+                                builder = builder.push_vector(|_| {
+                                    parse_json_vector(item)
                                 });
                             } else if item.is_string() {
                                 builder = builder.push_string(item.as_string().unwrap());
@@ -73,7 +83,7 @@ pub mod Rustache {
                     });
                 },
                 &Object(ref obj) => {
-                    data = data.insert_hash(k.as_slice(), |builder| {
+                    data = data.insert_hash(k.as_slice(), |_| {
                         parse_json(v)
                     });
                 },
@@ -84,6 +94,56 @@ pub mod Rustache {
             }
         }
 
+        data
+    }
+
+    fn parse_json_vector(json: &Json) -> VecBuilder {
+        let mut data = VecBuilder::new();
+        for v in json.as_list().unwrap().iter() {
+            match v {
+                &I64(num) => {
+                    data = data.push_string(num.to_string());
+                }
+                &U64(num) => {
+                    data = data.push_string(num.to_string());
+                },
+                &F64(num) => {
+                    data = data.push_string(num.to_string());
+                },
+                &Boolean(val) => {
+                    data = data.push_bool(val);
+                },
+                &List(ref list) => {
+                    data = data.push_vector(|mut builder| {
+                        for item in list.iter() {
+                            if item.is_object() {
+                                builder = builder.push_hash(|_| {
+                                    parse_json(item)
+                                });
+                            } else if item.is_list() {
+                                builder = builder.push_vector(|_| {
+                                    parse_json_vector(item)
+                                });
+                            } else if item.is_string() {
+                                builder = builder.push_string(item.as_string().unwrap());
+                            } else if item.is_boolean() {
+                                builder = builder.push_bool(item.as_boolean().unwrap());
+                            }
+                        }
+                        builder
+                    });
+                },
+                &Object(ref obj) => {
+                    data = data.push_hash(|_| {
+                        parse_json(v)
+                    });
+                },
+                &Null => {},
+                &String(ref text) => {
+                    data = data.push_string(text.as_slice());
+                },
+            }
+        }
         data
     }
 
