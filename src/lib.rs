@@ -130,7 +130,7 @@ pub enum Data<'a> {
     Bool(bool),
     Vector(Vec<Data<'a>>),
     Hash(HashMap<String, Data<'a>>),
-    Func(RefCell<|String|: 'a -> String>)
+    Lambda(RefCell<|String|: 'a -> String>)
 }
 
 impl<'a> PartialEq for Data<'a> {
@@ -140,7 +140,7 @@ impl<'a> PartialEq for Data<'a> {
             (&Bool(ref val0), &Bool(ref val1)) => val0 == val1,
             (&Vector(ref val0), &Vector(ref val1)) => val0 == val1,
             (&Hash(ref val0), &Hash(ref val1)) => val0 == val1,
-            (&Func(_), &Func(_)) => fail!("Can't compare closures"),
+            (&Lambda(_), &Lambda(_)) => fail!("Can't compare closures"),
             (_, _) => false
         }
     }
@@ -153,7 +153,7 @@ impl<'a> fmt::Show for Data<'a> {
             Bool(val)       => write!(f, "Boolean({})", val),
             Vector(ref val) => write!(f, "Vector({})", val),
             Hash(ref val)   => write!(f, "Hash({})", val),
-            Func(_)         => write!(f, "Func(...)") 
+            Lambda(_)         => write!(f, "Lambda(...)") 
         }
     }
 }
