@@ -5,6 +5,7 @@ use build::HashBuilder;
 use compiler::Compiler;
 use std::collections::HashMap;
 use rustache::Rustache;
+use std::io::stdio::stdout;
 
 pub struct Template<'a> {
    partials_path: String
@@ -44,9 +45,18 @@ impl<'a> Template<'a> {
         rv
     }
 
-    fn handle_lambda_interpolation<W: Writer>(&mut self, f: &mut |String|: 'a -> String, data: &HashMap<String, Data>, writer: &mut W) {
-        let val = (*f)("".to_string());
+    fn handle_unescaped_lambda_interpolation<W: Writer>(&mut self, f: &mut |String|: 'a -> String, data: &HashMap<String, Data>, raw: String, writer: &mut W) {
+        let val = (*f)(raw);
         let compiler = Compiler::new(val.as_slice());
+        let parser = Parser::new(&compiler.tokens);
+
+        self.render(writer, data, &parser);
+    }
+
+    fn handle_escaped_lambda_interpolation<W: Writer>(&mut self, f: &mut |String|: 'a -> String, data: &HashMap<String, Data>, raw: String, writer: &mut W) {
+        let val = (*f)(raw);
+        let value = self.escape_html(val.as_slice());
+        let compiler = Compiler::new(value.as_slice());
         let parser = Parser::new(&compiler.tokens);
 
         self.render(writer, data, &parser);
@@ -78,13 +88,14 @@ impl<'a> Template<'a> {
                 }
             },
             Lambda(ref f) => {
-                self.handle_lambda_interpolation(&mut *f.borrow_mut(), datastore, writer);
+                let raw = "".to_string();
+                self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, raw, writer);
             }
 
         }
     }
 
-    fn handle_value_node<'a, W: Writer>(&self, data: &Data, key: String, writer: &mut W) {
+    fn handle_value_node<'a, W: Writer>(&mut self, data: &Data, key: String, datastore: &HashMap<String, Data>, writer: &mut W) {
         let mut tmp: String = String::new();
         match *data {
             Strng(ref val) => {
@@ -100,20 +111,18 @@ impl<'a> Template<'a> {
             },
             Vector(ref list) => {
                 for item in list.iter() {
-                    self.handle_value_node(item, key.to_string(), writer);
+                    self.handle_value_node(item, key.to_string(), datastore, writer);
                 }
             },
             Hash(ref hash) => {
                 if hash.contains_key(&key) {
                     let ref tmp = hash[key];
-                    self.handle_value_node(tmp, key.to_string(), writer);
+                    self.handle_value_node(tmp, key.to_string(), datastore, writer);
                 }
             },
             Lambda(ref f) => {
-                let f = &mut *f.borrow_mut();
-                let val = (*f)("".to_string());
-                let value = self.escape_html(val.as_slice());
-                writer.write_str(value.as_slice()).ok().expect("write failed in render");
+                let raw = "".to_string();
+                self.handle_escaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, raw, writer);
             }
         }       
     }
@@ -139,7 +148,7 @@ impl<'a> Template<'a> {
                     self.handle_unescaped_node(data, key.to_string(), datastore, writer);
                 }
                 Value(key, _) => {
-                    self.handle_value_node(data, key.to_string(), writer);
+                    self.handle_value_node(data, key.to_string(), datastore, writer);
                 }
                 Static(key) => {
                     self.write_to_stream(writer, key.as_slice(), "render: section node static");
@@ -152,10 +161,8 @@ impl<'a> Template<'a> {
                                     self.handle_section_node(children, &hash[key.to_string()], datastore, writer);        
                                 },
                                 Lambda(ref f) => {
-                                    let f = &mut *f.borrow_mut();
-                                    let text = self.get_section_text(children);
-                                    let val = (*f)(*text);
-                                    self.write_to_stream(writer, val.as_slice(), "render: section node lambda");
+                                    let raw = self.get_section_text(children);
+                                    self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, *raw, writer);
                                 },
                                 _ => {
                                     self.handle_section_node(children, data, datastore, writer);
@@ -181,8 +188,8 @@ impl<'a> Template<'a> {
                 &Static(text) => temp.push_str(text),
                 &Value(_, text) => temp.push_str(text),
                 &Section(_, ref children, _, open, close) => {
-                    temp.push_str(open);
                     let rv = self.get_section_text(children);
+                    temp.push_str(open);
                     temp.push_str(rv.as_slice());
                     temp.push_str(close);
                 },
@@ -190,6 +197,8 @@ impl<'a> Template<'a> {
                 &Part(_, text) => temp.push_str(text)
             }
         }
+        stdout().write_str("TEMP");
+        stdout().write_str(temp.as_slice());
         temp
     }
 
@@ -237,7 +246,7 @@ impl<'a> Template<'a> {
                     let tmp = key.to_string();
                     if data.contains_key(&tmp) {
                         let ref val = data[tmp];
-                        self.handle_value_node(val, "".to_string(), writer);
+                        self.handle_value_node(val, "".to_string(), data, writer);
                     }
                 }
                 // static nodes are the test in the template that doesn't get modified, 
@@ -623,7 +632,18 @@ mod template_tests {
         assert_eq!(completed, Ok(()));
     }
 
-
+  // - name: Interpolation
+  //   desc: A lambda's return value should be interpolated.
+  //   data:
+  //     lambda: !code
+  //       ruby:    'proc { "world" }'
+  //       perl:    'sub { "world" }'
+  //       js:      'function() { return "world" }'
+  //       php:     'return "world";'
+  //       python:  'lambda: "world"'
+  //       clojure: '(fn [] "world")'
+  //   template: "Hello, {{lambda}}!"
+  //   expected: "Hello, world!"
 
     #[test]
     fn test_spec_lambda_return_value_interpolated() {
@@ -636,6 +656,20 @@ mod template_tests {
 
         assert_eq!("Hello, world!".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
+
+  // - name: Interpolation - Expansion
+  //   desc: A lambda's return value should be parsed.
+  //   data:
+  //     planet: "world"
+  //     lambda: !code
+  //       ruby:    'proc { "{{planet}}" }'
+  //       perl:    'sub { "{{planet}}" }'
+  //       js:      'function() { return "{{planet}}" }'
+  //       php:     'return "{{planet}}";'
+  //       python:  'lambda: "{{planet}}"'
+  //       clojure: '(fn [] "{{planet}}")'
+  //   template: "Hello, {{lambda}}!"
+  //   expected: "Hello, world!"
 
     #[test]
     fn test_spec_lambda_return_value_parsed() {
@@ -650,33 +684,45 @@ mod template_tests {
         assert_eq!("Hello, world!".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
+  // - name: Interpolation - Multiple Calls
+  //   desc: Interpolated lambdas should not be cached.
+  //   data:
+  //     lambda: !code
+  //       ruby:    'proc { $calls ||= 0; $calls += 1 }'
+  //       perl:    'sub { no strict; $calls += 1 }'
+  //       js:      'function() { return (g=(function(){return this})()).calls=(g.calls||0)+1 }'
+  //       php:     'global $calls; return ++$calls;'
+  //       python:  'lambda: globals().update(calls=globals().get("calls",0)+1) or calls'
+  //       clojure: '(def g (atom 0)) (fn [] (swap! g inc))'
+  //   template: '{{lambda}} == {{{lambda}}} == {{lambda}}'
+  //   expected: '1 == 2 == 3'
+
+    #[test]
     fn test_spec_lambda_not_cached_on_interpolation() {
+        let mut planets = vec!["Jupiter", "Earth", "Saturn"];
         let mut w = MemWriter::new();
         let compiler = Compiler::new("{{lambda}} == {{&lambda}} == {{lambda}}");
         let parser = Parser::new(&compiler.tokens);
-        let data = HashBuilder::new().insert_lambda("lambda", |_| { "{{planet}}".to_string() } )
+        let data = HashBuilder::new().insert_lambda("lambda", |_| { planets.pop().unwrap().to_string() } )
                                      .insert_string("planet", "world");
 
         Template::new().render_data(&mut w, &data, &parser);
 
-        assert_eq!("Hello, world!".to_string(), String::from_utf8(w.unwrap()).unwrap());
+        assert_eq!("Saturn == Earth == Jupiter".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
-
-
-  // // - name: Interpolation - Multiple Calls
-  // //   desc: Interpolated lambdas should not be cached.
-  // //   data:
-  // //     lambda: !code
-  // //       ruby:    'proc { $calls ||= 0; $calls += 1 }'
-  // //       perl:    'sub { no strict; $calls += 1 }'
-  // //       js:      'function() { return (g=(function(){return this})()).calls=(g.calls||0)+1 }'
-  // //       php:     'global $calls; return ++$calls;'
-  // //       python:  'lambda: globals().update(calls=globals().get("calls",0)+1) or calls'
-  // //       clojure: '(def g (atom 0)) (fn [] (swap! g inc))'
-  // //   template: '{{lambda}} == {{{lambda}}} == {{lambda}}'
-  // //   expected: '1 == 2 == 3'
-
+  // - name: Escaping
+  //   desc: Lambda results should be appropriately escaped.
+  //   data:
+  //     lambda: !code
+  //       ruby:    'proc { ">" }'
+  //       perl:    'sub { ">" }'
+  //       js:      'function() { return ">" }'
+  //       php:     'return ">";'
+  //       python:  'lambda: ">"'
+  //       clojure: '(fn [] ">")'
+  //   template: "<{{lambda}}{{{lambda}}}"
+  //   expected: "<&gt;>"
 
     #[test]
     fn test_spec_lambda_results_appropriately_escaped() {
@@ -689,7 +735,6 @@ mod template_tests {
 
         assert_eq!("<&gt;>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
-
 
     // - name: Section
     //   desc: Lambdas used for sections should receive the raw section string.
@@ -705,28 +750,14 @@ mod template_tests {
     //   template: "<{{#lambda}}{{x}}{{/lambda}}>"
     //   expected: "<yes>"
 
-
-    #[test]
-    fn test_section_lambda_data() {
-        let mut w = MemWriter::new();
-        let compiler = Compiler::new("{{ #wrapped }}{{ name }} is awesome.{{ /wrapped }}");
-        let parser = Parser::new(&compiler.tokens);
-        let data = HashBuilder::new()
-            .insert_lambda("wrapped", |_| {
-                " is awesome.".to_string()
-            });
-
-        Template::new().render_data(&mut w, &data, &parser);
-
-        assert_eq!(" is awesome.".to_string(), String::from_utf8(w.unwrap()).unwrap());
-    } 
-
     #[test]
     fn test_spec_lambdas_receive_raw_section_string() {
         let mut w = MemWriter::new();
         let compiler = Compiler::new("<{{#lambda}}{{x}}{{/lambda}}>");
         let parser = Parser::new(&compiler.tokens);
-        let data = HashBuilder::new().insert_lambda("lambda", |text| { stdout().write_str("OUTPUT"); stdout().write_str(text.as_slice()); if (text.as_slice() == "{{x}}") { "yes".to_string() } else { "no".to_string() } });
+        let data = HashBuilder::new().insert_lambda("lambda", |text| { stdout().write_str("OUTPUT"); 
+            stdout().write_str(text.as_slice()); 
+            if text.as_slice() == "{{x}}" { "yes".to_string() } else { "no".to_string() } });
 
         Template::new().render_data(&mut w, &data, &parser);
 
@@ -746,6 +777,7 @@ mod template_tests {
     //       clojure: '(fn [text] (str text "{{planet}}" text))'
     //   template: "<{{#lambda}}-{{/lambda}}>"
     //   expected: "<-Earth->"
+
     #[test]
     fn test_spec_lambdas_for_sections_parsed() {
         let mut w = MemWriter::new();
@@ -772,12 +804,13 @@ mod template_tests {
     //       clojure: '(fn [text] (str "__" text "__"))'
     //   template: '{{#lambda}}FILE{{/lambda}} != {{#lambda}}LINE{{/lambda}}'
     //   expected: '__FILE__ != __LINE__'
+
     #[test]
     fn test_spec_lambdas_for_sections_not_cached() {
         let mut w = MemWriter::new();
         let compiler = Compiler::new("{{#lambda}}FILE{{/lambda}} != {{#lambda}}LINE{{/lambda}}");
         let parser = Parser::new(&compiler.tokens);
-        let data = HashBuilder::new().insert_lambda("lambda", |_| { "__#{text}__".to_string() });
+        let data = HashBuilder::new().insert_lambda("lambda", |text| { String::new().append("__").append(text.as_slice()).append("__") });
 
         Template::new().render_data(&mut w, &data, &parser);
 
