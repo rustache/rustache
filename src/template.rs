@@ -3,7 +3,7 @@ use rustache;
 use compiler;
 use parser;
 use parser::{Node, Value, Static, Unescaped, Section, Part};
-use super::{Data, Strng, Bool, Vector, Hash, Lambda};
+use super::{Data, Strng, Bool, Integer, Float, Vector, Hash, Lambda};
 use build::HashBuilder;
 use std::collections::HashMap;
 
@@ -88,6 +88,14 @@ impl<'a> Template<'a> {
                 }
                 self.write_to_stream(writer, tmp.as_slice(), "render: unescaped node bool");
             },
+            Integer(ref val) => {
+                tmp = tmp + val.to_string();
+                self.write_to_stream(writer, tmp.as_slice(), "render: unescaped node int");
+            },
+            Float(ref val) => {
+                tmp = tmp + val.to_string();
+                self.write_to_stream(writer, tmp.as_slice(), "render: unescaped node float");
+            },
             Vector(ref list) => {
                 for item in list.iter() {
                     self.handle_unescaped_node(item, key.to_string(), datastore, writer);
@@ -124,6 +132,16 @@ impl<'a> Template<'a> {
                     &false => tmp.push_str("false")
                 }
                 self.write_to_stream(writer, tmp.as_slice(), "render: value node bool");
+            },
+            Integer(ref val) => {
+                let val = val.to_string();
+                tmp = *self.escape_html(&(*val.as_slice()));
+                self.write_to_stream(writer, tmp.as_slice(), "render: value node int");
+            },
+            Float(ref val) => {
+                let val = val.to_string();
+                tmp = *self.escape_html(&(*val.as_slice()));
+                self.write_to_stream(writer, tmp.as_slice(), "render: value node float");
             },
             Vector(ref list) => {
                 for item in list.iter() {

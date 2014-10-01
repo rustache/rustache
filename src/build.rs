@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use super::{Data, Strng, Bool, Vector, Hash, Lambda};
+use super::{Data, Strng, Bool, Integer, Float, Vector, Hash, Lambda};
 
 /// `HashBuilder` is a helper type that constructs `Data` types in a HashMap
 #[deriving(Show)]
@@ -47,6 +47,20 @@ impl<'a> HashBuilder<'a> {
     pub fn insert_bool<K: StrAllocating>(self, key: K, value: bool) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         data.insert(key.into_string(), Bool(value));
+        HashBuilder { data: data, partials_path: partials_path }
+    }
+
+    #[inline]
+    pub fn insert_integer<K: StrAllocating>(self, key: K, value: int) -> HashBuilder<'a> {
+        let HashBuilder { mut data, partials_path } = self;
+        data.insert(key.into_string(), Integer(value));
+        HashBuilder { data: data, partials_path: partials_path }
+    }
+
+    #[inline]
+    pub fn insert_float<K: StrAllocating>(self, key: K, value: f64) -> HashBuilder<'a> {
+        let HashBuilder { mut data, partials_path } = self;
+        data.insert(key.into_string(), Float(value));
         HashBuilder { data: data, partials_path: partials_path }
     }
 
@@ -170,6 +184,20 @@ impl<'a> VecBuilder<'a> {
     pub fn push_bool(self, value: bool) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         data.push(Bool(value));
+        VecBuilder { data: data }
+    }
+
+    #[inline]
+    pub fn push_integer(self, value: int) -> VecBuilder<'a> {
+        let VecBuilder { mut data } = self;
+        data.push(Integer(value));
+        VecBuilder { data: data }
+    }
+
+    #[inline]
+    pub fn push_float(self, value: f64) -> VecBuilder<'a> {
+        let VecBuilder { mut data } = self;
+        data.push(Float(value));
         VecBuilder { data: data }
     }
 
