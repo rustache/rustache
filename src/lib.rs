@@ -66,7 +66,7 @@ mod lib_tests {
         let data_path = "test_data/test.json";
 
         let mut w = MemWriter::new();
-        Rustache::render_json(template_path, data_path, &mut w);
+        Rustache::render_json_file(template_path, data_path, &mut w);
 
         let mut f = File::create(&Path::new("test_data/json.html"));
         let completed = f.write(w.unwrap().as_slice());
