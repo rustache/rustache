@@ -9,15 +9,15 @@ pub mod Rustache {
 
     pub fn render<'a, W: Writer>(path: &str, data: &HashBuilder, writer: &mut W) {
         let file = read_file(Path::new(path));
-        let compiler = Compiler::new(file.as_slice());
-        let parser = Parser::new(&compiler.tokens);
-        Template::new().render_data(writer, data, &parser);
+        let tokens = Compiler::create_tokens(file.as_slice());
+        let nodes = Parser::parse_nodes(&tokens);
+        Template::new().render_data(writer, data, &nodes);
     }
 
     pub fn render_text<'a, W: Writer>(input: &'a str, data: &HashBuilder, writer: &mut W) {
-        let compiler = Compiler::new(input);
-        let parser = Parser::new(&compiler.tokens);
-        Template::new().render_data(writer, data, &parser);
+        let tokens = Compiler::create_tokens(input);
+        let nodes = Parser::parse_nodes(&tokens);
+        Template::new().render_data(writer, data, &nodes);
     }
 
     pub fn render_json_string<'a, W: Writer>(template: &str, data: &str, writer: &mut W) {

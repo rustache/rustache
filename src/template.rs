@@ -1,5 +1,6 @@
 use std::path::Path;
-use parser::{Parser, Node, Value, Static, Unescaped, Section, Part};
+use parser::Parser;
+use parser::Parser::{Node, Value, Static, Unescaped, Section, Part};
 use super::{Data, Strng, Bool, Vector, Hash, Lambda};
 use build::HashBuilder;
 use compiler::Compiler;
@@ -27,7 +28,7 @@ impl<'a> Template<'a> {
                 let msg = format!("{}: {}", err, errstr);
                 fail!(msg);
             }
-            Ok(_) => { }
+            Ok(_) => {}
         }
     }
 
@@ -47,19 +48,19 @@ impl<'a> Template<'a> {
 
     fn handle_unescaped_lambda_interpolation<W: Writer>(&mut self, f: &mut |String|: 'a -> String, data: &HashMap<String, Data>, raw: String, writer: &mut W) {
         let val = (*f)(raw);
-        let compiler = Compiler::new(val.as_slice());
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens(val.as_slice());
+        let nodes = Parser::parse_nodes(&tokens);
 
-        self.render(writer, data, &parser);
+        self.render(writer, data, &nodes);
     }
 
     fn handle_escaped_lambda_interpolation<W: Writer>(&mut self, f: &mut |String|: 'a -> String, data: &HashMap<String, Data>, raw: String, writer: &mut W) {
         let val = (*f)(raw);
         let value = self.escape_html(val.as_slice());
-        let compiler = Compiler::new(value.as_slice());
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens(value.as_slice());
+        let nodes = Parser::parse_nodes(&tokens);
 
-        self.render(writer, data, &parser);
+        self.render(writer, data, &nodes);
     }
 
     fn handle_unescaped_node<'a, W: Writer>(&mut self, data: &Data, key: String, datastore: &HashMap<String, Data>, writer: &mut W) {
@@ -211,10 +212,10 @@ impl<'a> Template<'a> {
             None => fail!("path is not a valid UTF-8 sequence"),
             Some(_) => {
                 let file = Rustache::read_file(tmp.clone());
-                let compiler = Compiler::new(file.as_slice());
-                let parser = Parser::new(&compiler.tokens);
+                let tokens = Compiler::create_tokens(file.as_slice());
+                let nodes = Parser::parse_nodes(&tokens);
 
-                self.render(writer, data, &parser);
+                self.render(writer, data, &nodes);
             }
         }
     }
@@ -222,13 +223,13 @@ impl<'a> Template<'a> {
     // writer: an io::stream to write the rendered template out to
     // data:   the internal HashBuilder data store
     // parser: the parser object that has the parsed nodes, see src/parse.js
-    pub fn render<'a, W: Writer>(&mut self, writer: &mut W, data: &HashMap<String, Data>, parser: &Parser) {
+    pub fn render<'a, W: Writer>(&mut self, writer: &mut W, data: &HashMap<String, Data>, nodes: &Vec<Node>) {
         let mut tmp: String = String::new();
 
         // nodes are what the template file is parsed into
         // we have to iterate through each one and handle it as
         // the kind of node it is
-        for node in parser.nodes.iter() {
+        for node in nodes.iter() {
             tmp.truncate(0);
             match *node {
                 // unescaped nodes contain tags who's data gets written
@@ -287,13 +288,13 @@ impl<'a> Template<'a> {
     }
 
     // main entry point to Template
-    pub fn render_data<'a, W: Writer>(&mut self, writer: &mut W, datastore: &HashBuilder<'a>, parser: &Parser) {
+    pub fn render_data<'a, W: Writer>(&mut self, writer: &mut W, datastore: &HashBuilder<'a>, nodes: &Vec<Node>) {
         // we need to hang on to the partials path internally,
         // if there is one, for class methods to use.
         self.partials_path.truncate(0);
         self.partials_path.push_str(datastore.partials_path);
 
-        self.render(writer, &datastore.data, parser);
+        self.render(writer, &datastore.data, nodes);
     }
 
 }
@@ -319,29 +320,29 @@ mod template_tests {
         let a2 = "1&lt;2 &lt;b&gt;hello&lt;/b&gt;";
 
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("{{ value }}");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("{{ value }}");
+        let nodes = Parser::parse_nodes(&tokens);
         let mut data = HashBuilder::new().insert_string("value", s1);
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
         assert_eq!(a1, str::from_utf8(w.get_ref()).unwrap());
 
-        w = MemWriter::new();
+        w.flush();
         data = HashBuilder::new().insert_string("value", s2);
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
         assert_eq!(a2, str::from_utf8(w.get_ref()).unwrap());
     }
 
     #[test]
     fn test_not_escape_html() {
-        let s2 = "1<2 <b>hello</b>";
+        let s = "1<2 <b>hello</b>";
         let mut w = MemWriter::new();
-        let compiler2 = Compiler::new("{{& value }}");
+        let tokens = Compiler::create_tokens("{{& value }}");
 
-        let parser = Parser::new(&compiler2.tokens);
-        let data = HashBuilder::new().insert_string("value", s2);
+        let nodes = Parser::parse_nodes(&tokens);
+        let data = HashBuilder::new().insert_string("value", s);
 
-        Template::new().render_data(&mut w, &data, &parser);
-        assert_eq!(s2, str::from_utf8(w.get_ref()).unwrap());        
+        Template::new().render_data(&mut w, &data, &nodes);
+        assert_eq!(s, str::from_utf8(w.get_ref()).unwrap());        
     }
 
     #[test]
@@ -350,21 +351,21 @@ mod template_tests {
 
         let data = HashBuilder::new().insert_string("value1", "The heading");
 
-        let compiler = Compiler::new("<h1>{{ value1 }}</h1>");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("<h1>{{ value1 }}</h1>");
+        let nodes = Parser::parse_nodes(&tokens);
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
         assert_eq!("<h1>The heading</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
     fn test_unescaped_node_correct_string_data() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("<h1>{{& value1 }}</h1>");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("<h1>{{& value1 }}</h1>");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new().insert_string("value1", "heading");
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!("<h1>heading</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -374,11 +375,11 @@ mod template_tests {
         let s1 = "a < b > c & d \"spam\"\'";
         let a1 = "<h1>a < b > c & d \"spam\"\'</h1>";
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("<h1>{{& value1 }}</h1>");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("<h1>{{& value1 }}</h1>");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new().insert_string("value1", s1);
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!(a1.to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -386,11 +387,11 @@ mod template_tests {
     #[test]
     fn test_unescaped_node_correct_bool_false_data() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("<h1>{{& value1 }}</h1>");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("<h1>{{& value1 }}</h1>");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new().insert_bool("value1", false);
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!("<h1>false</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -398,11 +399,11 @@ mod template_tests {
     #[test]
     fn test_unescaped_node_correct_bool_true_data() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("<h1>{{& value1 }}</h1>");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("<h1>{{& value1 }}</h1>");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new().insert_bool("value1", true);
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!("<h1>true</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -411,14 +412,14 @@ mod template_tests {
     #[test]
     fn test_section_unescaped_string_data() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("{{# value1 }}{{& value }}{{/ value1}}");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("{{# value1 }}{{& value }}{{/ value1}}");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new()
             .insert_hash("value1", |builder| {
                 builder.insert_string("value", "<Section Value>")
             });
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!("<Section Value>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -426,14 +427,14 @@ mod template_tests {
     #[test]
     fn test_section_value_string_data() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("{{# value1 }}{{ value }}{{/ value1 }}");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("{{# value1 }}{{ value }}{{/ value1 }}");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new()
             .insert_hash("value1", |builder| {
                 builder.insert_string("value", "<Section Value>")
             });
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!("&lt;Section Value&gt;".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -441,8 +442,8 @@ mod template_tests {
     #[test]
     fn test_section_multiple_value_string_data() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("{{# names }}{{ name }}{{/ names }}");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("{{# names }}{{ name }}{{/ names }}");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new()
             .insert_hash("names", |builder| {
                 builder.insert_vector("name", |builder| {
@@ -453,7 +454,7 @@ mod template_tests {
                 })
             });
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!("tomrobertjoe".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -461,8 +462,8 @@ mod template_tests {
     #[test]
     fn test_excessively_nested_data() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("{{# hr }}{{# people }}{{ name }}{{/ people }}{{/ hr }}");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("{{# hr }}{{# people }}{{ name }}{{/ people }}{{/ hr }}");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new()
             .insert_hash("hr", |builder| {
                 builder.insert_hash("people", |builder| {
@@ -476,7 +477,7 @@ mod template_tests {
                 })
             });
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
         assert_eq!("tomrobertjoe".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }    
 
@@ -485,11 +486,11 @@ mod template_tests {
         let s1 = "a < b > c & d \"spam\"\'";
         let a1 = "a &lt; b &gt; c &amp; d &quot;spam&quot;'";
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("{{ value1 }}");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("{{ value1 }}");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new().insert_string("value1", s1);
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!(a1.to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -497,11 +498,11 @@ mod template_tests {
     #[test]
     fn test_value_node_correct_string_data() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("<h1>{{ value1 }}<h1>");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("<h1>{{ value1 }}<h1>");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new().insert_string("value1", "heading");
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!("<h1>heading<h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -509,13 +510,13 @@ mod template_tests {
     #[test]
     fn test_unescaped_node_lambda_data() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("<h1>{{& func1 }}<h1>");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("<h1>{{& func1 }}<h1>");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new().insert_lambda("func1", |_| {
             "heading".to_string()
         });
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!("<h1>heading<h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -523,13 +524,13 @@ mod template_tests {
     #[test]
     fn test_value_node_lambda_data() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("<h1>{{ func1 }}<h1>");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("<h1>{{ func1 }}<h1>");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new().insert_lambda("func1", |_| {
             "heading".to_string()
         });
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!("<h1>heading<h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -539,13 +540,13 @@ mod template_tests {
         let s1 = "a < b > c & d \"spam\"\'";
         let a1 = "a &lt; b &gt; c &amp; d &quot;spam&quot;'";
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("{{ func1 }}");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("{{ func1 }}");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new().insert_lambda("func1", |_| {
             s1.to_string()
         });
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!(a1.to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -553,11 +554,11 @@ mod template_tests {
     #[test]
     fn test_value_node_correct_false_bool_data() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("{{ value1 }}");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("{{ value1 }}");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new().insert_bool("value1", false);
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!("false".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -565,11 +566,11 @@ mod template_tests {
     #[test]
     fn test_value_node_correct_true_bool_data() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("{{ value1 }}");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("{{ value1 }}");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new().insert_bool("value1", true);
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!("true".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -577,23 +578,23 @@ mod template_tests {
     #[test]
     fn test_partial_node_correct_data() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("A wise woman once said: {{> hopper_quote.partial }}");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("A wise woman once said: {{> hopper_quote.partial }}");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new().insert_string("author", "Grace Hopper")
                                      .set_partials_path("test_data");
 
         let mut s: String = String::new();
         s.push_str("A wise woman once said: It's easier to get forgiveness than permission.-Grace Hopper");
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
         assert_eq!(s, String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
     fn test_partial_node_correct_data_with_extra() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("A wise woman once said: {{> hopper_quote.partial }} something else {{ extra }}");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("A wise woman once said: {{> hopper_quote.partial }} something else {{ extra }}");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new().insert_string("author", "Grace Hopper")
                                      .insert_string("extra", "extra data")
                                      .set_partials_path("test_data");
@@ -601,7 +602,7 @@ mod template_tests {
         let mut s: String = String::new();
         s.push_str("A wise woman once said: It's easier to get forgiveness than permission.-Grace Hopper something else extra data");
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
         assert_eq!(s, String::from_utf8(w.unwrap()).unwrap());
     }
 
@@ -622,10 +623,10 @@ mod template_tests {
             );
 
         let file = Rustache::read_file(Path::new("test_data/section_with_partial_template.html"));
-        let compiler = Compiler::new(file.as_slice());
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens(file.as_slice());
+        let nodes = Parser::parse_nodes(&tokens);
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         let mut f = File::create(&Path::new("test_data/section_with_partial.html"));
         let completed = f.write(w.unwrap().as_slice());
@@ -648,11 +649,11 @@ mod template_tests {
     #[test]
     fn test_spec_lambda_return_value_interpolated() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("Hello, {{lambda}}!");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("Hello, {{lambda}}!");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new().insert_lambda("lambda", |_| { "world".to_string() });
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!("Hello, world!".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -674,12 +675,12 @@ mod template_tests {
     #[test]
     fn test_spec_lambda_return_value_parsed() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("Hello, {{lambda}}!");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("Hello, {{lambda}}!");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new().insert_lambda("lambda", |_| { "{{planet}}".to_string() })
                                      .insert_string("planet", "world");
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!("Hello, world!".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -701,12 +702,12 @@ mod template_tests {
     fn test_spec_lambda_not_cached_on_interpolation() {
         let mut planets = vec!["Jupiter", "Earth", "Saturn"];
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("{{lambda}} == {{&lambda}} == {{lambda}}");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("{{lambda}} == {{&lambda}} == {{lambda}}");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new().insert_lambda("lambda", |_| { planets.pop().unwrap().to_string() } )
                                      .insert_string("planet", "world");
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!("Saturn == Earth == Jupiter".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -727,11 +728,11 @@ mod template_tests {
     #[test]
     fn test_spec_lambda_results_appropriately_escaped() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("<{{lambda}}{{&lambda}}");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("<{{lambda}}{{&lambda}}");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new().insert_lambda("lambda", |_| { return ">".to_string() });
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!("<&gt;>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -753,13 +754,13 @@ mod template_tests {
     #[test]
     fn test_spec_lambdas_receive_raw_section_string() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("<{{#lambda}}{{x}}{{/lambda}}>");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("<{{#lambda}}{{x}}{{/lambda}}>");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new().insert_lambda("lambda", |text| { stdout().write_str("OUTPUT"); 
             stdout().write_str(text.as_slice()); 
             if text.as_slice() == "{{x}}" { "yes".to_string() } else { "no".to_string() } });
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!("<yes>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -781,12 +782,12 @@ mod template_tests {
     #[test]
     fn test_spec_lambdas_for_sections_parsed() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("<{{#lambda}}-{{/lambda}}>");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("<{{#lambda}}-{{/lambda}}>");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new().insert_lambda("lambda", |_| { "#{text}{{planet}}#{text}".to_string() })
                                      .insert_string("planet", "Earth");
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!("<-Earth->".to_string(), String::from_utf8(w.unwrap()).unwrap());
 
@@ -808,11 +809,11 @@ mod template_tests {
     #[test]
     fn test_spec_lambdas_for_sections_not_cached() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("{{#lambda}}FILE{{/lambda}} != {{#lambda}}LINE{{/lambda}}");
-        let parser = Parser::new(&compiler.tokens);
+        let tokens = Compiler::create_tokens("{{#lambda}}FILE{{/lambda}} != {{#lambda}}LINE{{/lambda}}");
+        let nodes = Parser::parse_nodes(&tokens);
         let data = HashBuilder::new().insert_lambda("lambda", |text| { String::new().append("__").append(text.as_slice()).append("__") });
 
-        Template::new().render_data(&mut w, &data, &parser);
+        Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!("__FILE__ != __LINE__".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }

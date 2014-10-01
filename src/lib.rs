@@ -6,10 +6,6 @@ use std::collections::HashMap;
 use std::fmt;
 use std::cell::RefCell;
 
-use template::Template;
-use compiler::Compiler;
-use parser::{Parser};
-
 pub use rustache::Rustache;
 pub use build::{HashBuilder, VecBuilder};
 
