@@ -43,15 +43,15 @@ impl<'a> Template<'a> {
         rv
     }
 
-    fn handle_lambda_interpolation<W: Writer>(&mut self, f: |String|: 'a -> String, data: &HashMap<String, Data>, writer: &mut W) {
-        let val = (f)("".to_string());
+    fn handle_lambda_interpolation<W: Writer>(&mut self, f: &mut |String|: 'a -> String, data: &HashMap<String, Data>, writer: &mut W) {
+        let val = (*f)("".to_string());
         let compiler = Compiler::new(val.as_slice());
         let parser = Parser::new(&compiler.tokens);
 
         self.render(writer, data, &parser);
     }
 
-    fn handle_unescaped_node<'a, W: Writer>(&self, data: &Data, key: String, writer: &mut W) {
+    fn handle_unescaped_node<'a, W: Writer>(&mut self, data: &Data, key: String, datastore: &HashMap<String, Data>, writer: &mut W) {
         let mut tmp: String = String::new();
         match *data {
             Strng(ref val) => {
@@ -67,18 +67,17 @@ impl<'a> Template<'a> {
             },
             Vector(ref list) => {
                 for item in list.iter() {
-                    self.handle_unescaped_node(item, key.to_string(), writer);
+                    self.handle_unescaped_node(item, key.to_string(), datastore, writer);
                 }
             },
             Hash(ref hash) => {
                 if hash.contains_key(&key) {
                     let ref tmp = hash[key];
-                    self.handle_unescaped_node(tmp, key.to_string(), writer);
+                    self.handle_unescaped_node(tmp, key.to_string(), datastore, writer);
                 }
             },
             Lambda(ref f) => {
-                let f = *f.borrow_mut();
-                self.handle_lambda_interpolation(f, data, writer);
+                self.handle_lambda_interpolation(&mut *f.borrow_mut(), datastore, writer);
             }
 
         }
@@ -136,7 +135,7 @@ impl<'a> Template<'a> {
         for node in nodes.iter() {
             match *node {
                 Unescaped(key, _)  => {
-                    self.handle_unescaped_node(data, key.to_string(), writer);
+                    self.handle_unescaped_node(data, key.to_string(), datastore, writer);
                 }
                 Value(key, _) => {
                     self.handle_value_node(data, key.to_string(), writer);
@@ -228,7 +227,7 @@ impl<'a> Template<'a> {
                     let tmp = key.to_string();
                     if data.contains_key(&tmp) {
                         let ref val = data[tmp];
-                        self.handle_unescaped_node(val, "".to_string(), writer);
+                        self.handle_unescaped_node(val, "".to_string(), data, writer);
                     }
                 }
                 // value nodes contain tags who's data gets HTML escaped
