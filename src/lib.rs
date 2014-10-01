@@ -43,7 +43,7 @@ impl<'a> fmt::Show for Data<'a> {
             Bool(val)       => write!(f, "Boolean({})", val),
             Vector(ref val) => write!(f, "Vector({})", val),
             Hash(ref val)   => write!(f, "Hash({})", val),
-            Lambda(_)         => write!(f, "Lambda(...)") 
+            Lambda(_)       => write!(f, "Lambda(...)") 
         }
     }
 }

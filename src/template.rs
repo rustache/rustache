@@ -45,7 +45,11 @@ impl<'a> Template<'a> {
         rv
     }
 
-    fn handle_unescaped_lambda_interpolation<W: Writer>(&mut self, f: &mut |String|: 'a -> String, data: &HashMap<String, Data>, raw: String, writer: &mut W) {
+    fn handle_unescaped_lambda_interpolation<W: Writer>(&mut self, 
+                                                        f: &mut |String|: 'a -> String, 
+                                                        data: &HashMap<String, Data>, 
+                                                        raw: String, 
+                                                        writer: &mut W) {
         let val = (*f)(raw);
         let tokens = compiler::create_tokens(val.as_slice());
         let nodes = parser::parse_nodes(&tokens);
@@ -53,7 +57,11 @@ impl<'a> Template<'a> {
         self.render(writer, data, &nodes);
     }
 
-    fn handle_escaped_lambda_interpolation<W: Writer>(&mut self, f: &mut |String|: 'a -> String, data: &HashMap<String, Data>, raw: String, writer: &mut W) {
+    fn handle_escaped_lambda_interpolation<W: Writer>(&mut self, 
+                                                      f: &mut |String|: 'a -> String, 
+                                                      data: &HashMap<String, Data>, 
+                                                      raw: String, 
+                                                      writer: &mut W) {
         let val = (*f)(raw);
         let value = self.escape_html(val.as_slice());
         let tokens = compiler::create_tokens(value.as_slice());
@@ -62,7 +70,11 @@ impl<'a> Template<'a> {
         self.render(writer, data, &nodes);
     }
 
-    fn handle_unescaped_node<'a, W: Writer>(&mut self, data: &Data, key: String, datastore: &HashMap<String, Data>, writer: &mut W) {
+    fn handle_unescaped_node<'a, W: Writer>(&mut self, 
+                                            data: &Data, 
+                                            key: String, 
+                                            datastore: &HashMap<String, Data>, 
+                                            writer: &mut W) {
         let mut tmp: String = String::new();
         match *data {
             Strng(ref val) => {
@@ -95,7 +107,11 @@ impl<'a> Template<'a> {
         }
     }
 
-    fn handle_value_node<'a, W: Writer>(&mut self, data: &Data, key: String, datastore: &HashMap<String, Data>, writer: &mut W) {
+    fn handle_value_node<'a, W: Writer>(&mut self, 
+                                        data: &Data, 
+                                        key: String, 
+                                        datastore: &HashMap<String, Data>, 
+                                        writer: &mut W) {
         let mut tmp: String = String::new();
         match *data {
             Strng(ref val) => {
@@ -127,7 +143,10 @@ impl<'a> Template<'a> {
         }       
     }
 
-    fn handle_inverted_node<'a, W:Writer>(&mut self, nodes: &Vec<Node>, data: &HashMap<String, Data>, writer: &mut W) {
+    fn handle_inverted_node<'a, W:Writer>(&mut self, 
+                                          nodes: &Vec<Node>, 
+                                          data: &HashMap<String, Data>, 
+                                          writer: &mut W) {
         for node in nodes.iter() {
             match *node {
                 Static(key) => {
@@ -298,7 +317,10 @@ impl<'a> Template<'a> {
     }
 
     // main entry point to Template
-    pub fn render_data<'a, W: Writer>(&mut self, writer: &mut W, datastore: &HashBuilder<'a>, nodes: &Vec<Node>) {
+    pub fn render_data<'a, W: Writer>(&mut self, 
+                                      writer: &mut W, 
+                                      datastore: &HashBuilder<'a>, 
+                                      nodes: &Vec<Node>) {
         // we need to hang on to the partials path internally,
         // if there is one, for class methods to use.
         self.partials_path.truncate(0);
