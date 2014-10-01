@@ -378,7 +378,6 @@ impl<'a> Template<'a> {
 
 #[cfg(test)]
 mod template_tests {
-    //use std::io::stdio::stdout;
     use std::io::File;
     use std::io::MemWriter;
     use std::str;
