@@ -1,6 +1,6 @@
 use std::path::Path;
 use parser::{Parser, Node, Value, Static, Unescaped, Section, Part};
-use super::{Data, Strng, Bool, Vector, Hash, Func, Read};
+use super::{Data, Strng, Bool, Vector, Hash, Lambda, Read};
 use build::HashBuilder;
 use compiler::Compiler;
 use std::collections::HashMap;
@@ -43,7 +43,15 @@ impl<'a> Template<'a> {
         rv
     }
 
-    fn handle_unescaped_node<'a, W: Writer>(&self, data: &Data, key: String, writer: &mut W) {
+    fn handle_lambda_interpolation<W: Writer>(&mut self, f: &mut |String|: 'a -> String, data: &HashMap<String, Data>, writer: &mut W) {
+        let val = (*f)("".to_string());
+        let compiler = Compiler::new(val.as_slice());
+        let parser = Parser::new(&compiler.tokens);
+
+        self.render(writer, data, &parser);
+    }
+
+    fn handle_unescaped_node<'a, W: Writer>(&mut self, data: &Data, key: String, datastore: &HashMap<String, Data>, writer: &mut W) {
         let mut tmp: String = String::new();
         match *data {
             Strng(ref val) => {
@@ -59,19 +67,17 @@ impl<'a> Template<'a> {
             },
             Vector(ref list) => {
                 for item in list.iter() {
-                    self.handle_unescaped_node(item, key.to_string(), writer);
+                    self.handle_unescaped_node(item, key.to_string(), datastore, writer);
                 }
             },
             Hash(ref hash) => {
                 if hash.contains_key(&key) {
                     let ref tmp = hash[key];
-                    self.handle_unescaped_node(tmp, key.to_string(), writer);
+                    self.handle_unescaped_node(tmp, key.to_string(), datastore, writer);
                 }
             },
-           Func(ref f) => {
-                let f = &mut *f.borrow_mut();
-                let val = (*f)("".to_string());
-                writer.write_str(val.as_slice()).ok().expect("write failed in render");
+            Lambda(ref f) => {
+                self.handle_lambda_interpolation(&mut *f.borrow_mut(), datastore, writer);
             }
 
         }
@@ -102,7 +108,7 @@ impl<'a> Template<'a> {
                     self.handle_value_node(tmp, key.to_string(), writer);
                 }
             },
-            Func(ref f) => {
+            Lambda(ref f) => {
                 let f = &mut *f.borrow_mut();
                 let val = (*f)("".to_string());
                 let value = self.escape_html(val.as_slice());
@@ -129,7 +135,7 @@ impl<'a> Template<'a> {
         for node in nodes.iter() {
             match *node {
                 Unescaped(key, _)  => {
-                    self.handle_unescaped_node(data, key.to_string(), writer);
+                    self.handle_unescaped_node(data, key.to_string(), datastore, writer);
                 }
                 Value(key, _) => {
                     self.handle_value_node(data, key.to_string(), writer);
@@ -137,22 +143,19 @@ impl<'a> Template<'a> {
                 Static(key) => {
                     self.write_to_stream(writer, key.as_slice(), "render: section node static");
                 }
-                Section(ref key, ref children, ref inverted, _, _) => {
+                Section(ref key, ref children, ref inverted, open, close) => {
                     match inverted {
                         &false => {
                             match *data {
                                 Hash(ref hash) => {
                                     self.handle_section_node(children, &hash[key.to_string()], datastore, writer);        
                                 },
-/*                                Func(ref f) => {
+                                Lambda(ref f) => {
                                     let f = &mut *f.borrow_mut();
-                                    let param = String::new();
-                                    for child in children.into_iter() {
-                                        param.append(child);
-                                    }
-                                    let val = (*f)(param);
-                                    val
-                                },*/
+                                    let text = self.get_section_text(children);
+                                    let val = (*f)(*text);
+                                    self.write_to_stream(writer, val.as_slice(), "render: section node lambda");
+                                },
                                 _ => {
                                     self.handle_section_node(children, data, datastore, writer);
                                 }
@@ -170,7 +173,26 @@ impl<'a> Template<'a> {
         }
     }
 
-   fn handle_partial_file_node<'a, W: Writer>(&mut self,
+    fn get_section_text(&self, children: &Vec<Node>) -> Box<String> {
+        let mut temp = box String::new();
+        for child in children.iter() {
+            match child {
+                &Static(text) => temp.push_str(text),
+                &Value(_, text) => temp.push_str(text),
+                &Section(_, ref children, _, open, close) => {
+                    temp.push_str(open);
+                    let rv = self.get_section_text(children);
+                    temp.push_str(rv.as_slice());
+                    temp.push_str(close);
+                },
+                &Unescaped(_, text) => temp.push_str(text),
+                &Part(_, text) => temp.push_str(text)
+            }
+        }
+        temp
+    }
+
+    fn handle_partial_file_node<'a, W: Writer>(&mut self,
                                               filename: &str, 
                                                   data: &HashMap<String, Data>, 
                                                 writer: &mut W) {
@@ -205,7 +227,7 @@ impl<'a> Template<'a> {
                     let tmp = key.to_string();
                     if data.contains_key(&tmp) {
                         let ref val = data[tmp];
-                        self.handle_unescaped_node(val, "".to_string(), writer);
+                        self.handle_unescaped_node(val, "".to_string(), data, writer);
                     }
                 }
                 // value nodes contain tags who's data gets HTML escaped
@@ -406,6 +428,21 @@ mod template_tests {
     }
 
     #[test]
+    fn test_section_lambda_data() {
+        let mut w = MemWriter::new();
+        let compiler = Compiler::new("{{ #wrapped }}{{ name }} is awesome.{{ /wrapped }}");
+        let parser = Parser::new(&compiler.tokens);
+        let data = HashBuilder::new()
+            .insert_lambda("wrapped", |_| {
+                " is awesome.".to_string()
+            });
+
+        Template::new().render_data(&mut w, &data, &parser);
+
+        assert_eq!(" is awesome.".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    }
+    
+    #[test]
     fn test_section_multiple_value_string_data() {
         let mut w = MemWriter::new();
         let compiler = Compiler::new("{{# names }}{{ name }}{{/ names }}");
@@ -476,9 +513,9 @@ mod template_tests {
     #[test]
     fn test_unescaped_node_lambda_data() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("<h1>{{& func1 }}<h1>");
+        let compiler = Compiler::new("<h1>{{& lambda1 }}<h1>");
         let parser = Parser::new(&compiler.tokens);
-        let data = HashBuilder::new().insert_func("func1", |_| {
+        let data = HashBuilder::new().insert_lambda("lambda1", |_| {
             "heading".to_string()
         });
 
@@ -490,9 +527,9 @@ mod template_tests {
     #[test]
     fn test_value_node_lambda_data() {
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("<h1>{{ func1 }}<h1>");
+        let compiler = Compiler::new("<h1>{{ lambda1 }}<h1>");
         let parser = Parser::new(&compiler.tokens);
-        let data = HashBuilder::new().insert_func("func1", |_| {
+        let data = HashBuilder::new().insert_lambda("lambda1", |_| {
             "heading".to_string()
         });
 
@@ -506,9 +543,9 @@ mod template_tests {
         let s1 = "a < b > c & d \"spam\"\'";
         let a1 = "a &lt; b &gt; c &amp; d &quot;spam&quot;'";
         let mut w = MemWriter::new();
-        let compiler = Compiler::new("{{ func1 }}");
+        let compiler = Compiler::new("{{ lambda1 }}");
         let parser = Parser::new(&compiler.tokens);
-        let data = HashBuilder::new().insert_func("func1", |_| {
+        let data = HashBuilder::new().insert_lambda("lambda1", |_| {
             s1.to_string()
         });
 

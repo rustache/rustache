@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use super::{Data, Strng, Bool, Vector, Hash, Func};
+use super::{Data, Strng, Bool, Vector, Hash, Lambda};
 
 /// `HashBuilder` is a helper type that constructs `Data` types in a HashMap
 #[deriving(Show)]
@@ -95,22 +95,22 @@ impl<'a> HashBuilder<'a> {
         HashBuilder { data: data, partials_path: partials_path }
     }
 
-    /// Add a `Function` to the `HashBuilder`
+    /// Add a `Lambda` that accepts a String and returns a String to the `HashBuilder`
     ///
     /// ```rust
     /// use rustache::HashBuilder;
     /// let mut num = 0;
     /// let data = HashBuilder::new()
-    ///     .insert_func("double", |_| {
+    ///     .insert_lambda("double", |_| {
     ///         num *= 2u;
     ///         num.to_string()                
     ///     })
     ///     .build();
     /// ```
     #[inline]
-    pub fn insert_func<K: StrAllocating>(self, key: K, f: |String|: 'a -> String) -> HashBuilder<'a> {
+    pub fn insert_lambda<K: StrAllocating>(self, key: K, f: |String|: 'a -> String) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
-        data.insert(key.into_string(), Func(RefCell::new(f)));
+        data.insert(key.into_string(), Lambda(RefCell::new(f)));
         HashBuilder { data: data, partials_path: partials_path }
     }
 
@@ -218,22 +218,22 @@ impl<'a> VecBuilder<'a> {
         VecBuilder { data: data }
     }
 
-    /// Add a `Function` to the `VecBuilder`
+    /// Add a `Lambda` to the `VecBuilder`
     ///
     /// ```rust
     /// use rustache::VecBuilder;
     /// let mut num = 0;
     /// let data = VecBuilder::new()
-    ///     .push_func(|double| {
+    ///     .push_lambda(|double| {
     ///         num *= 2u;
     ///         num.to_string()
     ///     })
     ///     .build();
     /// ```
     #[inline]
-    pub fn push_func(self, f: |String|: 'a -> String) -> VecBuilder <'a> {
+    pub fn push_lambda(self, f: |String|: 'a -> String) -> VecBuilder <'a> {
         let VecBuilder { mut data } = self;
-        data.push(Func(RefCell::new(f)));
+        data.push(Lambda(RefCell::new(f)));
         VecBuilder { data: data }
     }
 
@@ -249,7 +249,7 @@ mod tests {
     use std::collections::HashMap;
 
     use super::{HashBuilder, VecBuilder};
-    use super::super::{Strng, Bool, Vector, Hash, Func};
+    use super::super::{Strng, Bool, Vector, Hash, Lambda};
 
     #[test]
     fn test_new_builders() {
@@ -298,13 +298,13 @@ mod tests {
     }
 
     #[test]
-    fn test_hash_func_builder() {
+    fn test_hash_lambda_builder() {
         // Since we can't directly compare closures, just make
         // sure we're threading through the builder
 
         let mut num = 10u;
         let data = HashBuilder::new()
-            .insert_func("double", |x| {
+            .insert_lambda("double", |x| {
                 num *= 2u;
                 x + num.to_string()
             })
@@ -313,7 +313,7 @@ mod tests {
         match data {
             Hash(m) => {
                 match *m.find_equiv(&("double")).unwrap() {
-                    Func(ref f) => {
+                    Lambda(ref f) => {
                         let f = &mut *f.borrow_mut();
                         assert_eq!((*f)("double: ".to_string()), "double: 20".to_string());
                         assert_eq!((*f)("double: ".to_string()), "double: 40".to_string());
@@ -327,13 +327,13 @@ mod tests {
     }
 
     #[test]
-    fn test_vec_func_builder() {
+    fn test_vec_lambda_builder() {
         // Since we can't directly compare closures, just make
         // sure we're threading through the builder
 
         let mut num = 10u;
         let data = VecBuilder::new()
-            .push_func(|x| {
+            .push_lambda(|x| {
                 num *= 2u;
                 x + num.to_string()
             })
@@ -342,7 +342,7 @@ mod tests {
         match data {
             Vector(m) => {
                 match m.as_slice() {
-                    [Func(ref f)] => {
+                    [Lambda(ref f)] => {
                         let f = &mut *f.borrow_mut();
                         assert_eq!((*f)("double: ".to_string()), "double: 20".to_string());
                         assert_eq!((*f)("double: ".to_string()), "double: 40".to_string());
