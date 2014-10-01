@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use super::{Data, Strng, Bool, Vector, Hash, Lambda};
+use super::{Data, Strng, Bool, Integer, Float, Vector, Hash, Lambda};
 
 /// `HashBuilder` is a helper type that constructs `Data` types in a HashMap
 #[deriving(Show)]
@@ -28,6 +28,7 @@ impl<'a> HashBuilder<'a> {
     ///     .insert_string("game", "Hearthstone: Heroes of Warcraft")
     ///     .build();
     /// ```
+
     #[inline]
     pub fn insert_string<K: StrAllocating, V: StrAllocating>(self, key: K, value: V) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
@@ -43,10 +44,45 @@ impl<'a> HashBuilder<'a> {
     ///     .insert_bool("playing", true)
     ///     .build();
     /// ```
+
     #[inline]
     pub fn insert_bool<K: StrAllocating>(self, key: K, value: bool) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         data.insert(key.into_string(), Bool(value));
+        HashBuilder { data: data, partials_path: partials_path }
+    }
+
+    /// Add an `Integer` to the `HashBuilder`
+    ///
+    /// ```rust
+    /// use rustache::HashBuilder;
+    /// let data = HashBuilder::new()
+    ///     .insert_int("age", 10i)
+    ///     .insert_int("drinking age", -21i)
+    ///     .build();
+    /// ```
+
+    #[inline]
+    pub fn insert_int<K: StrAllocating>(self, key: K, value: int) -> HashBuilder<'a> {
+        let HashBuilder { mut data, partials_path } = self;
+        data.insert(key.into_string(), Integer(value));
+        HashBuilder { data: data, partials_path: partials_path }
+    }
+
+    /// Add a `Float` to the `HashBuilder`
+    ///
+    /// ```rust
+    /// use rustache::HashBuilder;
+    /// let data = HashBuilder::new()
+    ///     .insert_float("pi", 3.141596f64)
+    ///     .insert_float("phi", 1.61803398875f64)
+    ///     .build();
+    /// ```
+
+    #[inline]
+    pub fn insert_float<K: StrAllocating>(self, key: K, value: f64) -> HashBuilder<'a> {
+        let HashBuilder { mut data, partials_path } = self;
+        data.insert(key.into_string(), Float(value));
         HashBuilder { data: data, partials_path: partials_path }
     }
 
@@ -62,6 +98,7 @@ impl<'a> HashBuilder<'a> {
     ///     })
     ///     .build();   
     /// ```
+
     #[inline]
     pub fn insert_vector<K: StrAllocating>(self, key: K, f: |VecBuilder<'a>| -> VecBuilder<'a>) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
@@ -87,6 +124,7 @@ impl<'a> HashBuilder<'a> {
     ///     })
     ///     .build();
     /// ```
+
     #[inline]
     pub fn insert_hash<K: StrAllocating>(self, key: K, f: |HashBuilder<'a>| -> HashBuilder<'a>) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
@@ -107,6 +145,7 @@ impl<'a> HashBuilder<'a> {
     ///     })
     ///     .build();
     /// ```
+
     #[inline]
     pub fn insert_lambda<K: StrAllocating>(self, key: K, f: |String|: 'a -> String) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
@@ -150,6 +189,7 @@ impl<'a> VecBuilder<'a> {
     ///     .push_string("Druid")
     ///     .build();
     /// ```
+
     #[inline]
     pub fn push_string<T: StrAllocating>(self, value: T) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
@@ -157,7 +197,7 @@ impl<'a> VecBuilder<'a> {
         VecBuilder { data: data }
     }
 
-    /// Add a `Boolean` to the `VecBuilder`
+    /// Add a `Bool` to the `VecBuilder`
     ///
     /// ```rust
     /// use rustache::VecBuilder;
@@ -166,10 +206,45 @@ impl<'a> VecBuilder<'a> {
     ///     .push_bool(false)
     ///     .build();
     /// ```
+
     #[inline]
     pub fn push_bool(self, value: bool) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         data.push(Bool(value));
+        VecBuilder { data: data }
+    }
+
+    /// Add an `Integer` to the `VecBuilder`
+    ///
+    /// ```rust
+    /// use rustache::VecBuilder;
+    /// let data = VecBuilder::new()
+    ///     .push_int(10i)
+    ///     .push_int(-21i)
+    ///     .build();
+    /// ```
+
+    #[inline]
+    pub fn push_int(self, value: int) -> VecBuilder<'a> {
+        let VecBuilder { mut data } = self;
+        data.push(Integer(value));
+        VecBuilder { data: data }
+    }
+
+    /// Add a `Float` to the `VecBuilder`
+    ///
+    /// ```rust
+    /// use rustache::VecBuilder;
+    /// let data = VecBuilder::new()
+    ///     .push_float(10.356356f64)
+    ///     .push_float(-21.34956230456f64)
+    ///     .build();
+    /// ```
+
+    #[inline]
+    pub fn push_float(self, value: f64) -> VecBuilder<'a> {
+        let VecBuilder { mut data } = self;
+        data.push(Float(value));
         VecBuilder { data: data }
     }
 
@@ -185,6 +260,7 @@ impl<'a> VecBuilder<'a> {
     ///     })
     ///     .build();
     /// ```
+
     #[inline]
     pub fn push_vector(self, f: |VecBuilder<'a>| -> VecBuilder<'a>) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
@@ -210,6 +286,7 @@ impl<'a> VecBuilder<'a> {
     ///     })
     ///     .build();
     /// ```
+
     #[inline]
     pub fn push_hash(self, f: |HashBuilder<'a>| -> HashBuilder<'a>) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
@@ -230,6 +307,7 @@ impl<'a> VecBuilder<'a> {
     ///     })
     ///     .build();
     /// ```
+
     #[inline]
     pub fn push_lambda(self, f: |String|: 'a -> String) -> VecBuilder <'a> {
         let VecBuilder { mut data } = self;
@@ -249,7 +327,7 @@ mod tests {
     use std::collections::HashMap;
 
     use super::{HashBuilder, VecBuilder};
-    use super::super::{Strng, Bool, Vector, Hash, Lambda};
+    use super::super::{Strng, Bool, Integer, Float, Vector, Hash, Lambda};
 
     #[test]
     fn test_new_builders() {
@@ -272,6 +350,8 @@ mod tests {
         let mut hash1 = HashMap::new();
         hash1.insert("first_name".to_string(), Strng("Anduin".to_string()));
         hash1.insert("last_name".to_string(), Strng("Wrynn".to_string()));
+        hash1.insert("age".to_string(), Integer(21i));
+        hash1.insert("weight".to_string(), Float(120.16f64));
         hash1.insert("class".to_string(), Strng("Priest".to_string()));
         hash1.insert("died".to_string(), Bool(false));
         hash1.insert("class_cards".to_string(), Vector(vec!(
@@ -281,6 +361,8 @@ mod tests {
         let hash2 = HashBuilder::new().set_partials_path("/hearthstone")
                         .insert_string("first_name", "Anduin")
                         .insert_string("last_name", "Wrynn")
+                        .insert_int("age", 21i)
+                        .insert_float("weight", 120.16f64)
                         .insert_string("class", "Priest")
                         .insert_bool("died", false)
                         .insert_vector("class_cards", |builder| {
