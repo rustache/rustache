@@ -12,7 +12,7 @@ use std::fmt;
 use std::cell::RefCell;
 
 pub use build::{HashBuilder, VecBuilder};
-pub use rustache::{render_text};
+pub use rustache::{render, render_text, render_json_file, render_json_string};
 
 mod rustache;
 mod compiler;
