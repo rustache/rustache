@@ -6,6 +6,22 @@ use serialize::json::{Json, Boolean, Null, I64, U64, F64, String, List, Object};
 use build::{HashBuilder, VecBuilder};
 use template::Template;
 
+/// Render a text file from a HashBuilder data source to the specified writer
+///
+/// ```rust
+/// extern crate rustache;
+///
+/// use rustache;
+/// use rustache::HashBuilder;
+/// use std::MemWriter;
+///
+/// let w = MemWriter::new();
+/// let data = HashBuilder::new()
+///     .insert_string("name", "Bob the Builder")
+///     .build();
+///
+/// rustache::render("templates/index.tpl.html", &data, &mut w);
+/// ```
 pub fn render<'a, W: Writer>(path: &str, data: &HashBuilder, writer: &mut W) {
     let file = read_file(Path::new(path));
     let tokens = compiler::create_tokens(file.as_slice());
@@ -13,18 +29,50 @@ pub fn render<'a, W: Writer>(path: &str, data: &HashBuilder, writer: &mut W) {
     Template::new().render_data(writer, data, &nodes);
 }
 
+/// Render a string from a HashBuilder data source to the specified writer
+///
+/// ```rust
+/// extern crate rustache;
+///
+/// use rustache;
+/// use rustache::HashBuilder;
+/// use std::MemWriter;
+///
+/// let w = MemWriter::new();
+/// let data = HashBuilder::new()
+///     .insert_string("name", "Bob the Builder")
+///     .build();
+///
+/// rustache::render_text("{{ name }}", &data, &mut w);
+/// ```
 pub fn render_text<'a, W: Writer>(input: &'a str, data: &HashBuilder, writer: &mut W) {
     let tokens = compiler::create_tokens(input);
     let nodes = parser::parse_nodes(&tokens);
     Template::new().render_data(writer, data, &nodes);
 }
 
-pub fn render_json<'a, W: Writer>(template: &str, json: Json, writer: &mut W) {
+/// Render a template  from a HashBuilder data source to the specified writer
+///
+/// ```rust
+/// extern crate rustache;
+///
+/// use rustache;
+/// use rustache::HashBuilder;
+/// use std::MemWriter;
+///
+/// let w = MemWriter::new();
+/// let data = HashBuilder::new()
+///     .insert_string("name", "Bob the Builder")
+///     .build();
+///
+/// rustache::render_text("{{ name }}", &data, &mut w);
+/// ```
+pub fn render_json<W: Writer>(template: &str, json: Json, writer: &mut W) {
     let data = parse_json(&json);
     render(template, &data, writer);
 }
 
-pub fn render_json_string<'a, W: Writer>(template: &str, data: &str, writer: &mut W) {
+pub fn render_json_string<W: Writer>(template: &str, data: &str, writer: &mut W) {
     let json = match json::from_str(data) {
         Ok(json) => json,
         Err(err) => fail!("Invalid JSON. {}", err)
@@ -34,7 +82,7 @@ pub fn render_json_string<'a, W: Writer>(template: &str, data: &str, writer: &mu
 }
 
 
-pub fn render_json_file<'a, W: Writer>(template: &str, data: &str, writer: &mut W) {
+pub fn render_json_file<W: Writer>(template: &str, data: &str, writer: &mut W) {
     let data_string = read_file(Path::new(data));
 
     let json = match json::from_str(data_string.as_slice()) {
