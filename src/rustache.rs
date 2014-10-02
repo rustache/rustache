@@ -19,30 +19,30 @@ pub fn render_text<'a, W: Writer>(input: &'a str, data: &HashBuilder, writer: &m
     Template::new().render_data(writer, data, &nodes);
 }
 
+pub fn render_json<'a, W: Writer>(template: &str, json: Json, writer: &mut W) {
+    let data = parse_json(&json);
+    render(template, &data, writer);
+}
+
 pub fn render_json_string<'a, W: Writer>(template: &str, data: &str, writer: &mut W) {
     let json = match json::from_str(data) {
         Ok(json) => json,
         Err(err) => fail!("Invalid JSON. {}", err)
     };
     
-    let data = parse_json(&json);
-
-    println!("{}", data);
-
-    render(template, &data, writer);
+    render_json(template, json, writer);
 }
 
-pub fn render_json_file<'a, W: Writer>(template_path: &str, data_path: &str, writer: &mut W) {
-    let data_string = read_file(Path::new(data_path));
+
+pub fn render_json_file<'a, W: Writer>(template: &str, data: &str, writer: &mut W) {
+    let data_string = read_file(Path::new(data));
 
     let json = match json::from_str(data_string.as_slice()) {
         Ok(json) => json,
         Err(err) => fail!("Invalid JSON. {}", err)
     };
     
-    let data = parse_json(&json);
-
-    render(template_path, &data, writer);
+    render_json(template, json, writer);
 }
 
 fn parse_json(json: &Json) -> HashBuilder{
