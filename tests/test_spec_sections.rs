@@ -48,7 +48,7 @@ use rustache::HashBuilder;
 //     expected: '"This should be rendered."'
 
     #[test]
-    fn test_truthy_sections_should_render_contents() {
+    fn test_spec_sections_truthy_should_render_contents() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_bool("boolean", true);
@@ -65,7 +65,7 @@ use rustache::HashBuilder;
 //     expected: '""'
 
     #[test]
-    fn test_falsy_sections_should_not_render_contents() {
+    fn test_spec_sections_falsy_should_not_render_contents() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_bool("boolean", false);
@@ -82,7 +82,7 @@ use rustache::HashBuilder;
 //     expected: '"Hi Joe."'
 
     #[test]
-    fn test_objects_and_hashes_should_be_pushed_onto_context_stack() {
+    fn test_spec_sections_objects_and_hashes_should_be_pushed_onto_context_stack() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_hash("context", |builder| {
@@ -135,7 +135,7 @@ use rustache::HashBuilder;
       // 1
 
 /*    #[test]
-    fn test_all_elements_on_the_context_stack_should_be_accessible() {
+    fn test_spec_sections_all_elements_on_the_context_stack_should_be_accessible() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_hash("a", |builder| {
@@ -201,7 +201,7 @@ use rustache::HashBuilder;
 //     expected: '"123"'
 
     #[test]
-    fn test_list_items_are_iterated() {
+    fn test_spec_sections_list_items_are_iterated() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_vector("list", |builder| {
@@ -232,7 +232,7 @@ use rustache::HashBuilder;
 //     expected: '""'
 
     #[test]
-    fn test_empty_lists_behave_like_falsy_values() {
+    fn test_spec_sections_empty_lists_behave_like_falsy_values() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_vector("list", |builder| {
@@ -261,7 +261,7 @@ use rustache::HashBuilder;
 //       * third
 
 /*    #[test]
-    fn test_multiple_sections_per_template_permitted() {
+    fn test_spec_sections_multiple_per_template_permitted() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_bool("bool", true)
@@ -292,7 +292,7 @@ use rustache::HashBuilder;
 //     expected: "| A B C D E |"
 
     #[test]
-    fn test_nested_truthy_sections_contents_render() {
+    fn test_spec_sections_nested_truthy_contents_render() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_bool("bool", true);
@@ -309,7 +309,7 @@ use rustache::HashBuilder;
 //     expected: "| A  E |"
 
 /*    #[test]
-    fn test_nested_falsy_sections_contents_do_not_render() {
+    fn test_spec_sections_nested_falsy_contents_do_not_render() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_bool("bool", false);
@@ -326,7 +326,7 @@ use rustache::HashBuilder;
 //     expected: "[]"
 
     #[test]
-    fn test_failed_context_lookups_are_falsy() {
+    fn test_spec_sections_failed_context_lookups_are_falsy() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new();
 
@@ -344,23 +344,23 @@ use rustache::HashBuilder;
 //     template: '"{{#list}}({{.}}){{/list}}"'
 //     expected: '"(a)(b)(c)(d)(e)"'
 
-/*    #[test]
-    fn test_implicit_iterators_directly_interpolate_strings() {
-        let mut w = MemWriter::new();
-        let data = HashBuilder::new()
-            .insert_vector("list", |builder| {
-                builder
-                    .push_string("a")
-                    .push_string("b")
-                    .push_string("c")
-                    .push_string("d")
-                    .push_string("e")
-            });
+    // #[test]
+    // fn test_spec_sections_implicit_iterators_directly_interpolate_strings() {
+    //     let mut w = MemWriter::new();
+    //     let data = HashBuilder::new()
+    //         .insert_vector("list", |builder| {
+    //             builder
+    //                 .push_string("a")
+    //                 .push_string("b")
+    //                 .push_string("c")
+    //                 .push_string("d")
+    //                 .push_string("e")
+    //         });
 
-        rustache::render_text("{{#list}}({{.}}){{/list}}", &data, &mut w);
+    //     rustache::render_text("{{#list}}({{.}}){{/list}}", &data, &mut w);
 
-        assert_eq!("(a)(b)(c)(d)(e)".to_string(), String::from_utf8(w.unwrap()).unwrap());
-    }*/
+    //     assert_eq!("(a)(b)(c)(d)(e)".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    // }
 
 //   - name: Implicit Iterator - Integer
 //     desc: Implicit iterators should cast integers to strings and interpolate.
@@ -370,7 +370,7 @@ use rustache::HashBuilder;
 //     expected: '"(1)(2)(3)(4)(5)"'
 
 /*    #[test]
-    fn test_implicit_iterators_directly_interpolate_integers() {
+    fn test_spec_sections_implicit_iterators_directly_interpolate_integers() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_vector("list", |builder| {
@@ -395,7 +395,7 @@ use rustache::HashBuilder;
 //     expected: '"(1.1)(2.2)(3.3)(4.4)(5.5)"'
 
 /*    #[test]
-    fn test_implicit_iterators_directly_interpolate_floats() {
+    fn test_spec_sections_implicit_iterators_directly_interpolate_floats() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_vector("list", |builder| {
@@ -421,7 +421,7 @@ use rustache::HashBuilder;
 //     expected: '"Here" == "Here"'
 
 /*    #[test]
-    fn test_truthy_dotted_names_are_valid_section_tags() {
+    fn test_spec_sections_truthy_dotted_names_are_valid_section_tags() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_hash("a", |builder| {
@@ -444,7 +444,7 @@ use rustache::HashBuilder;
 //     expected: '"" == ""'
 
     #[test]
-    fn test_falsy_dotted_names_are_not_valid_section_tags() {
+    fn test_spec_sections_falsy_dotted_names_are_not_valid_section_tags() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_hash("a", |builder| {
@@ -467,7 +467,7 @@ use rustache::HashBuilder;
 //     expected: '"" == ""'
 
     #[test]
-    fn test_unresolved_dotted_names_are_not_valid_section_tags() {
+    fn test_spec_sections_unresolved_dotted_names_are_not_valid_section_tags() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_hash("a", |builder| {
@@ -488,7 +488,7 @@ use rustache::HashBuilder;
 //     expected: " | \t|\t | \n"
 
     #[test]
-    fn test_sections_do_not_alter_surrounding_whitespace() {
+    fn test_spec_sections_do_not_alter_surrounding_whitespace() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_bool("boolean", true);
@@ -505,7 +505,7 @@ use rustache::HashBuilder;
 //     expected: " |  \n  | \n"
 
     #[test]
-    fn test_sections_do_not_alter_internal_whitespace() {
+    fn test_spec_sections_do_not_alter_internal_whitespace() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_bool("boolean", true);
@@ -522,7 +522,7 @@ use rustache::HashBuilder;
 //     expected: " YES\n GOOD\n"
 
     #[test]
-    fn test_single_line_sections_do_not_alter_surrounding_whitespace() {
+    fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_bool("boolean", true);
@@ -547,7 +547,7 @@ use rustache::HashBuilder;
 //       | A Line
 
 /*    #[test]
-    fn test_standalone_lines_are_removed_from_template() {
+    fn test_spec_sections_standalone_lines_are_removed_from_template() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_bool("boolean", true);
@@ -585,7 +585,7 @@ use rustache::HashBuilder;
 //       | A Line
 
 /*    #[test]
-    fn test_indented_standalone_lines_are_removed_from_template() {
+    fn test_spec_sections_indented_standalone_lines_are_removed_from_template() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_bool("boolean", true);
@@ -614,7 +614,7 @@ use rustache::HashBuilder;
 //     expected: "|\r\n|"
 
 /*    #[test]
-    fn test_newline_standalone_tags() {
+    fn test_spec_sections_newline_standalone_tags() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_bool("boolean", true);
@@ -631,7 +631,7 @@ use rustache::HashBuilder;
 //     expected: "#\n/"
 
 /*    #[test]
-    fn test_standalone_tags_do_not_require_preceding_newline() {
+    fn test_spec_sections_standalone_tags_do_not_require_preceding_newline() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_bool("boolean", true);
@@ -648,7 +648,7 @@ use rustache::HashBuilder;
 //     expected: "#\n/\n"
 
 /*    #[test]
-    fn test_standalone_tags_do_not_require_following_newline() {
+    fn test_spec_sections_standalone_tags_do_not_require_following_newline() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_bool("boolean", true);
@@ -667,7 +667,7 @@ use rustache::HashBuilder;
 //     expected: '|=|'
 
     #[test]
-    fn test_superfluous_tag_whitespace_is_ignored() {
+    fn test_spec_sections_superfluous_tag_whitespace_is_ignored() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new()
             .insert_bool("boolean", true);
