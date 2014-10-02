@@ -13,32 +13,30 @@ pub enum Token<'a> {
 
 pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
     let mut tokens: Vec<Token> = Vec::new();
-    let mut open_pos = 0u;
     let mut close_pos = 0u;
     let len = contents.len();
+    let re = regex!(r"(?P<outer>\{\{(?P<inner>\{?\S?\s?[\w\s]*\s?\}?)\}\})");
 
-    for (mut i, c) in contents.chars().enumerate() {
-        if c == '{' && contents.char_at(i+1) == '{' {
-            open_pos = i;
-            if open_pos != close_pos {
-                tokens.push(Text(contents.slice(close_pos, open_pos)));
-            }
+    for cap in re.captures_iter(contents) {
+        let inner = cap.name("inner");
+        let outer = cap.name("outer");
+        println!("{} for {}", cap.pos(0), outer);
+        let (o, c) = cap.pos(0).unwrap();
+        
+        if o != close_pos {
+            tokens.push(Text(contents.slice(close_pos, o)));
         }
-        if c == '}' && i < len - 1 && contents.char_at(i+1) == '}' && contents.char_at(open_pos) == '{'{
-            close_pos = i + 2;
-            let raw = contents.slice(open_pos, close_pos);
-            let val = contents.slice(open_pos + 2, close_pos - 2);
-            match val.char_at(0) {
-                '!' => continue, // comment, skip over
-                '#' => tokens.push(OTag(val.slice_from(1).trim(), false, raw)), // Section OTAG
-                '/' => tokens.push(CTag(val.slice_from(1).trim(), raw)), // Section CTAG
-                '^' => tokens.push(OTag(val.slice_from(1).trim(), true, raw)), // Inverted Section
-                '>' => tokens.push(Partial(val.slice_from(1).trim(), raw)), // partial
-                '&' => tokens.push(Raw(val.slice_from(1).trim(), raw)), // Unescaped
-                '{' => continue, // unescaped literal
-                _   => tokens.push(Variable(val.trim(), raw))
 
-            }
+        close_pos = c;
+        match inner.char_at(0) {
+            '!' => continue,
+            '#' => tokens.push(OTag(inner.slice_from(1).trim(), false, outer)),
+            '/' => tokens.push(CTag(inner.slice_from(1).trim(), outer)),
+            '^' => tokens.push(OTag(inner.slice_from(1).trim(), true, outer)),
+            '>' => tokens.push(Partial(inner.slice_from(1).trim(), outer)),
+            '&' => tokens.push(Raw(inner.slice_from(1).trim(), outer)),
+            '{' => tokens.push(Raw(inner.slice(1, inner.len() - 1).trim(), outer)),
+            _   => tokens.push(Variable(inner.trim(), outer))
         }
     }
     if close_pos < len { 
@@ -55,11 +53,13 @@ mod compiler_tests {
 
     #[test]
     fn basic_compiler_test() {
-        let contents = "<div> <h1> {{ token }} {{> partial }} </h1> </div>";
+        let contents = "<div> <h1> {{ token }} {{{ unescaped }}} {{> partial }} </h1> </div>";
         let tokens = compiler::create_tokens(contents);
         let expected = vec![Text("<div> <h1> "), 
                             Variable("token", "{{ token }}"),
-                            Text(" "), 
+                            Text(" "),
+                            Raw("unescaped", "{{{ unescaped }}}"),
+                            Text(" "),
                             Partial("partial", "{{> partial }}"), Text(" </h1> </div>")];
 
         assert_eq!(expected, tokens);
