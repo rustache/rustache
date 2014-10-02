@@ -1,5 +1,4 @@
 Rustache
-====
 [![Build Status](https://travis-ci.org/rustache/rustache.svg?branch=master)](https://travis-ci.org/rustache/rustache)
 ====
 
@@ -7,7 +6,7 @@ Rustache is a Rust implementation of the Mustache spec.
 
 ## Documentation
 
-The different Mustache tags are documented at [mustache(5)](http://mustache.github.com/mustache.5.html)
+The different Mustache tags are documented at [mustache(5)](http://mustache.github.com/mustache.5.html).
 
 ## Install
 
