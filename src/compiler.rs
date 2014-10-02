@@ -15,11 +15,11 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
     let mut tokens: Vec<Token> = Vec::new();
     let mut close_pos = 0u;
     let len = contents.len();
-    let re = regex!(r"(?P<outer>\{\{(?P<inner>\{?\S?\s?[\w\.?\s]*\s?\}?)\}\})");
+    let re = regex!(r"\{\{(\{?\S?\s?[\w\.?\s]*\s?\}?)\}\}");
 
     for cap in re.captures_iter(contents) {
-        let inner = cap.name("inner");
-        let outer = cap.name("outer");
+        let inner = cap.at(1);
+        let outer = cap.at(0);
         println!("{} for {}", cap.pos(0), outer);
         let (o, c) = cap.pos(0).unwrap();
         
