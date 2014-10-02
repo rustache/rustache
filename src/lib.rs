@@ -1,4 +1,6 @@
 #![crate_name = "rustache"]
+#![warn(missing_doc)]
+// #![deny(warnings)]
 
 #![feature(phase)]
 #[phase(plugin)]
