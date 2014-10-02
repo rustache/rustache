@@ -21,7 +21,7 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
         let inner = cap.name("inner");
         let outer = cap.name("outer");
         println!("{} for {}", cap.pos(0), outer);
-        let (mut o, c) = cap.pos(0).unwrap();
+        let (o, c) = cap.pos(0).unwrap();
         
         if o != close_pos {
             tokens.push(Text(contents.slice(close_pos, o)));
