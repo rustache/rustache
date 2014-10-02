@@ -231,6 +231,27 @@ impl<'a> Template<'a> {
         }
     }
 
+    // section data is considered false in a few cases:
+    // there is no data for the key in the data hashmap
+    // the data is a bool with a value of false
+    // the data is an empty vector
+    fn is_section_data_true(&self, data: &Data) -> bool {
+        let mut rv = true;
+
+        match data {
+            // if the data is a bool, rv is just the bool value
+            &Bool(value) => { rv = value; },
+            &Vector(ref vec) => {
+                if vec.len() == 0 {
+                    rv = false;
+                }
+            },
+            _ => { }
+        }
+
+        return rv;
+    }
+
     fn get_section_text(&self, children: &Vec<Node>) -> Box<String> {
         let mut temp = box String::new();
         for child in children.iter() {
@@ -312,7 +333,12 @@ impl<'a> Template<'a> {
                 // for each element found in it's data
                 Section(ref key, ref children, ref inverted, _, _) => {
                     let tmp = key.to_string();
-                    match (data.contains_key(&tmp), *inverted) {
+                    let truthy = if data.contains_key(&tmp) {
+                        self.is_section_data_true(&data[tmp])
+                    } else {
+                        false
+                    };
+                    match (truthy, *inverted) {
                         (true, true) => {},
                         (false, false) => {},
                         (true, false) => {
@@ -320,7 +346,6 @@ impl<'a> Template<'a> {
                             self.handle_section_node(children, val, data, writer);
                         },
                         (false, true) => {
-                            let ref val = data[tmp];
                             self.handle_inverted_node(children, data, writer);
                         }
                     }
