@@ -28,6 +28,10 @@ extern crate rustache;
 
 ====
 
+# Examples
+
+====
+
 ## Testing
 
 Simply clone and run:
