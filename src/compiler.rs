@@ -8,19 +8,17 @@ pub enum Token<'a> {
     OTag(&'a str, bool, &'a str), // bool denotes whether it is an inverted section tag
     CTag(&'a str, &'a str),
     Raw(&'a str, &'a str),
-    Partial(&'a str, &'a str)
+    Partial(&'a str, &'a str),
 }
 
 pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
     let mut tokens: Vec<Token> = Vec::new();
-    let mut close_pos = 0u;
+    let re = regex!(r"\{\{(\{?\S?\s?[\w\.?\s]*\s?\}?)\}\}");
     let len = contents.len();
-    let re = regex!(r"(?P<outer>\{\{(?P<inner>\{?\S?\s?[\w\.?\s]*\s?\}?)\}\})");
-
+    let mut close_pos = 0u;
     for cap in re.captures_iter(contents) {
-        let inner = cap.name("inner");
-        let outer = cap.name("outer");
-        println!("{} for {}", cap.pos(0), outer);
+        let inner = cap.at(1);
+        let outer = cap.at(0);
         let (o, c) = cap.pos(0).unwrap();
         
         if o != close_pos {
