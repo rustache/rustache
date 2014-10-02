@@ -206,7 +206,7 @@ impl<'a> Template<'a> {
                 Static(key) => {
                     self.write_to_stream(writer, key.as_slice(), "render: section node static");
                 }
-                Section(ref key, ref children, ref inverted, open, close) => {
+                Section(ref key, ref children, ref inverted, ref open, ref close) => {
                     match inverted {
                         &false => {
                             match *data {
@@ -257,14 +257,14 @@ impl<'a> Template<'a> {
         for child in children.iter() {
             match child {
                 &Static(text) => temp.push_str(text),
-                &Value(_, text) => temp.push_str(text),
-                &Section(_, ref children, _, open, close) => {
+                &Value(_, ref text) => temp.push_str(text.as_slice()),
+                &Section(_, ref children, _, ref open, ref close) => {
                     let rv = self.get_section_text(children);
-                    temp.push_str(open);
+                    temp.push_str(open.as_slice());
                     temp.push_str(rv.as_slice());
-                    temp.push_str(close);
+                    temp.push_str(close.as_slice());
                 },
-                &Unescaped(_, text) => temp.push_str(text),
+                &Unescaped(_, ref text) => temp.push_str(text.as_slice()),
                 &Part(_, text) => temp.push_str(text)
             }
         }
