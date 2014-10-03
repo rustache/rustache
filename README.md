@@ -99,7 +99,6 @@ cargo test
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute.
 
-====
 
 ## License
 
