@@ -143,20 +143,23 @@ fn test_spec_lambdas_escaping() {
 //         clojure: '(fn [text] (if (= text "{{x}}") "yes" "no"))'
 //     template: "<{{#lambda}}{{x}}{{/lambda}}>"
 //     expected: "<yes>"
-// #[test]
-// fn test_spec_lambdas_section() {
-//     let mut w = MemWriter::new();
-//     let data = HashBuilder::new()
-//                 .insert_string("x", "Error!")
-//                 .insert_lambda("lambda", |txt| {
-//                     "yes".to_string()
-//                     "no".to_string()
-//                 });
+#[test]
+fn test_spec_lambdas_section() {
+    let mut w = MemWriter::new();
+    let data = HashBuilder::new()
+                .insert_string("x", "Error!")
+                .insert_lambda("lambda", |txt| {
+                    if txt.as_slice() == "{{x}}" {
+                        "yes".to_string()
+                    } else {
+                        "no".to_string()
+                    }
+                });
 
-//     rustache::render_text_from_hb("<{{#lambda}}{{x}}{{/lambda}}>", &data, &mut w);
+    rustache::render_text_from_hb("<{{#lambda}}{{x}}{{/lambda}}>", &data, &mut w);
 
-//     assert_eq!("<yes>".to_string(), String::from_utf8(w.unwrap()).unwrap());
-// }
+    assert_eq!("<yes>".to_string(), String::from_utf8(w.unwrap()).unwrap());
+}
 
 //   - name: Section - Expansion
 //     desc: Lambdas used for sections should have their results parsed.
@@ -177,7 +180,7 @@ fn test_spec_lambdas_section_expansion() {
     let data = HashBuilder::new()
                 .insert_string("planet", "Earth")
                 .insert_lambda("lambda", |txt| {
-                    let mut result = txt.to_string();
+                    let mut result = txt.clone();
                     result.push_str("{{planet}}");
                     result.push_str(txt.as_slice());
                     result
