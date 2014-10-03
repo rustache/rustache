@@ -1,13 +1,13 @@
-[Rustache](https://rustache.github.io) [![Build Status](https://travis-ci.org/rustache/rustache.svg?branch=master)](https://travis-ci.org/rustache/rustache)
+Rustache [![Build Status](https://travis-ci.org/rustache/rustache.svg?branch=master)](https://travis-ci.org/rustache/rustache)
 ====
 
-Rustache is a [Rust](https://www.rust-lang.org/) implementation of the [Mustache](https://mustache.github.io/) spec.
+[Rustache](https://rustache.github.io) is a [Rust](https://www.rust-lang.org/) implementation of the [Mustache](https://mustache.github.io/) spec.
 
 ## Documentation
 
 The different Mustache tags are documented at the [mustache(5)](http://mustache.github.com/mustache.5.html) man page.
 
-Our docs page is located [here](https://rustache.github.io/doc/rustache/).
+The project's docs page is located [here](https://rustache.github.io/doc/rustache/).
 
 ## Install
 
@@ -95,10 +95,13 @@ Simply clone and run:
 cargo test
 ```
 
+## Roadmap
+
+`//TODO`
+
 ## Contribute
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute.
-
 
 ## License
 
