@@ -1,7 +1,7 @@
-extern crate rustache;
+// extern crate rustache;
 
-use std::io::MemWriter;
-use rustache::HashBuilder;
+// use std::io::MemWriter;
+// use rustache::HashBuilder;
 
 //   - name: Basic Behavior
 //     desc: The greater-than operator should expand to the named partial.
