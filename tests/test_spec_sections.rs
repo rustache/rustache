@@ -293,7 +293,7 @@ fn test_spec_sections_failed_context_lookups_are_falsy() {
 //       list: [ 'a', 'b', 'c', 'd', 'e' ]
 //     template: '"{{#list}}({{.}}){{/list}}"'
 //     expected: '"(a)(b)(c)(d)(e)"'
-// #[test]
+#[test]
 // fn test_spec_sections_implicit_iterators_directly_interpolate_strings() {
 //     let mut w = MemWriter::new();
 //     let data = HashBuilder::new()
