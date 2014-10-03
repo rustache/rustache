@@ -76,7 +76,7 @@ let data = HashBuilder::new()
 rustache::render_text_from_hb("{{ name }}", &data, &mut writer);
 ```
 
-Here's an example of how to pass in data in the form of a JSON enum to a `render` method:
+Here's an example of how to pass in data in the form of a JSON `enum` to a `render` method:
 
 ```rust
 let mut writer = MemWriter::new();
@@ -94,6 +94,8 @@ cargo test
 ```
 
 ## Contribute
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute.
 
 ====
 
