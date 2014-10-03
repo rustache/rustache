@@ -76,8 +76,7 @@ impl<'a> fmt::Show for Data<'a> {
 #[cfg(test)]
 mod lib_tests {
     use rustache;
-    use std::io::MemWriter;
-    use std::io::File;
+    use std::io::{File, MemWriter};
     use build::HashBuilder;
 
     #[test]
