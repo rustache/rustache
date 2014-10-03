@@ -1,6 +1,4 @@
-[Rustache](https://rustache.github.io)
-====
-[![Build Status](https://travis-ci.org/rustache/rustache.svg?branch=master)](https://travis-ci.org/rustache/rustache)
+[Rustache](https://rustache.github.io) [![Build Status](https://travis-ci.org/rustache/rustache.svg?branch=master)](https://travis-ci.org/rustache/rustache)
 ====
 
 Rustache is a Rust implementation of the Mustache spec.
@@ -38,13 +36,13 @@ files from a provided file path:
 
 ```rust
 // Renders a template file from a HashBuilder to a specified writer
-rustache::render_file_from_hb("path.html", &data, &writer)
+rustache::render_file_from_hb("path/to/template.html", &data, &writer)
 
 // Renders a template file from a JSON enum to a specified writer
-rustache::render_file_from_json_enum("path.html", &data, &writer)
+rustache::render_file_from_json_enum("path/to/template.html", &data, &writer)
 
 // Renders a template file from a JSON string to a specified writer
-rustache::render_file_from_json_string("path.html", &str, &writer)
+rustache::render_file_from_json_string("path/to/template.html", &str, &writer)
 
 // Renders a template file from a JSON file to a specified writer
 rustache::render_file_from_json_file("path/to/template.html", "data/data.json", &writer)
