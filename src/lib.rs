@@ -1,7 +1,13 @@
 #![crate_name = "rustache"]
+#![comment = "A flexible template engine for Rust"]
+#![license = "MIT"]
+
 #![warn(missing_doc)]
 // #![deny(warnings)]
-#![license = "MIT"]
+
+//! The main crate for the Rustache library.
+//!
+//! Rustache is a flexible template engine for Rust.
 
 #![feature(phase)]
 #[phase(plugin)]
@@ -25,6 +31,7 @@ mod build;
 mod template;
 
 /// Represents the possible types that passed in data may take on
+#[doc(hidden)]
 pub enum Data<'a> {
     Strng(String),
     Bool(bool),
