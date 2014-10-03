@@ -76,6 +76,11 @@ Simply clone and run:
 ```bash
 cargo test
 ```
+====
+
+## Contribute
+
+====
 
 ## License
 
