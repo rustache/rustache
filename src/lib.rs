@@ -1,6 +1,7 @@
 #![crate_name = "rustache"]
 #![warn(missing_doc)]
 // #![deny(warnings)]
+#![license = "MIT"]
 
 #![feature(phase)]
 #[phase(plugin)]
@@ -34,6 +35,7 @@ pub enum Data<'a> {
     Lambda(RefCell<|String|: 'a -> String>)
 }
 
+/// Implementing custom PartialEq for Data
 impl<'a> PartialEq for Data<'a> {
     fn eq(&self, other: &Data<'a>) -> bool {
         match (self, other) {
@@ -49,6 +51,7 @@ impl<'a> PartialEq for Data<'a> {
     }
 }
 
+/// Implementing custom Show for Data
 impl<'a> fmt::Show for Data<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {

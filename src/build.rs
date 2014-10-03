@@ -28,7 +28,6 @@ impl<'a> HashBuilder<'a> {
     /// let data = HashBuilder::new()
     ///     .insert_string("game", "Hearthstone: Heroes of Warcraft");
     /// ```
-
     pub fn insert_string<K: StrAllocating, V: StrAllocating>(self, key: K, value: V) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         data.insert(key.into_string(), Strng(value.into_string()));
@@ -42,7 +41,6 @@ impl<'a> HashBuilder<'a> {
     /// let data = HashBuilder::new()
     ///     .insert_bool("playing", true);
     /// ```
-
     pub fn insert_bool<K: StrAllocating>(self, key: K, value: bool) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         data.insert(key.into_string(), Bool(value));
@@ -57,7 +55,6 @@ impl<'a> HashBuilder<'a> {
     ///     .insert_int("age", 10i)
     ///     .insert_int("drinking age", -21i);
     /// ```
-
     pub fn insert_int<K: StrAllocating>(self, key: K, value: int) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         data.insert(key.into_string(), Integer(value));
@@ -72,7 +69,6 @@ impl<'a> HashBuilder<'a> {
     ///     .insert_float("pi", 3.141596f64)
     ///     .insert_float("phi", 1.61803398875f64);
     /// ```
-
     pub fn insert_float<K: StrAllocating>(self, key: K, value: f64) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         data.insert(key.into_string(), Float(value));
@@ -90,7 +86,6 @@ impl<'a> HashBuilder<'a> {
     ///             .push_string("Druid".to_string())
     ///     });  
     /// ```
-
     pub fn insert_vector<K: StrAllocating>(self, key: K, f: |VecBuilder<'a>| -> VecBuilder<'a>) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         let builder = f(VecBuilder::new());
@@ -114,7 +109,6 @@ impl<'a> HashBuilder<'a> {
     ///             .insert_string("last_name", "Proudmoore")    
     ///     });
     /// ```
-
     pub fn insert_hash<K: StrAllocating>(self, key: K, f: |HashBuilder<'a>| -> HashBuilder<'a>) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         let builder = f(HashBuilder::new());
@@ -133,7 +127,6 @@ impl<'a> HashBuilder<'a> {
     ///         num.to_string()                
     ///     });
     /// ```
-
     pub fn insert_lambda<K: StrAllocating>(self, key: K, f: |String|: 'a -> String) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         data.insert(key.into_string(), Lambda(RefCell::new(f)));
@@ -172,7 +165,6 @@ impl<'a> VecBuilder<'a> {
     ///     .push_string("Mage")
     ///     .push_string("Druid");
     /// ```
-
     pub fn push_string<T: StrAllocating>(self, value: T) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         data.push(Strng(value.into_string()));
@@ -187,7 +179,6 @@ impl<'a> VecBuilder<'a> {
     ///     .push_bool(true)
     ///     .push_bool(false);
     /// ```
-
     pub fn push_bool(self, value: bool) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         data.push(Bool(value));
@@ -202,7 +193,6 @@ impl<'a> VecBuilder<'a> {
     ///     .push_int(10i)
     ///     .push_int(-21i);
     /// ```
-
     pub fn push_int(self, value: int) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         data.push(Integer(value));
@@ -217,7 +207,6 @@ impl<'a> VecBuilder<'a> {
     ///     .push_float(10.356356f64)
     ///     .push_float(-21.34956230456f64);
     /// ```
-
     pub fn push_float(self, value: f64) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         data.push(Float(value));
@@ -235,7 +224,6 @@ impl<'a> VecBuilder<'a> {
     ///             .push_string("Jaina Proudmoore".to_string())
     ///     });
     /// ```
-
     pub fn push_vector(self, f: |VecBuilder<'a>| -> VecBuilder<'a>) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         let builder = f(VecBuilder::new());
@@ -259,7 +247,6 @@ impl<'a> VecBuilder<'a> {
     ///             .insert_string("last_name".to_string(), "Stormrage".to_string())    
     ///     });
     /// ```
-
     pub fn push_hash(self, f: |HashBuilder<'a>| -> HashBuilder<'a>) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         let builder = f(HashBuilder::new());
@@ -278,7 +265,6 @@ impl<'a> VecBuilder<'a> {
     ///         num.to_string()
     ///     });
     /// ```
-
     pub fn push_lambda(self, f: |String|: 'a -> String) -> VecBuilder <'a> {
         let VecBuilder { mut data } = self;
         data.push(Lambda(RefCell::new(f)));
