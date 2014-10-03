@@ -707,65 +707,13 @@ mod template_tests {
         assert_eq!(completed, Ok(()));
     }
 
-  // - name: Interpolation
-  //   desc: A lambda's return value should be interpolated.
-  //   data:
-  //     lambda: !code
-  //       ruby:    'proc { "world" }'
-  //       perl:    'sub { "world" }'
-  //       js:      'function() { return "world" }'
-  //       php:     'return "world";'
-  //       python:  'lambda: "world"'
-  //       clojure: '(fn [] "world")'
-  //   template: "Hello, {{lambda}}!"
-  //   expected: "Hello, world!"
-
-    #[test]
-    fn test_spec_lambda_return_value_interpolated() {
-        let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("Hello, {{lambda}}!");
-        let nodes = parser::parse_nodes(&tokens);
-        let data = HashBuilder::new().insert_lambda("lambda", |_| { "world".to_string() });
-
-        Template::new().render_data(&mut w, &data, &nodes);
-
-        assert_eq!("Hello, world!".to_string(), String::from_utf8(w.unwrap()).unwrap());
-    }
-
-  // - name: Interpolation - Expansion
-  //   desc: A lambda's return value should be parsed.
-  //   data:
-  //     planet: "world"
-  //     lambda: !code
-  //       ruby:    'proc { "{{planet}}" }'
-  //       perl:    'sub { "{{planet}}" }'
-  //       js:      'function() { return "{{planet}}" }'
-  //       php:     'return "{{planet}}";'
-  //       python:  'lambda: "{{planet}}"'
-  //       clojure: '(fn [] "{{planet}}")'
-  //   template: "Hello, {{lambda}}!"
-  //   expected: "Hello, world!"
-
-    #[test]
-    fn test_spec_lambda_return_value_parsed() {
-        let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("Hello, {{lambda}}!");
-        let nodes = parser::parse_nodes(&tokens);
-        let data = HashBuilder::new().insert_lambda("lambda", |_| { "{{planet}}".to_string() })
-                                     .insert_string("planet", "world");
-
-        Template::new().render_data(&mut w, &data, &nodes);
-
-        assert_eq!("Hello, world!".to_string(), String::from_utf8(w.unwrap()).unwrap());
-    }
-
   // - name: Interpolation - Multiple Calls
   //   desc: Interpolated lambdas should not be cached.
   //   data:
   //     lambda: !code
   //       ruby:    'proc { $calls ||= 0; $calls += 1 }'
   //       perl:    'sub { no strict; $calls += 1 }'
-  //       js:      'function() { return (g=(function(){return this})()).calls=(g.calls||0)+1 }'
+  //       js:      'function() {return (g=(function(){return this})()).calls=(g.calls||0)+1 }'
   //       php:     'global $calls; return ++$calls;'
   //       python:  'lambda: globals().update(calls=globals().get("calls",0)+1) or calls'
   //       clojure: '(def g (atom 0)) (fn [] (swap! g inc))'
@@ -783,124 +731,5 @@ mod template_tests {
         Template::new().render_data(&mut w, &data, &nodes);
 
         assert_eq!("Saturn == Earth == Jupiter".to_string(), String::from_utf8(w.unwrap()).unwrap());
-    }
-
-  // - name: Escaping
-  //   desc: Lambda results should be appropriately escaped.
-  //   data:
-  //     lambda: !code
-  //       ruby:    'proc { ">" }'
-  //       perl:    'sub { ">" }'
-  //       js:      'function() { return ">" }'
-  //       php:     'return ">";'
-  //       python:  'lambda: ">"'
-  //       clojure: '(fn [] ">")'
-  //   template: "<{{lambda}}{{{lambda}}}"
-  //   expected: "<&gt;>"
-
-    #[test]
-    fn test_spec_lambda_results_appropriately_escaped() {
-        let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("<{{lambda}}{{&lambda}}");
-        let nodes = parser::parse_nodes(&tokens);
-        let data = HashBuilder::new().insert_lambda("lambda", |_| { return ">".to_string() });
-
-        Template::new().render_data(&mut w, &data, &nodes);
-
-        assert_eq!("<&gt;>".to_string(), String::from_utf8(w.unwrap()).unwrap());
-    }
-
-    // - name: Section
-    //   desc: Lambdas used for sections should receive the raw section string.
-    //   data:
-    //     x: 'Error!'
-    //     lambda: !code
-    //       ruby:    'proc { |text| text == "{{x}}" ? "yes" : "no" }'
-    //       perl:    'sub { $_[0] eq "{{x}}" ? "yes" : "no" }'
-    //       js:      'function(txt) { return (txt == "{{x}}" ? "yes" : "no") }'
-    //       php:     'return ($text == "{{x}}") ? "yes" : "no";'
-    //       python:  'lambda text: text == "{{x}}" and "yes" or "no"'
-    //       clojure: '(fn [text] (if (= text "{{x}}") "yes" "no"))'
-    //   template: "<{{#lambda}}{{x}}{{/lambda}}>"
-    //   expected: "<yes>"
-
-    #[test]
-    fn test_spec_lambdas_receive_raw_section_string() {
-        let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("<{{#lambda}}{{x}}{{/lambda}}>");
-        let nodes = parser::parse_nodes(&tokens);
-        let data = HashBuilder::new().insert_lambda("lambda", |text| { 
-            if text.as_slice() == "{{x}}" { "yes".to_string() } else { "no".to_string() }
-        });
-
-        Template::new().render_data(&mut w, &data, &nodes);
-
-        assert_eq!("<yes>".to_string(), String::from_utf8(w.unwrap()).unwrap());
-    }
-
-    // - name: Section - Expansion
-    //   desc: Lambdas used for sections should have their results parsed.
-    //   data:
-    //     planet: "Earth"
-    //     lambda: !code
-    //       ruby:    'proc { |text| "#{text}{{planet}}#{text}" }'
-    //       perl:    'sub { $_[0] . "{{planet}}" . $_[0] }'
-    //       js:      'function(txt) { return txt + "{{planet}}" + txt }'
-    //       php:     'return $text . "{{planet}}" . $text;'
-    //       python:  'lambda text: "%s{{planet}}%s" % (text, text)'
-    //       clojure: '(fn [text] (str text "{{planet}}" text))'
-    //   template: "<{{#lambda}}-{{/lambda}}>"
-    //   expected: "<-Earth->"
-
-    #[test]
-    fn test_spec_lambdas_for_sections_parsed() {
-        let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("<{{#lambda}}-{{/lambda}}>");
-        let nodes = parser::parse_nodes(&tokens);
-        let data = HashBuilder::new().insert_string("planet", "Earth")
-                                     .insert_lambda("lambda", |text| { 
-                                        let mut tmp = String::new();
-                                        tmp.push_str(text.as_slice());
-                                        tmp.push_str("{{planet}}");
-                                        tmp.push_str(text.as_slice());
-                                        return tmp;
-                                     });
-
-        Template::new().render_data(&mut w, &data, &nodes);
-
-        assert_eq!("<-Earth->".to_string(), String::from_utf8(w.unwrap()).unwrap());
-
-    }
-
-    // // - name: Section - Multiple Calls
-    // //   desc: Lambdas used for sections should not be cached.
-    // //   data:
-    // //     lambda: !code
-    // //       ruby:    'proc { |text| "__#{text}__" }'
-    // //       perl:    'sub { "__" . $_[0] . "__" }'
-    // //       js:      'function(txt) { return "__" + txt + "__" }'
-    // //       php:     'return "__" . $text . "__";'
-    // //       python:  'lambda text: "__%s__" % (text)'
-    // //       clojure: '(fn [text] (str "__" text "__"))'
-    // //   template: '{{#lambda}}FILE{{/lambda}} != {{#lambda}}LINE{{/lambda}}'
-    // //   expected: '__FILE__ != __LINE__'
-
-    #[test]
-    fn test_spec_lambdas_for_sections_not_cached() {
-        let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("{{#lambda}}FILE{{/lambda}} != {{#lambda}}LINE{{/lambda}}");
-        let nodes = parser::parse_nodes(&tokens);
-        let data = HashBuilder::new().insert_lambda("lambda", |text| { 
-            let mut tmp = String::new();
-            tmp.push_str("__");
-            tmp.push_str(text.as_slice());
-            tmp.push_str("__");
-            return tmp;
-        });
-
-
-        Template::new().render_data(&mut w, &data, &nodes);
-
-        assert_eq!("__FILE__ != __LINE__".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 }
