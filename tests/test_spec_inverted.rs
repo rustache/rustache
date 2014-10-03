@@ -162,12 +162,44 @@ fn test_spec_inverted_missing_falsey() {
 //   data: { a: { b: { c: true } } }
 //   template: '"{{^a.b.c}}Not Here{{/a.b.c}}" == ""'
 //   expected: '"" == ""'
+// #[test]
+// fn test_spec_truthy_dotted_names_valid_inverted_section_tags() {
+//     let mut w = MemWriter::new();
+//     let data = HashBuilder::new()
+//         .insert_hash("a", |builder| {
+//             builder
+//                 .insert_hash("b", |builder| {
+//                     builder
+//                         .insert_bool("c", true)
+//                 })
+//         });
+
+//     rustache::render_text_from_hb("'{{^a.b.c}}Not Here{{/a.b.c}}' == ''", &data, &mut w);
+
+//     assert_eq!("'' == ''".to_string(), String::from_utf8(w.unwrap()).unwrap());
+// }
 
 // - name: Dotted Names - Falsey
 //   desc: Dotted names should be valid for Inverted Section tags.
 //   data: { a: { b: { c: false } } }
 //   template: '"{{^a.b.c}}Not Here{{/a.b.c}}" == "Not Here"'
 //   expected: '"Not Here" == "Not Here"'
+#[test]
+fn test_spec_falsey_dotted_names_valid_inverted_section_tags() {
+    let mut w = MemWriter::new();
+    let data = HashBuilder::new()
+        .insert_hash("a", |builder| {
+            builder
+                .insert_hash("b", |builder| {
+                    builder
+                        .insert_bool("c", false)
+                })
+        });
+
+    rustache::render_text_from_hb("'{{^a.b.c}}Not Here{{/a.b.c}}' == 'Not Here'", &data, &mut w);
+
+    assert_eq!("'Not Here' == 'Not Here'".to_string(), String::from_utf8(w.unwrap()).unwrap());
+}
 
 // - name: Dotted Names - Broken Chains
 //   desc: Dotted names that cannot be resolved should be considered falsey.
