@@ -14,7 +14,8 @@ use std::fmt;
 use std::cell::RefCell;
 
 pub use build::{HashBuilder, VecBuilder};
-pub use rustache::{render, render_text, render_json_file, render_json_string};
+pub use rustache::{render_file_from_hb, render_file_from_json_enum, render_file_from_json_string, render_file_from_json_file};
+pub use rustache::{render_text_from_hb, render_text_from_json_enum, render_text_from_json_string, render_text_from_json_file};
 
 mod rustache;
 mod compiler;
@@ -75,7 +76,7 @@ mod lib_tests {
         let data_path = "test_data/test.json";
 
         let mut w = MemWriter::new();
-        rustache::render_json_file(template_path, data_path, &mut w);
+        rustache::render_file_from_json_file(template_path, data_path, &mut w);
 
         let mut f = File::create(&Path::new("test_data/json.html"));
         let completed = f.write(w.unwrap().as_slice());
@@ -98,7 +99,7 @@ mod lib_tests {
             ).set_partials_path("test_data");
             
         let mut w = MemWriter::new();
-        rustache::render(path, &data, &mut w);
+        rustache::render_file_from_hb(path, &data, &mut w);
 
         let mut f = File::create(&Path::new("test_data/index.html"));
         let completed = f.write(w.unwrap().as_slice());

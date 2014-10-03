@@ -6,35 +6,28 @@ use serialize::json::{Json, Boolean, Null, I64, U64, F64, String, List, Object};
 use build::{HashBuilder, VecBuilder};
 use template::Template;
 
-pub fn render<'a, W: Writer>(path: &str, data: &HashBuilder, writer: &mut W) {
+pub fn render_file_from_hb<W: Writer>(path: &str, data: &HashBuilder, writer: &mut W) {
     let file = read_file(Path::new(path));
     let tokens = compiler::create_tokens(file.as_slice());
     let nodes = parser::parse_nodes(&tokens);
     Template::new().render_data(writer, data, &nodes);
 }
 
-pub fn render_text<'a, W: Writer>(input: &'a str, data: &HashBuilder, writer: &mut W) {
-    let tokens = compiler::create_tokens(input);
-    let nodes = parser::parse_nodes(&tokens);
-    Template::new().render_data(writer, data, &nodes);
-}
-
-pub fn render_json<'a, W: Writer>(template: &str, json: Json, writer: &mut W) {
+pub fn render_file_from_json_enum<W: Writer>(template: &str, json: Json, writer: &mut W) {
     let data = parse_json(&json);
-    render(template, &data, writer);
+    render_file_from_hb(template, &data, writer);
 }
 
-pub fn render_json_string<'a, W: Writer>(template: &str, data: &str, writer: &mut W) {
+pub fn render_file_from_json_string<W: Writer>(template: &str, data: &str, writer: &mut W) {
     let json = match json::from_str(data) {
         Ok(json) => json,
         Err(err) => fail!("Invalid JSON. {}", err)
     };
     
-    render_json(template, json, writer);
+    render_file_from_json_enum(template, json, writer);
 }
 
-
-pub fn render_json_file<'a, W: Writer>(template: &str, data: &str, writer: &mut W) {
+pub fn render_file_from_json_file<W: Writer>(template: &str, data: &str, writer: &mut W) {
     let data_string = read_file(Path::new(data));
 
     let json = match json::from_str(data_string.as_slice()) {
@@ -42,7 +35,38 @@ pub fn render_json_file<'a, W: Writer>(template: &str, data: &str, writer: &mut 
         Err(err) => fail!("Invalid JSON. {}", err)
     };
     
-    render_json(template, json, writer);
+    render_file_from_json_enum(template, json, writer);
+}
+
+pub fn render_text_from_hb<W: Writer>(input: &str, data: &HashBuilder, writer: &mut W) {
+    let tokens = compiler::create_tokens(input);
+    let nodes = parser::parse_nodes(&tokens);
+    Template::new().render_data(writer, data, &nodes);
+}
+
+pub fn render_text_from_json_enum<W: Writer>(input: &str, json: Json, writer: &mut W) {
+    let data = parse_json(&json);
+    render_text_from_hb(input, &data, writer);
+}
+
+pub fn render_text_from_json_string<W: Writer>(input: &str, data: &str, writer: &mut W) {
+    let json = match json::from_str(data) {
+        Ok(json) => json,
+        Err(err) => fail!("Invalid JSON. {}", err)
+    };
+    
+    render_text_from_json_enum(input, json, writer);
+}
+
+pub fn render_text_from_json_file<W: Writer>(input: &str, data: &str, writer: &mut W) {
+    let data_string = read_file(Path::new(data));
+
+    let json = match json::from_str(data_string.as_slice()) {
+        Ok(json) => json,
+        Err(err) => fail!("Invalid JSON. {}", err)
+    };
+    
+    render_text_from_json_enum(input, json, writer);
 }
 
 fn parse_json(json: &Json) -> HashBuilder{
