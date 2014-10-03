@@ -1,18 +1,17 @@
-Rustache
-====
-https://rustache.github.io
-[![Build Status](https://travis-ci.org/rustache/rustache.svg?branch=master)](https://travis-ci.org/rustache/rustache)
+[Rustache](https://rustache.github.io) [![Build Status](https://travis-ci.org/rustache/rustache.svg?branch=master)](https://travis-ci.org/rustache/rustache)
 ====
 
-Rustache is a Rust implementation of the Mustache spec.
+Rustache is a [Rust](https://www.rust-lang.org/) implementation of the [Mustache](https://mustache.github.io/) spec.
 
 ## Documentation
 
-The different Mustache tags are documented at [mustache(5)](http://mustache.github.com/mustache.5.html).
+The different Mustache tags are documented at the [mustache(5)](http://mustache.github.com/mustache.5.html) man page.
+
+Our docs page is located [here](https://rustache.github.io/doc/rustache/).
 
 ## Install
 
-Install it through Cargo:
+Install it through [Cargo](https://crates.io/):
 
 ```toml
 [dependencies.rustache]
@@ -25,13 +24,68 @@ Then link it within your crate like so:
 extern crate rustache;
 ```
 
-# Getting Started
+## API Methods
 
-====
+The main forward interface that users will interact with when using Rustache is the `rustache::render` method like so:
 
-# Examples
+```rust
+rustache::render("path/to/template.html", &data)
+```
 
-====
+Users also have the option to utilize more focused API methods for 
+interfacing with Rustache. The following methods handle template 
+files from a provided file path:
+
+```rust
+// Renders a template file from a HashBuilder to a specified writer
+rustache::render_file_from_hb("path/to/template.html", &data, &writer)
+
+// Renders a template file from a JSON enum to a specified writer
+rustache::render_file_from_json_enum("path/to/template.html", &data, &writer)
+
+// Renders a template file from a JSON string to a specified writer
+rustache::render_file_from_json_string("path/to/template.html", &str, &writer)
+
+// Renders a template file from a JSON file to a specified writer
+rustache::render_file_from_json_file("path/to/template.html", "data/data.json", &writer)
+```
+
+The following methods handle templates in the form of text strings:
+
+```rust
+// Render template text from a specified HashBuilder to a specified writer
+rustache::render_text_from_hb("{{ name }}", &data, &writer)
+
+// Render template text from a JSON enum to a specified writer
+rustache::render_text_from_json_enum("{{ name }}", &json, &writer)
+
+// Render template text from a JSON string to a specified writer
+rustache::render_text_from_json_string("{{ name }}", &str, &writer)
+
+// Render template text from a JSON file to a specified writer
+rustache::render_text_from_json_file("{{ name }}", "data/data.json", &writer)
+```
+
+## Examples
+
+Here's an example of how to pass in data to a `render` method using the `HashBuilder`:
+
+```rust
+let mut writer = MemWriter::new();
+let data = HashBuilder::new()
+    .insert_string("name", "Bob");
+
+rustache::render_text_from_hb("{{ name }}", &data, &mut writer);
+```
+
+Here's an example of how to pass in data in the form of a JSON `enum` to a `render` method:
+
+```rust
+let mut writer = MemWriter::new();
+let data  = json::from_str(r#"{"name": "Bob"}"#);
+
+rustache::render_text_from_json_enum("{{ name }}", data, &mut writer);
+```
 
 ## Testing
 
@@ -41,7 +95,12 @@ Simply clone and run:
 cargo test
 ```
 
-# License
+## Contribute
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute.
+
+
+## License
 
 Copyright (c) 2014 Team Rustache
 

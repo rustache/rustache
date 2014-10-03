@@ -9,12 +9,11 @@ extern crate regex;
 
 extern crate serialize;
 
-use std::collections::HashMap;
 use std::fmt;
 use std::cell::RefCell;
+use std::collections::HashMap;
 
 pub use build::{HashBuilder, VecBuilder};
-pub use rustache::{render_file_from_hb, render_file_from_json_enum, render_file_from_json_string, render_file_from_json_file};
 pub use rustache::{render_text_from_hb, render_text_from_json_enum, render_text_from_json_string, render_text_from_json_file, read_file};
 
 mod rustache;
@@ -24,6 +23,7 @@ mod build;
 mod template;
 
 /// Represents the possible types that passed in data may take on
+#[doc(hidden)]
 pub enum Data<'a> {
     Strng(String),
     Bool(bool),
