@@ -53,7 +53,7 @@ use rustache::HashBuilder;
         let data = HashBuilder::new()
             .insert_bool("boolean", true);
 
-        rustache::render_text("{{#boolean}}This should be rendered.{{/boolean}}", &data, &mut w);
+        rustache::render_text_from_hb("{{#boolean}}This should be rendered.{{/boolean}}", &data, &mut w);
 
         assert_eq!("This should be rendered.".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -70,7 +70,7 @@ use rustache::HashBuilder;
         let data = HashBuilder::new()
             .insert_bool("boolean", false);
 
-        rustache::render_text("{{#boolean}}This should not be rendered.{{/boolean}}", &data, &mut w);
+        rustache::render_text_from_hb("{{#boolean}}This should not be rendered.{{/boolean}}", &data, &mut w);
 
         assert_eq!("".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -90,7 +90,7 @@ use rustache::HashBuilder;
                     .insert_string("name", "Joe")
             });
 
-        rustache::render_text("{{#context}}Hi {{name}}.{{/context}}", &data, &mut w);
+        rustache::render_text_from_hb("{{#context}}Hi {{name}}.{{/context}}", &data, &mut w);
 
         assert_eq!("Hi Joe.".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -159,7 +159,7 @@ use rustache::HashBuilder;
                     .insert_int("five", 5)
             });
 
-        rustache::render_text("{{#a}}
+        rustache::render_text_from_hb("{{#a}}
                                {{one}}
                                {{#b}}
                                {{one}}{{two}}{{one}}
@@ -220,7 +220,7 @@ use rustache::HashBuilder;
                     })
             });
 
-        rustache::render_text("{{#list}}{{item}}{{/list}}", &data, &mut w);
+        rustache::render_text_from_hb("{{#list}}{{item}}{{/list}}", &data, &mut w);
 
         assert_eq!("123".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -239,7 +239,7 @@ use rustache::HashBuilder;
                 builder
             });
 
-        rustache::render_text("{{#list}}Yay lists!{{/list}}", &data, &mut w);
+        rustache::render_text_from_hb("{{#list}}Yay lists!{{/list}}", &data, &mut w);
 
         assert_eq!("".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -267,7 +267,7 @@ use rustache::HashBuilder;
             .insert_bool("bool", true)
             .insert_string("two", "second");
 
-        rustache::render_text("{{#bool}}
+        rustache::render_text_from_hb("{{#bool}}
                                * first
                                {{/bool}}
                                * {{two}}
@@ -297,7 +297,7 @@ use rustache::HashBuilder;
         let data = HashBuilder::new()
             .insert_bool("bool", true);
 
-        rustache::render_text("| A {{#bool}}B {{#bool}}C{{/bool}} D{{/bool}} E |", &data, &mut w);
+        rustache::render_text_from_hb("| A {{#bool}}B {{#bool}}C{{/bool}} D{{/bool}} E |", &data, &mut w);
 
         assert_eq!("| A B C D E |".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -314,7 +314,7 @@ use rustache::HashBuilder;
         let data = HashBuilder::new()
             .insert_bool("bool", false);
 
-        rustache::render_text("| A {{#bool}}B {{#bool}}C{{/bool}} D{{/bool}} E |", &data, &mut w);
+        rustache::render_text_from_hb("| A {{#bool}}B {{#bool}}C{{/bool}} D{{/bool}} E |", &data, &mut w);
 
         assert_eq!("| A  E |".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }*/
@@ -330,7 +330,7 @@ use rustache::HashBuilder;
         let mut w = MemWriter::new();
         let data = HashBuilder::new();
 
-        rustache::render_text("[{{#missing}}Found key 'missing'!{{/missing}}]", &data, &mut w);
+        rustache::render_text_from_hb("[{{#missing}}Found key 'missing'!{{/missing}}]", &data, &mut w);
 
         assert_eq!("[]".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -357,7 +357,7 @@ use rustache::HashBuilder;
     //                 .push_string("e")
     //         });
 
-    //     rustache::render_text("{{#list}}({{.}}){{/list}}", &data, &mut w);
+        rustache::render_text_from_hb("{{#list}}({{.}}){{/list}}", &data, &mut w);
 
     //     assert_eq!("(a)(b)(c)(d)(e)".to_string(), String::from_utf8(w.unwrap()).unwrap());
     // }
@@ -382,7 +382,7 @@ use rustache::HashBuilder;
                     .push_int(5)
             });
 
-        rustache::render_text("{{#list}}({{.}}){{/list}}", &data, &mut w);
+        rustache::render_text_from_hb("{{#list}}({{.}}){{/list}}", &data, &mut w);
 
         assert_eq!("(1)(2)(3)(4)(5)".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }*/
@@ -407,7 +407,7 @@ use rustache::HashBuilder;
                     .push_float(5.50)
             });
 
-        rustache::render_text("{{#list}}({{.}}){{/list}}", &data, &mut w);
+        rustache::render_text_from_hb("{{#list}}({{.}}){{/list}}", &data, &mut w);
 
         assert_eq!("(1.1)(2.2)(3.3)(4.4)(5.5)".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }*/
@@ -432,7 +432,7 @@ use rustache::HashBuilder;
                 })
             });
 
-        rustache::render_text("'{{#a.b.c}}Here{{/a.b.c}}' == 'Here'", &data, &mut w);
+        rustache::render_text_from_hb("'{{#a.b.c}}Here{{/a.b.c}}' == 'Here'", &data, &mut w);
 
         assert_eq!("'Here' == 'Here'".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }*/
@@ -455,7 +455,7 @@ use rustache::HashBuilder;
                 })
             });
 
-        rustache::render_text("'{{#a.b.c}}Here{{/a.b.c}}' == ''", &data, &mut w);
+        rustache::render_text_from_hb("'{{#a.b.c}}Here{{/a.b.c}}' == ''", &data, &mut w);
 
         assert_eq!("'' == ''".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -474,7 +474,7 @@ use rustache::HashBuilder;
                 builder
             });
 
-        rustache::render_text("'{{#a.b.c}}Here{{/a.b.c}}' == ''", &data, &mut w);
+        rustache::render_text_from_hb("'{{#a.b.c}}Here{{/a.b.c}}' == ''", &data, &mut w);
 
         assert_eq!("'' == ''".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -493,7 +493,7 @@ use rustache::HashBuilder;
         let data = HashBuilder::new()
             .insert_bool("boolean", true);
 
-        rustache::render_text(" | {{#boolean}}\t|\t{{/boolean}} | \n", &data, &mut w);
+        rustache::render_text_from_hb(" | {{#boolean}}\t|\t{{/boolean}} | \n", &data, &mut w);
 
         assert_eq!(" | \t|\t | \n".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -510,7 +510,7 @@ use rustache::HashBuilder;
         let data = HashBuilder::new()
             .insert_bool("boolean", true);
 
-        rustache::render_text(" | {{#boolean}} {{! Important Whitespace }}\n {{/boolean}} | \n", &data, &mut w);
+        rustache::render_text_from_hb(" | {{#boolean}} {{! Important Whitespace }}\n {{/boolean}} | \n", &data, &mut w);
 
         assert_eq!(" |  \n  | \n".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -527,7 +527,7 @@ use rustache::HashBuilder;
         let data = HashBuilder::new()
             .insert_bool("boolean", true);
 
-        rustache::render_text(" {{#boolean}}YES{{/boolean}}\n {{#boolean}}GOOD{{/boolean}}\n", &data, &mut w);
+        rustache::render_text_from_hb(" {{#boolean}}YES{{/boolean}}\n {{#boolean}}GOOD{{/boolean}}\n", &data, &mut w);
 
         assert_eq!(" YES\n GOOD\n".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -552,7 +552,7 @@ use rustache::HashBuilder;
         let data = HashBuilder::new()
             .insert_bool("boolean", true);
 
-        rustache::render_text("|
+        rustache::render_text_from_hb("|
                                | This Is
                                {{#boolean}}
                                |
@@ -590,7 +590,7 @@ use rustache::HashBuilder;
         let data = HashBuilder::new()
             .insert_bool("boolean", true);
 
-        rustache::render_text("|
+        rustache::render_text_from_hb("|
                                | This Is
                                  {{#boolean}}
                                |
@@ -619,7 +619,7 @@ use rustache::HashBuilder;
         let data = HashBuilder::new()
             .insert_bool("boolean", true);
 
-        rustache::render_text("|\r\n{{#boolean}}\r\n{{/boolean}}\r\n|", &data, &mut w);
+        rustache::render_text_from_hb("|\r\n{{#boolean}}\r\n{{/boolean}}\r\n|", &data, &mut w);
 
         assert_eq!("|\r\n|".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }*/
@@ -636,7 +636,7 @@ use rustache::HashBuilder;
         let data = HashBuilder::new()
             .insert_bool("boolean", true);
 
-        rustache::render_text("  {{#boolean}}\n#{{/boolean}}\n/", &data, &mut w);
+        rustache::render_text_from_hb("  {{#boolean}}\n#{{/boolean}}\n/", &data, &mut w);
 
         assert_eq!("#\n/".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }*/
@@ -653,7 +653,7 @@ use rustache::HashBuilder;
         let data = HashBuilder::new()
             .insert_bool("boolean", true);
 
-        rustache::render_text("#{{#boolean}}\n/\n  {{/boolean}}", &data, &mut w);
+        rustache::render_text_from_hb("#{{#boolean}}\n/\n  {{/boolean}}", &data, &mut w);
 
         assert_eq!("#\n/\n".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }*/
@@ -672,7 +672,7 @@ use rustache::HashBuilder;
         let data = HashBuilder::new()
             .insert_bool("boolean", true);
 
-        rustache::render_text("|{{# boolean }}={{/ boolean }}|", &data, &mut w);
+        rustache::render_text_from_hb("|{{# boolean }}={{/ boolean }}|", &data, &mut w);
 
         assert_eq!("|=|".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }

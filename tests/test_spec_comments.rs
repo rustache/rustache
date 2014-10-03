@@ -9,7 +9,7 @@ fn test_spec_inline_comment() {
     let mut w = MemWriter::new();
     let data = HashBuilder::new();
 
-    rustache::render_text("12345{{! Comment Block }}67890", &data, &mut w);
+    rustache::render_text_from_hb("12345{{! Comment Block }}67890", &data, &mut w);
 
     assert_eq!("1234567890".to_string(), String::from_utf8(w.unwrap()).unwrap());
 }
@@ -24,7 +24,7 @@ fn test_spec_inline_comment() {
 //     let mut w = MemWriter::new();
 //     let data = HashBuilder::new();
 
-//     rustache::render_text("12345{{! Comment Block! }}67890", &data, &mut w);
+//     rustache::render_text_from_hb("12345{{! Comment Block! }}67890", &data, &mut w);
 
 //     assert_eq!("1234567890".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
@@ -45,7 +45,7 @@ fn test_spec_inline_comment() {
 //     let mut w = MemWriter::new();
 //     let data = HashBuilder::new();
 
-//     rustache::render_text("12345{{!\nThis is a\nmulti-line comment...\n}}67890", &data, &mut w);
+//     rustache::render_text_from_hb("12345{{!\nThis is a\nmulti-line comment...\n}}67890", &data, &mut w);
 
 //     assert_eq!("1234567890".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
@@ -67,7 +67,7 @@ fn test_spec_inline_comment() {
 //     let mut w = MemWriter::new();
 //     let data = HashBuilder::new();
 
-//     rustache::render_text("Begin.\n{{! Comment Block! }}\nEnd.", &data, &mut w);
+//     rustache::render_text_from_hb("Begin.\n{{! Comment Block! }}\nEnd.", &data, &mut w);
 
 //     assert_eq!("Begin\nEnd.".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
@@ -88,7 +88,7 @@ fn test_spec_inline_comment() {
 //     let mut w = MemWriter::new();
 //     let data = HashBuilder::new();
 
-//     rustache::render_text("Begin.\n\t{{! Indented Comment Block! }}\nEnd.", &data, &mut w);
+//     rustache::render_text_from_hb("Begin.\n\t{{! Indented Comment Block! }}\nEnd.", &data, &mut w);
 
 //     assert_eq!("Begin\nEnd.".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
@@ -104,7 +104,7 @@ fn test_spec_inline_comment() {
 //     let mut w = MemWriter::new();
 //     let data = HashBuilder::new();
 
-//     rustache::render_text("|\r\n{{! Standalone Comment }}\r\n|", &data, &mut w);
+//     rustache::render_text_from_hb("|\r\n{{! Standalone Comment }}\r\n|", &data, &mut w);
 
 //     assert_eq!("|\r\n|".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
@@ -120,7 +120,7 @@ fn test_spec_inline_comment() {
 //     let mut w = MemWriter::new();
 //     let data = HashBuilder::new();
 
-//     rustache::render_text("B  {{! I'm Still Standalone }}\n!", &data, &mut w);
+//     rustache::render_text_from_hb("B  {{! I'm Still Standalone }}\n!", &data, &mut w);
 
 //     assert_eq!("!".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
@@ -136,7 +136,7 @@ fn test_spec_inline_comment() {
 //     let mut w = MemWriter::new();
 //     let data = HashBuilder::new();
 
-//     rustache::render_text("!\n  {{! I'm Still Standalone }}", &data, &mut w);
+//     rustache::render_text_from_hb("!\n  {{! I'm Still Standalone }}", &data, &mut w);
 
 //     assert_eq!("!\n".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
@@ -159,7 +159,7 @@ fn test_spec_inline_comment() {
 //     let mut w = MemWriter::new();
 //     let data = HashBuilder::new();
 
-//     rustache::render_text("Begin.\n{{!\nSomething's going on here...\n}}\nEnd.", &data, &mut w);
+//     rustache::render_text_from_hb("Begin.\n{{!\nSomething's going on here...\n}}\nEnd.", &data, &mut w);
 
 //     assert_eq!("Begin.\nEnd.".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
@@ -182,7 +182,7 @@ fn test_spec_inline_comment() {
 //     let mut w = MemWriter::new();
 //     let data = HashBuilder::new();
 
-//     rustache::render_text("Begin.\n{{!\n\tSomething's going on here...\n}}\nEnd.", &data, &mut w);
+//     rustache::render_text_from_hb("Begin.\n{{!\n\tSomething's going on here...\n}}\nEnd.", &data, &mut w);
 
 //     assert_eq!("Begin.\nEnd.".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
@@ -204,7 +204,7 @@ fn test_spec_inline_comment() {
 //     let mut w = MemWriter::new();
 //     let data = HashBuilder::new();
 
-//     rustache::render_text("12345 {{! Comment Block! }} 67890", &data, &mut w);
+//     rustache::render_text_from_hb("12345 {{! Comment Block! }} 67890", &data, &mut w);
 
 //     assert_eq!("12345  67890".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
