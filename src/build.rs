@@ -120,11 +120,9 @@ impl<'a> HashBuilder<'a> {
     ///
     /// ```ignore
     /// use rustache::HashBuilder;
-    /// let mut num = 0;
     /// let data = HashBuilder::new()
-    ///     .insert_lambda("double", |_| {
-    ///         num *= 2u;
-    ///         num.to_string()                
+    ///     .insert_lambda("lambda", |_| {
+    ///         "world".to_string()               
     ///     });
     /// ```
     pub fn insert_lambda<K: StrAllocating>(self, key: K, f: |String|: 'a -> String) -> HashBuilder<'a> {
@@ -258,11 +256,9 @@ impl<'a> VecBuilder<'a> {
     ///
     /// ```ignore
     /// use rustache::VecBuilder;
-    /// let mut num = 0;
     /// let data = VecBuilder::new()
-    ///     .push_lambda(|double| {
-    ///         num *= 2u;
-    ///         num.to_string()
+    ///     .push_lambda(|lambda| {
+    ///         "world".to_string()
     ///     });
     /// ```
     pub fn push_lambda(self, f: |String|: 'a -> String) -> VecBuilder <'a> {
