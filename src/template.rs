@@ -213,7 +213,6 @@ impl<'a> Template<'a> {
                                 Hash(ref hash) => {
                                     self.handle_section_node(children, &hash[key.to_string()], datastore, writer);        
                                 },
-
                                 _ => {
                                     self.handle_section_node(children, data, datastore, writer);
                                 }
