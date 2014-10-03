@@ -21,7 +21,7 @@ impl<'a> HashBuilder<'a> {
 
     /// Add a `String` to the `HashBuilder`
     ///
-    /// ```rust
+    /// ```ignore
     /// use rustache::HashBuilder;
     /// let data = HashBuilder::new()
     ///     .insert_string("game", "Hearthstone: Heroes of Warcraft")
@@ -36,7 +36,7 @@ impl<'a> HashBuilder<'a> {
 
     /// Add a `Boolean` to the `HashBuilder`
     ///
-    /// ```rust
+    /// ```ignore
     /// use rustache::HashBuilder;
     /// let data = HashBuilder::new()
     ///     .insert_bool("playing", true)
@@ -51,7 +51,7 @@ impl<'a> HashBuilder<'a> {
 
     /// Add an `Integer` to the `HashBuilder`
     ///
-    /// ```rust
+    /// ```ignore
     /// use rustache::HashBuilder;
     /// let data = HashBuilder::new()
     ///     .insert_int("age", 10i)
@@ -67,7 +67,7 @@ impl<'a> HashBuilder<'a> {
 
     /// Add a `Float` to the `HashBuilder`
     ///
-    /// ```rust
+    /// ```ignore
     /// use rustache::HashBuilder;
     /// let data = HashBuilder::new()
     ///     .insert_float("pi", 3.141596f64)
@@ -83,7 +83,7 @@ impl<'a> HashBuilder<'a> {
 
     /// Add a `Vector` to the `HashBuilder`
     ///
-    /// ```rust
+    /// ```ignore
     /// use rustache::HashBuilder;
     /// let data = HashBuilder::new()
     ///     .insert_vector("classes", |builder| {
@@ -103,7 +103,7 @@ impl<'a> HashBuilder<'a> {
 
     /// Add a `Hash` to the `HashBuilder`
     /// 
-    /// ```rust
+    /// ```ignore
     /// use rustache::HashBuilder;
     /// let data = HashBuilder::new()
     ///     .insert_hash("hero1", |builder| {
@@ -128,7 +128,7 @@ impl<'a> HashBuilder<'a> {
 
     /// Add a `Lambda` that accepts a String and returns a String to the `HashBuilder`
     ///
-    /// ```rust
+    /// ```ignore
     /// use rustache::HashBuilder;
     /// let mut num = 0;
     /// let data = HashBuilder::new()
@@ -171,7 +171,7 @@ impl<'a> VecBuilder<'a> {
 
     /// Add a `String` to the `VecBuilder`
     ///
-    /// ```rust
+    /// ```ignore
     /// use rustache::VecBuilder;
     /// let data = VecBuilder::new()
     ///     .push_string("Mage")
@@ -187,7 +187,7 @@ impl<'a> VecBuilder<'a> {
 
     /// Add a `Bool` to the `VecBuilder`
     ///
-    /// ```rust
+    /// ```ignore
     /// use rustache::VecBuilder;
     /// let data = VecBuilder::new()
     ///     .push_bool(true)
@@ -203,7 +203,7 @@ impl<'a> VecBuilder<'a> {
 
     /// Add an `Integer` to the `VecBuilder`
     ///
-    /// ```rust
+    /// ```ignore
     /// use rustache::VecBuilder;
     /// let data = VecBuilder::new()
     ///     .push_int(10i)
@@ -219,7 +219,7 @@ impl<'a> VecBuilder<'a> {
 
     /// Add a `Float` to the `VecBuilder`
     ///
-    /// ```rust
+    /// ```ignore
     /// use rustache::VecBuilder;
     /// let data = VecBuilder::new()
     ///     .push_float(10.356356f64)
@@ -235,7 +235,7 @@ impl<'a> VecBuilder<'a> {
 
     /// Add a `Vector` to the `VecBuilder`
     ///
-    /// ```rust
+    /// ```ignore
     /// use rustache::VecBuilder;
     /// let data = VecBuilder::new()
     ///     .push_vector(|builder| {
@@ -255,7 +255,7 @@ impl<'a> VecBuilder<'a> {
 
     /// Add a `Hash` to the `VecBuilder`
     ///
-    /// ```rust
+    /// ```ignore
     /// use rustache::VecBuilder;
     /// let data = VecBuilder::new()
     ///     .push_hash(|builder| {
@@ -280,7 +280,7 @@ impl<'a> VecBuilder<'a> {
 
     /// Add a `Lambda` to the `VecBuilder`
     ///
-    /// ```rust
+    /// ```ignore
     /// use rustache::VecBuilder;
     /// let mut num = 0;
     /// let data = VecBuilder::new()
