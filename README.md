@@ -1,15 +1,17 @@
 [Rustache](https://rustache.github.io) [![Build Status](https://travis-ci.org/rustache/rustache.svg?branch=master)](https://travis-ci.org/rustache/rustache)
 ====
 
-Rustache is a Rust implementation of the Mustache spec.
+Rustache is a [Rust](https://www.rust-lang.org/) implementation of the Mustache spec.
 
 ## Documentation
 
-The different Mustache tags are documented at [mustache(5)](http://mustache.github.com/mustache.5.html).
+The different Mustache tags are documented at the [mustache(5)](http://mustache.github.com/mustache.5.html) man page.
+
+Our docs page is located [here](https://rustache.github.io/doc/rustache/).
 
 ## Install
 
-Install it through Cargo:
+Install it through [Cargo](https://crates.io/):
 
 ```toml
 [dependencies.rustache]
