@@ -24,6 +24,7 @@ mod build;
 mod template;
 
 /// Represents the possible types that passed in data may take on
+#[doc(hidden)]
 pub enum Data<'a> {
     Strng(String),
     Bool(bool),

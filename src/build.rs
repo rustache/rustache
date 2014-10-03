@@ -6,7 +6,9 @@ use super::{Data, Strng, Bool, Integer, Float, Vector, Hash, Lambda};
 /// `HashBuilder` is a helper type that constructs `Data` types in a HashMap
 #[deriving(Show)]
 pub struct HashBuilder<'a> {
+    #[doc(hidden)]
     pub data: HashMap<String, Data<'a>>,
+    #[doc(hidden)]
     pub partials_path: &'a str
 }
 
