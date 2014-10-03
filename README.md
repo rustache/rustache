@@ -82,7 +82,7 @@ Here's an example of how to pass in data in the form of a JSON `enum` to a `rend
 
 ```rust
 let mut writer = MemWriter::new();
-let data  = json::from_str(r#"{"name": "Bob"}"#);
+let data = json::from_str(r#"{"name": "Bob"}"#);
 
 rustache::render_text_from_json_enum("{{ name }}", data, &mut writer);
 ```
