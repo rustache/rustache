@@ -262,6 +262,7 @@ fn parse_json_vector(json: &Json) -> VecBuilder {
     data
 }
 
+// Hide from documentation
 #[doc(hidden)]
 pub fn read_file(path: Path) -> String {
     // Open the file path

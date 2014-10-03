@@ -14,20 +14,15 @@ fn test_spec_inline_comment() {
     assert_eq!("1234567890".to_string(), String::from_utf8(w.unwrap()).unwrap());
 }
 
-  // - name: Inline
-  //   desc: Comment blocks should be removed from the template.
-  //   data: { }
-  //   template: '12345{{! Comment Block! }}67890'
-  //   expected: '1234567890'
-// #[test]
-// fn test_spec_inline_comment_with_bang() {
-//     let mut w = MemWriter::new();
-//     let data = HashBuilder::new();
+#[test]
+fn test_spec_inline_comment_with_bang() {
+    let mut w = MemWriter::new();
+    let data = HashBuilder::new();
 
-//     rustache::render_text_from_hb("12345{{! Comment Block! }}67890", &data, &mut w);
+    rustache::render_text_from_hb("12345{{! Comment Block! }}67890", &data, &mut w);
 
-//     assert_eq!("1234567890".to_string(), String::from_utf8(w.unwrap()).unwrap());
-// }
+    assert_eq!("1234567890".to_string(), String::from_utf8(w.unwrap()).unwrap());
+}
 
 
   // - name: Multiline
