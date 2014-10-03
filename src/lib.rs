@@ -1,6 +1,7 @@
 #![crate_name = "rustache"]
 #![warn(missing_doc)]
 // #![deny(warnings)]
+#![license = "MIT"]
 
 #![feature(phase)]
 #[phase(plugin)]
@@ -14,6 +15,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 
 pub use build::{HashBuilder, VecBuilder};
+pub use rustache::{render_file_from_hb, render_file_from_json_enum, render_file_from_json_string, render_file_from_json_file};
 pub use rustache::{render_text_from_hb, render_text_from_json_enum, render_text_from_json_string, render_text_from_json_file, read_file};
 
 mod rustache;
@@ -34,6 +36,7 @@ pub enum Data<'a> {
     Lambda(RefCell<|String|: 'a -> String>)
 }
 
+/// Implementing custom PartialEq for Data
 impl<'a> PartialEq for Data<'a> {
     fn eq(&self, other: &Data<'a>) -> bool {
         match (self, other) {
@@ -49,6 +52,7 @@ impl<'a> PartialEq for Data<'a> {
     }
 }
 
+/// Implementing custom Show for Data
 impl<'a> fmt::Show for Data<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
