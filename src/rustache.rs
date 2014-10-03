@@ -8,15 +8,14 @@ use template::Template;
 
 /// Render a template file from a HashBuilder to a specified writer
 ///
-/// ```rust
+/// ```ignore
 /// use rustache;
 /// use rustache::HashBuilder;
-/// use std::MemWriter;
+/// use std::io::MemWriter;
 ///
-/// let w = MemWriter::new();
+/// let mut w = MemWriter::new();
 /// let data = HashBuilder::new()
-///     .insert_string("name", "Bob")
-///     .build();
+///     .insert_string("name", "Bob");
 ///
 /// rustache::render_file_from_hb("path/to/template.html", &data, &mut w);
 /// ```
@@ -29,12 +28,14 @@ pub fn render_file_from_hb<W: Writer>(path: &str, data: &HashBuilder, writer: &m
 
 /// Render a template file from a Rust JSON Enum to a specified writer
 ///
-/// ```rust
+/// ```ignore
+/// extern crate serialize;
+///
 /// use rustache;
 /// use serialize::json;
-/// use std::MemWriter;
+/// use std::io::MemWriter;
 ///
-/// let w = MemWriter::new();
+/// let mut w = MemWriter::new();
 /// let data = json::from_str(r#"{"name": "Bob"}"#);
 ///
 /// rustache::render_file_from_json_enum("path/to/template.html", data, &mut w);
@@ -46,11 +47,11 @@ pub fn render_file_from_json_enum<W: Writer>(template: &str, json: Json, writer:
 
 /// Render a template file from a JSON string to a specified writer
 ///
-/// ```rust
+/// ```ignore
 /// use rustache;
-/// use std::MemWriter;
+/// use std::io::MemWriter;
 ///
-/// let w = MemWriter::new();
+/// let mut w = MemWriter::new();
 /// let data = r#"{"name": "Bob"}"#;
 ///
 /// rustache::render_file_from_json_string("path/to/template.html", data, &mut w);
@@ -66,11 +67,11 @@ pub fn render_file_from_json_string<W: Writer>(template: &str, data: &str, write
 
 /// Render a template file from a JSON file to a specified writer
 ///
-/// ```rust
+/// ```ignore
 /// use rustache;
-/// use std::MemWriter;
+/// use std::io::MemWriter;
 ///
-/// let w = MemWriter::new();
+/// let mut w = MemWriter::new();
 ///
 /// rustache::render_file_from_json_file("path/to/template.html", "data/data.json", &mut w);
 /// ```
@@ -87,17 +88,16 @@ pub fn render_file_from_json_file<W: Writer>(template: &str, data: &str, writer:
 
 /// Render template text from a HashBuilder to a specified writer
 ///
-/// ```rust
+/// ```ignore
 /// use rustache;
 /// use rustache::HashBuilder;
-/// use std::MemWriter;
+/// use std::io::MemWriter;
 ///
-/// let w = MemWriter::new();
+/// let mut w = MemWriter::new();
 /// let data = HashBuilder::new()
-///     .insert_string("name", "Bob the Builder")
-///     .build();
+///     .insert_string("name", "Bob the Builder");
 ///
-/// rustache::render_text_from_json_hb("{{ name }}", &data, &mut w);
+/// rustache::render_text_from_hb("{{ name }}", &data, &mut w);
 /// ```
 pub fn render_text_from_hb<W: Writer>(input: &str, data: &HashBuilder, writer: &mut W) {
     let tokens = compiler::create_tokens(input);
@@ -107,12 +107,14 @@ pub fn render_text_from_hb<W: Writer>(input: &str, data: &HashBuilder, writer: &
 
 /// Render template text from a Rust JSON Enum to a specified writer
 ///
-/// ```rust
+/// ```ignore
+/// extern crate serialize;
+///
 /// use rustache;
 /// use serialize::json;
-/// use std::MemWriter;
+/// use std::io::MemWriter;
 ///
-/// let w = MemWriter::new();
+/// let mut w = MemWriter::new();
 /// let data = json::from_str(r#"{"name": "Bob"}"#);
 ///
 /// rustache::render_text_from_json_enum("{{ name }}", data, &mut w);
@@ -124,11 +126,11 @@ pub fn render_text_from_json_enum<W: Writer>(input: &str, json: Json, writer: &m
 
 /// Render template text from a JSON string to a specified writer
 ///
-/// ```rust
+/// ```ignore
 /// use rustache;
-/// use std::MemWriter;
+/// use std::io::MemWriter;
 ///
-/// let w = MemWriter::new();
+/// let mut w = MemWriter::new();
 /// let data = r#"{"name": "Bob"}"#;
 ///
 /// rustache::render_text_from_json_string("{{ name }}", data, &mut w);
@@ -144,11 +146,11 @@ pub fn render_text_from_json_string<W: Writer>(input: &str, data: &str, writer: 
 
 /// Render template text from a JSON file to a specified writer
 ///
-/// ```rust
+/// ```ignore
 /// use rustache;
-/// use std::MemWriter;
+/// use std::io::MemWriter;
 ///
-/// let w = MemWriter::new();
+/// let mut w = MemWriter::new();
 ///
 /// rustache::render_text_from_json_file("{{ name }}", "data/data.json", &mut w);
 /// ```
@@ -259,14 +261,8 @@ fn parse_json_vector(json: &Json) -> VecBuilder {
     }
     data
 }
-/// Helper function for opening a file and performing error handling.
-/// Returns the contents of the files as a `String`.
-///
-/// ```rust
-/// use rustache;
-///
-/// rustache::readfile("path/to/file");
-/// ```
+
+#[doc(hidden)]
 pub fn read_file(path: Path) -> String {
     // Open the file path
     let display = path.display();

@@ -15,7 +15,7 @@ use std::cell::RefCell;
 
 pub use build::{HashBuilder, VecBuilder};
 pub use rustache::{render_file_from_hb, render_file_from_json_enum, render_file_from_json_string, render_file_from_json_file};
-pub use rustache::{render_text_from_hb, render_text_from_json_enum, render_text_from_json_string, render_text_from_json_file};
+pub use rustache::{render_text_from_hb, render_text_from_json_enum, render_text_from_json_string, render_text_from_json_file, read_file};
 
 mod rustache;
 mod compiler;
