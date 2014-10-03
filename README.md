@@ -83,6 +83,7 @@ let mut writer = MemWriter::new();
 let data  = json::from_str(r#"{"name": "Bob"}"#);
 
 rustache::render_text_from_json_enum("{{ name }}", data, &mut writer);
+```
 
 ## Testing
 
