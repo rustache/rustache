@@ -26,8 +26,7 @@ impl<'a> HashBuilder<'a> {
     /// ```ignore
     /// use rustache::HashBuilder;
     /// let data = HashBuilder::new()
-    ///     .insert_string("game", "Hearthstone: Heroes of Warcraft")
-    ///     .build();
+    ///     .insert_string("game", "Hearthstone: Heroes of Warcraft");
     /// ```
 
     pub fn insert_string<K: StrAllocating, V: StrAllocating>(self, key: K, value: V) -> HashBuilder<'a> {
@@ -41,8 +40,7 @@ impl<'a> HashBuilder<'a> {
     /// ```ignore
     /// use rustache::HashBuilder;
     /// let data = HashBuilder::new()
-    ///     .insert_bool("playing", true)
-    ///     .build();
+    ///     .insert_bool("playing", true);
     /// ```
 
     pub fn insert_bool<K: StrAllocating>(self, key: K, value: bool) -> HashBuilder<'a> {
@@ -57,8 +55,7 @@ impl<'a> HashBuilder<'a> {
     /// use rustache::HashBuilder;
     /// let data = HashBuilder::new()
     ///     .insert_int("age", 10i)
-    ///     .insert_int("drinking age", -21i)
-    ///     .build();
+    ///     .insert_int("drinking age", -21i);
     /// ```
 
     pub fn insert_int<K: StrAllocating>(self, key: K, value: int) -> HashBuilder<'a> {
@@ -73,8 +70,7 @@ impl<'a> HashBuilder<'a> {
     /// use rustache::HashBuilder;
     /// let data = HashBuilder::new()
     ///     .insert_float("pi", 3.141596f64)
-    ///     .insert_float("phi", 1.61803398875f64)
-    ///     .build();
+    ///     .insert_float("phi", 1.61803398875f64);
     /// ```
 
     pub fn insert_float<K: StrAllocating>(self, key: K, value: f64) -> HashBuilder<'a> {
@@ -92,8 +88,7 @@ impl<'a> HashBuilder<'a> {
     ///         builder
     ///             .push_string("Mage".to_string())
     ///             .push_string("Druid".to_string())
-    ///     })
-    ///     .build();   
+    ///     });  
     /// ```
 
     pub fn insert_vector<K: StrAllocating>(self, key: K, f: |VecBuilder<'a>| -> VecBuilder<'a>) -> HashBuilder<'a> {
@@ -117,8 +112,7 @@ impl<'a> HashBuilder<'a> {
     ///         builder
     ///             .insert_string("first_name", "Jaina")
     ///             .insert_string("last_name", "Proudmoore")    
-    ///     })
-    ///     .build();
+    ///     });
     /// ```
 
     pub fn insert_hash<K: StrAllocating>(self, key: K, f: |HashBuilder<'a>| -> HashBuilder<'a>) -> HashBuilder<'a> {
@@ -137,8 +131,7 @@ impl<'a> HashBuilder<'a> {
     ///     .insert_lambda("double", |_| {
     ///         num *= 2u;
     ///         num.to_string()                
-    ///     })
-    ///     .build();
+    ///     });
     /// ```
 
     pub fn insert_lambda<K: StrAllocating>(self, key: K, f: |String|: 'a -> String) -> HashBuilder<'a> {
@@ -153,7 +146,7 @@ impl<'a> HashBuilder<'a> {
     }
 
     /// Return the built `Data`
-    pub fn build(self) -> Data<'a> {
+    fn build(self) -> Data<'a> {
         Hash(self.data)
     }
 }
@@ -177,8 +170,7 @@ impl<'a> VecBuilder<'a> {
     /// use rustache::VecBuilder;
     /// let data = VecBuilder::new()
     ///     .push_string("Mage")
-    ///     .push_string("Druid")
-    ///     .build();
+    ///     .push_string("Druid");
     /// ```
 
     pub fn push_string<T: StrAllocating>(self, value: T) -> VecBuilder<'a> {
@@ -193,8 +185,7 @@ impl<'a> VecBuilder<'a> {
     /// use rustache::VecBuilder;
     /// let data = VecBuilder::new()
     ///     .push_bool(true)
-    ///     .push_bool(false)
-    ///     .build();
+    ///     .push_bool(false);
     /// ```
 
     pub fn push_bool(self, value: bool) -> VecBuilder<'a> {
@@ -209,8 +200,7 @@ impl<'a> VecBuilder<'a> {
     /// use rustache::VecBuilder;
     /// let data = VecBuilder::new()
     ///     .push_int(10i)
-    ///     .push_int(-21i)
-    ///     .build();
+    ///     .push_int(-21i);
     /// ```
 
     pub fn push_int(self, value: int) -> VecBuilder<'a> {
@@ -225,8 +215,7 @@ impl<'a> VecBuilder<'a> {
     /// use rustache::VecBuilder;
     /// let data = VecBuilder::new()
     ///     .push_float(10.356356f64)
-    ///     .push_float(-21.34956230456f64)
-    ///     .build();
+    ///     .push_float(-21.34956230456f64);
     /// ```
 
     pub fn push_float(self, value: f64) -> VecBuilder<'a> {
@@ -244,8 +233,7 @@ impl<'a> VecBuilder<'a> {
     ///         builder
     ///             .push_string("Anduin Wrynn".to_string())
     ///             .push_string("Jaina Proudmoore".to_string())
-    ///     })
-    ///     .build();
+    ///     });
     /// ```
 
     pub fn push_vector(self, f: |VecBuilder<'a>| -> VecBuilder<'a>) -> VecBuilder<'a> {
@@ -269,8 +257,7 @@ impl<'a> VecBuilder<'a> {
     ///         builder
     ///             .insert_string("first_name".to_string(), "Malfurion".to_string())
     ///             .insert_string("last_name".to_string(), "Stormrage".to_string())    
-    ///     })
-    ///     .build();
+    ///     });
     /// ```
 
     pub fn push_hash(self, f: |HashBuilder<'a>| -> HashBuilder<'a>) -> VecBuilder<'a> {
@@ -289,8 +276,7 @@ impl<'a> VecBuilder<'a> {
     ///     .push_lambda(|double| {
     ///         num *= 2u;
     ///         num.to_string()
-    ///     })
-    ///     .build();
+    ///     });
     /// ```
 
     pub fn push_lambda(self, f: |String|: 'a -> String) -> VecBuilder <'a> {
@@ -300,7 +286,7 @@ impl<'a> VecBuilder<'a> {
     }
 
     /// Return the built `Data`
-    pub fn build(self) -> Data<'a> {
+    fn build(self) -> Data<'a> {
         Vector(self.data)
     }
 }

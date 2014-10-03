@@ -63,11 +63,26 @@ rustache::render_text_from_json_string("{{ name }}", &str, &writer)
 // Render template text from a JSON file to a specified writer
 rustache::render_text_from_json_file("{{ name }}", "data/data.json", &writer)
 ```
-====
 
 ## Examples
 
-====
+Here's an example of how to pass in data to a `render` method using the `HashBuilder`:
+
+```rust
+let mut writer = MemWriter::new();
+let data = HashBuilder::new()
+    .insert_string("name", "Bob");
+
+rustache::render_text_from_hb("{{ name }}", &data, &mut writer);
+```
+
+Here's an example of how to pass in data in the form of a JSON enum to a `render` method:
+
+```rust
+let mut writer = MemWriter::new();
+let data  = json::from_str(r#"{"name": "Bob"}"#);
+
+rustache::render_text_from_json_enum("{{ name }}", data, &mut writer);
 
 ## Testing
 
@@ -76,7 +91,6 @@ Simply clone and run:
 ```bash
 cargo test
 ```
-====
 
 ## Contribute
 
