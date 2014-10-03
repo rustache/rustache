@@ -24,11 +24,50 @@ Then link it within your crate like so:
 extern crate rustache;
 ```
 
-# Getting Started
+## API Methods
 
+The main forward interface that users will interact with when using Rustache is the `rustache::render` method like so:
+
+```rust
+rustache::render("path/to/template.html", &data)
+```
+
+Users also have the option to utilize more focused API methods for 
+interfacing with Rustache. The following methods handle template 
+files from a provided file path:
+
+```rust
+// Renders a template file from a HashBuilder to a specified writer
+rustache::render_file_from_hb("path.html", &data, &writer)
+
+// Renders a template file from a JSON enum to a specified writer
+rustache::render_file_from_json_enum("path.html", &data, &writer)
+
+// Renders a template file from a JSON string to a specified writer
+rustache::render_file_from_json_string("path.html", &str, &writer)
+
+// Renders a template file from a JSON file to a specified writer
+rustache::render_file_from_json_file("path/to/template.html", "data/data.json", &writer)
+```
+
+The following methods handle templates in the form of text strings:
+
+```rust
+// Render template text from a specified HashBuilder to a specified writer
+rustache::render_text_from_hb("{{ name }}", &data, &writer)
+
+// Render template text from a JSON enum to a specified writer
+rustache::render_text_from_json_enum("{{ name }}", &json, &writer)
+
+// Render template text from a JSON string to a specified writer
+rustache::render_text_from_json_string("{{ name }}", &str, &writer)
+
+// Render template text from a JSON file to a specified writer
+rustache::render_text_from_json_file("{{ name }}", "data/data.json", &writer)
+```
 ====
 
-# Examples
+## Examples
 
 ====
 
@@ -40,7 +79,7 @@ Simply clone and run:
 cargo test
 ```
 
-# License
+## License
 
 Copyright (c) 2014 Team Rustache
 
