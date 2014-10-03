@@ -2,18 +2,17 @@
 #![comment = "A flexible template engine for Rust"]
 #![license = "MIT"]
 
-#![warn(missing_doc)]
-// #![deny(warnings)]
+#![deny(missing_doc)]
+#![deny(warnings)]
 
+#![feature(phase)]
 //! The main crate for the Rustache library.
 //!
 //! Rustache is a flexible template engine for Rust.
 
-#![feature(phase)]
-#[phase(plugin)]
-extern crate regex_macros;
+// StdLib dependencies
+#[phase(plugin)] extern crate regex_macros;
 extern crate regex;
-
 extern crate serialize;
 
 use std::fmt;
@@ -24,13 +23,7 @@ pub use build::{HashBuilder, VecBuilder};
 pub use rustache::{render_file_from_hb, render_file_from_json_enum, render_file_from_json_string, render_file_from_json_file};
 pub use rustache::{render_text_from_hb, render_text_from_json_enum, render_text_from_json_string, render_text_from_json_file, read_file};
 
-mod rustache;
-mod compiler;
-mod parser;
-mod build;
-mod template;
-
-/// Represents the possible types that passed in data may take on
+// Represents the possible types that passed in data may take on
 #[doc(hidden)]
 pub enum Data<'a> {
     Strng(String),
@@ -42,7 +35,7 @@ pub enum Data<'a> {
     Lambda(RefCell<|String|: 'a -> String>)
 }
 
-/// Implementing custom PartialEq for Data
+// Implementing custom PartialEq for Data
 impl<'a> PartialEq for Data<'a> {
     fn eq(&self, other: &Data<'a>) -> bool {
         match (self, other) {
@@ -58,7 +51,7 @@ impl<'a> PartialEq for Data<'a> {
     }
 }
 
-/// Implementing custom Show for Data
+// Implementing custom Show for Data
 impl<'a> fmt::Show for Data<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
@@ -73,46 +66,9 @@ impl<'a> fmt::Show for Data<'a> {
     }
 }
 
-#[cfg(test)]
-mod lib_tests {
-    use rustache;
-    use std::io::MemWriter;
-    use std::io::File;
-    use build::HashBuilder;
-
-    #[test]
-    fn test_json_parse() {
-        let template_path = "test_data/json.template.html";
-        let data_path = "test_data/test.json";
-
-        let mut w = MemWriter::new();
-        rustache::render_file_from_json_file(template_path, data_path, &mut w);
-
-        let mut f = File::create(&Path::new("test_data/json.html"));
-        let completed = f.write(w.unwrap().as_slice());
-        assert_eq!(completed, Ok(()));
-    }
-
-    #[test]
-    fn file_end_to_end_test() {
-        let path = "test_data/index.template.html";
-        let data = HashBuilder::new()
-            .insert_hash("people", |builder| {
-                builder.insert_vector("information", |builder| {
-                    builder
-                        .push_string("<tr><td>Fleur</td><td>Dragan</td></tr>")
-                        .push_string("<tr><td>Jarrod</td><td>Ruhland</td></tr>")
-                        .push_string("<tr><td>Jim</td><td>O'Brien</td></tr>")
-                        .push_string("<tr><td>Sean</td><td>Chen</td></tr>")
-                    }
-                )}
-            ).set_partials_path("test_data");
-            
-        let mut w = MemWriter::new();
-        rustache::render_file_from_hb(path, &data, &mut w);
-
-        let mut f = File::create(&Path::new("test_data/index.html"));
-        let completed = f.write(w.unwrap().as_slice());
-        assert_eq!(completed, Ok(()));
-    }
-}
+// Internal Modules
+mod rustache;
+mod compiler;
+mod parser;
+mod build;
+mod template;
