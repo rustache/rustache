@@ -85,13 +85,23 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
                     OTag(name, inverted, raw) => {
                         let mut children: Vec<Token> = vec![];
                         let mut count = 0u;
+                        let mut otag_count = 1u;
                         for item in list.slice_from(i + 1).iter() {
                             count += 1;
                             match *item {
-                                CTag(title, temp) => {
+                                OTag(title, inverted, raw) => {
                                     if title == name {
+                                        otag_count += 1;
+                                    }
+                                    children.push(*item);
+                                },
+                                CTag(title, temp) => {
+                                    if title == name && otag_count == 1 {
                                         nodes.push(Section(name, parse_nodes(&children).clone(), inverted, raw.to_string(), temp.to_string()));
                                         break;
+                                    } else if title == name && otag_count > 1 {
+                                        otag_count -= 1;
+                                        children.push(*item);
                                     } else {
                                         children.push(*item);
                                         continue;
