@@ -13,15 +13,13 @@ pub enum Token<'a> {
 
 pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
     let mut tokens: Vec<Token> = Vec::new();
-    // let re = regex!(r"\{\{(\{?\S?\s?[\w\.?\s]*\s?\}?)\}\}");
-    let re = regex!(r"\{\{(\{?\S?\s*?[\w\.\n*\s]*\S*?\s*?\}?)\}\}");
+    let re = regex!(r"\{\{(\{?\S?\s*?[\w\.\s]*.*?\s*?\}?)\}\}");
     let len = contents.len();
     let mut close_pos = 0u;
     for cap in re.captures_iter(contents) {
         let inner = cap.at(1);
         let outer = cap.at(0);
         let (o, c) = cap.pos(0).unwrap();
-        
         if o != close_pos {
             tokens.push(Text(contents.slice(close_pos, o)));
         }
@@ -50,7 +48,7 @@ mod compiler_tests {
     use compiler::{Text, Variable, OTag, CTag, Raw, Partial};
 
     #[test]
-    fn test_super_dots() {
+    fn test_extended_dot_notation() {
         let contents = "{{ test.test.test.test }}";
         let tokens = compiler::create_tokens(contents);
         let expected = vec![Variable("test.test.test.test", "{{ test.test.test.test }}")];

@@ -24,28 +24,15 @@ fn test_spec_inline_comment_with_bang() {
     assert_eq!("1234567890".to_string(), String::from_utf8(w.unwrap()).unwrap());
 }
 
+#[test]
+fn test_spec_multiline_comment() {
+    let mut w = MemWriter::new();
+    let data = HashBuilder::new();
 
-  // - name: Multiline
-  //   desc: Multiline comments should be permitted.
-  //   data: { }
-  //   template: |
-  //     12345{{!
-  //       This is a
-  //       multi-line comment...
-  //     }}67890
-  //   expected: |
-  //     1234567890
-// #[test]
-// fn test_spec_multiline_comment() {
-//     let mut w = MemWriter::new();
-//     let data = HashBuilder::new();
+    rustache::render_text_from_hb("12345{{!\nThis is a\nmulti-line comment...\n}}67890", &data, &mut w);
 
-//     rustache::render_text_from_hb("12345{{!\nThis is a\nmulti-line comment...\n}}67890", &data, &mut w);
-
-//     assert_eq!("1234567890".to_string(), String::from_utf8(w.unwrap()).unwrap());
-// }
-
-
+    assert_eq!("1234567890".to_string(), String::from_utf8(w.unwrap()).unwrap());
+}
 
   // - name: Standalone
   //   desc: All standalone comment lines should be removed.
@@ -57,7 +44,7 @@ fn test_spec_inline_comment_with_bang() {
   //   expected: |
   //     Begin.
   //     End.
-//#[test]
+// #[test]
 // fn test_spec_standalone_comment() {
 //     let mut w = MemWriter::new();
 //     let data = HashBuilder::new();
@@ -182,27 +169,15 @@ fn test_spec_inline_comment_with_bang() {
 //     assert_eq!("Begin.\nEnd.".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
 
+#[test]
+fn test_spec_indented_inline_comment() {
+    let mut w = MemWriter::new();
+    let data = HashBuilder::new();
 
-  // - name: Indented Inline
-  //   desc: Inline comments should not strip whitespace
-  //   data: { }
-  //   template: "  12 {{! 34 }}\n"
-  //   expected: "  12 \n"
+    rustache::render_text_from_hb("12345 {{! Comment Block! }} 67890", &data, &mut w);
 
-  // - name: Surrounding Whitespace
-  //   desc: Comment removal should preserve surrounding whitespace.
-  //   data: { }
-  //   template: '12345 {{! Comment Block! }} 67890'
-  //   expected: '12345  67890'
-// #[test]
-// fn test_spec_indented_inline_comment() {
-//     let mut w = MemWriter::new();
-//     let data = HashBuilder::new();
-
-//     rustache::render_text_from_hb("12345 {{! Comment Block! }} 67890", &data, &mut w);
-
-//     assert_eq!("12345  67890".to_string(), String::from_utf8(w.unwrap()).unwrap());
-// }
+    assert_eq!("12345  67890".to_string(), String::from_utf8(w.unwrap()).unwrap());
+}
 
 
 
