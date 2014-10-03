@@ -45,7 +45,7 @@ pub fn render_json_file<'a, W: Writer>(template: &str, data: &str, writer: &mut 
     render_json(template, json, writer);
 }
 
-fn parse_json(json: &Json) -> HashBuilder{
+fn parse_json(json: &Json) -> HashBuilder {
     let mut data = HashBuilder::new();
     for (k, v) in json.as_object().unwrap().iter() {
         match v {
@@ -64,18 +64,16 @@ fn parse_json(json: &Json) -> HashBuilder{
             &List(ref list) => {
                 data = data.insert_vector(k.as_slice(), |mut builder| {
                     for item in list.iter() {
-                        if item.is_object() {
-                            builder = builder.push_hash(|_| {
+                        builder = match *item {
+                            Object(_) => builder.push_hash(|_| {
                                 parse_json(item)
-                            });
-                        } else if item.is_list() {
-                            builder = builder.push_vector(|_| {
+                            }),
+                            List(_) => builder.push_vector(|_| {
                                 parse_json_vector(item)
-                            });
-                        } else if item.is_string() {
-                            builder = builder.push_string(item.as_string().unwrap());
-                        } else if item.is_boolean() {
-                            builder = builder.push_bool(item.as_boolean().unwrap());
+                            }),
+                            String(_) => builder.push_string(item.as_string().unwrap()),
+                            Boolean(_) => builder.push_bool(item.as_boolean().unwrap()),
+                            _ => builder
                         }
                     }
                     builder
@@ -115,18 +113,16 @@ fn parse_json_vector(json: &Json) -> VecBuilder {
             &List(ref list) => {
                 data = data.push_vector(|mut builder| {
                     for item in list.iter() {
-                        if item.is_object() {
-                            builder = builder.push_hash(|_| {
+                        builder = match *item {
+                            Object(_) => builder.push_hash(|_| {
                                 parse_json(item)
-                            });
-                        } else if item.is_list() {
-                            builder = builder.push_vector(|_| {
+                            }),
+                            List(_) => builder.push_vector(|_| {
                                 parse_json_vector(item)
-                            });
-                        } else if item.is_string() {
-                            builder = builder.push_string(item.as_string().unwrap());
-                        } else if item.is_boolean() {
-                            builder = builder.push_bool(item.as_boolean().unwrap());
+                            }),
+                            String(_) => builder.push_string(item.as_string().unwrap()),
+                            Boolean(_) => builder.push_bool(item.as_boolean().unwrap()),
+                            _ => builder
                         }
                     }
                     builder
