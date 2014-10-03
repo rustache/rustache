@@ -357,7 +357,7 @@ use rustache::HashBuilder;
     //                 .push_string("e")
     //         });
 
-        rustache::render_text_from_hb("{{#list}}({{.}}){{/list}}", &data, &mut w);
+    // rustache::render_text_from_hb("{{#list}}({{.}}){{/list}}", &data, &mut w);
 
     //     assert_eq!("(a)(b)(c)(d)(e)".to_string(), String::from_utf8(w.unwrap()).unwrap());
     // }
