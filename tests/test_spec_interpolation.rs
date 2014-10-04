@@ -139,45 +139,45 @@ fn test_spec_interpolation_integer_ampersand() {
 //   data: { power: 1.210 }
 //   template: '"{{power}} jiggawatts!"'
 //   expected: '"1.21 jiggawatts!"'
-// #[test]
-// fn test_spec_interpolation_float_basic() {
-//     let mut w = MemWriter::new();
-//     let data = HashBuilder::new().insert_float("power", 1.210);
+#[test]
+fn test_spec_interpolation_float_basic() {
+    let mut w = MemWriter::new();
+    let data = HashBuilder::new().insert_float("power", 1.210);
 
-//     rustache::render_text_from_hb("{{power}} jiggawatts!", &data, &mut w);
+    rustache::render_text_from_hb("{{power}} jiggawatts!", &data, &mut w);
 
-//     assert_eq!("1.21 jiggawatts!".to_string(), String::from_utf8(w.unwrap()).unwrap());
-// }
+    assert_eq!("1.21 jiggawatts!".to_string(), String::from_utf8(w.unwrap()).unwrap());
+}
 
 // - name: Triple Mustache Decimal Interpolation
 //   desc: Decimals should interpolate seamlessly with proper significance.
 //   data: { power: 1.210 }
 //   template: '"{{{power}}} jiggawatts!"'
 //   expected: '"1.21 jiggawatts!"'
-// #[test]
-// fn test_spec_interpolation_float_triple_mustache() {
-//     let mut w = MemWriter::new();
-//     let data = HashBuilder::new().insert_float("power", 1.210);
+#[test]
+fn test_spec_interpolation_float_triple_mustache() {
+    let mut w = MemWriter::new();
+    let data = HashBuilder::new().insert_float("power", 1.210);
 
-//     rustache::render_text_from_hb("{{{power}}} jiggawatts!", &data, &mut w);
+    rustache::render_text_from_hb("{{{power}}} jiggawatts!", &data, &mut w);
 
-//     assert_eq!("1.21 jiggawatts!".to_string(), String::from_utf8(w.unwrap()).unwrap());
-// }
+    assert_eq!("1.21 jiggawatts!".to_string(), String::from_utf8(w.unwrap()).unwrap());
+}
 
 // - name: Ampersand Decimal Interpolation
 //   desc: Decimals should interpolate seamlessly with proper significance.
 //   data: { power: 1.210 }
 //   template: '"{{&power}} jiggawatts!"'
 //   expected: '"1.21 jiggawatts!"'
-// #[test]
-// fn test_spec_interpolation_float_ampersand() {
-//     let mut w = MemWriter::new();
-//     let data = HashBuilder::new().insert_float("power", 1.210);
+#[test]
+fn test_spec_interpolation_float_ampersand() {
+    let mut w = MemWriter::new();
+    let data = HashBuilder::new().insert_float("power", 1.210);
 
-//     rustache::render_text_from_hb("{{&power}} jiggawatts!", &data, &mut w);
+    rustache::render_text_from_hb("{{&power}} jiggawatts!", &data, &mut w);
 
-//     assert_eq!("1.21 jiggawatts!".to_string(), String::from_utf8(w.unwrap()).unwrap());
-// }
+    assert_eq!("1.21 jiggawatts!".to_string(), String::from_utf8(w.unwrap()).unwrap());
+}
 
 // - name: Basic Context Miss Interpolation
 //   desc: Failed context lookups should default to empty strings.
@@ -247,7 +247,10 @@ fn test_spec_interpolation_dotted_names_basic() {
 #[test]
 fn test_spec_interpolation_dotted_names_triple_mustache() {
     let mut w = MemWriter::new();
-    let data = HashBuilder::new().insert_hash("person", |h| { h.insert_string("name", "Joe") });
+    let data = HashBuilder::new()
+                .insert_hash("person", |h| {
+                    h.insert_string("name", "Joe")
+                });
 
     rustache::render_text_from_hb("\"{{{person.name}}}\" == \"{{#person}}{{{name}}}{{/person}}\"", &data, &mut w);
 
@@ -262,7 +265,10 @@ fn test_spec_interpolation_dotted_names_triple_mustache() {
 #[test]
 fn test_spec_interpolation_dotted_names_ampersand() {
     let mut w = MemWriter::new();
-    let data = HashBuilder::new().insert_hash("person", |h| { h.insert_string("name", "Joe") });
+    let data = HashBuilder::new()
+                .insert_hash("person", |h| {
+                    h.insert_string("name", "Joe")
+                });
 
     rustache::render_text_from_hb("\"{{&person.name}}\" == \"{{#person}}{{&name}}{{/person}}\"", &data, &mut w);
 
@@ -275,25 +281,26 @@ fn test_spec_interpolation_dotted_names_ampersand() {
 //     a: { b: { c: { d: { e: { name: 'Phil' } } } } }
 //   template: '"{{a.b.c.d.e.name}}" == "Phil"'
 //   expected: '"Phil" == "Phil"'
-// #[test]
-// fn test_spec_interpolation_dotted_names_arbitrary_depth() {
-//     let mut w = MemWriter::new();
-//     let data = HashBuilder::new().insert_hash("a", |h| { 
-//         h.insert_hash("b", |h| {
-//             h.insert_hash("c", |h| {
-//                 h.insert_hash("d", |h| {
-//                     h.insert_hash("e", |h| { 
-//                         h.insert_string("name", "Phil")
-//                     })
-//                 })
-//             })
-//         })
-//     });
+#[test]
+fn test_spec_interpolation_dotted_names_arbitrary_depth() {
+    let mut w = MemWriter::new();
+    let data = HashBuilder::new()
+                .insert_hash("a", |h| { 
+                    h.insert_hash("b", |h| {
+                        h.insert_hash("c", |h| {
+                            h.insert_hash("d", |h| {
+                                h.insert_hash("e", |h| { 
+                                    h.insert_string("name", "Phil")
+                                })
+                            })
+                        })
+                    })
+                });
 
-//     rustache::render_text_from_hb("\"{{{person.name}}}\" == \"{{#person}}{{{&name}}}{{/person}}\"", &data, &mut w);
+    rustache::render_text_from_hb("\"{{a.b.c.d.e.name}}\" == \"Phil\"", &data, &mut w);
 
-//     assert_eq!("\"Joe\" == \"Joe\"".to_string(), String::from_utf8(w.unwrap()).unwrap());
-// }
+    assert_eq!("\"Phil\" == \"Phil\"".to_string(), String::from_utf8(w.unwrap()).unwrap());
+}
 
 // - name: Dotted Names - Broken Chains
 //   desc: Any falsey value prior to the last part of the name should yield ''.
@@ -301,15 +308,15 @@ fn test_spec_interpolation_dotted_names_ampersand() {
 //     a: { }
 //   template: '"{{a.b.c}}" == ""'
 //   expected: '"" == ""'
-// #[test]
-// fn test_spec_interpolation_dotted_broken_chains() {
-//     let mut w = MemWriter::new();
-//     let data = HashBuilder::new().insert_hash("person", |h| { h });
+#[test]
+fn test_spec_interpolation_dotted_broken_chains() {
+    let mut w = MemWriter::new();
+    let data = HashBuilder::new();
 
-//     rustache::render_text_from_hb("\"{{a.b.c}}\" == \"\"", &data, &mut w);
+    rustache::render_text_from_hb("\"{{a.b.c}}\" == \"\"", &data, &mut w);
 
-//     assert_eq!("\"\" == \"\"".to_string(), String::from_utf8(w.unwrap()).unwrap());
-// }
+    assert_eq!("\"\" == \"\"".to_string(), String::from_utf8(w.unwrap()).unwrap());
+}
 
 // - name: Dotted Names - Broken Chain Resolution
 //   desc: Each part of a dotted name should resolve only against its parent.
@@ -318,16 +325,23 @@ fn test_spec_interpolation_dotted_names_ampersand() {
 //     c: { name: 'Jim' }
 //   template: '"{{a.b.c.name}}" == ""'
 //   expected: '"" == ""'
-// #[test]
-// fn test_spec_interpolation_dotted_broken_chain_resolution() {
-//     let mut w = MemWriter::new();
-//     let data = HashBuilder::new().insert_hash("a", |h| { h.insert_hash("b", |h| { h })})
-//                                  .insert_hash("c", |h| { h.insert_string("name", "Jim") });
+#[test]
+fn test_spec_interpolation_dotted_broken_chain_resolution() {
+    let mut w = MemWriter::new();
+    let data = HashBuilder::new()
+                .insert_hash("a", |h| {
+                    h.insert_hash("b", |h| {
+                        h
+                    })
+                })
+                .insert_hash("c", |h| {
+                    h.insert_string("name", "Jim")
+                });
 
-//     rustache::render_text_from_hb("\"{{a.b.c}}\" == \"\"", &data, &mut w);
+    rustache::render_text_from_hb("\"{{a.b.c}}\" == \"\"", &data, &mut w);
 
-//     assert_eq!("\"\" == \"\"".to_string(), String::from_utf8(w.unwrap()).unwrap());
-// }
+    assert_eq!("\"\" == \"\"".to_string(), String::from_utf8(w.unwrap()).unwrap());
+}
 
 // - name: Dotted Names - Initial Resolution
 //   desc: The first part of a dotted name should resolve as any other name.
@@ -336,34 +350,35 @@ fn test_spec_interpolation_dotted_names_ampersand() {
 //     b: { c: { d: { e: { name: 'Wrong' } } } }
 //   template: '"{{#a}}{{b.c.d.e.name}}{{/a}}" == "Phil"'
 //   expected: '"Phil" == "Phil"'
-// #[test]
-// fn test_spec_interpolation_dotted_initial_resolution() {
-//     let mut w = MemWriter::new();
-//     let data = HashBuilder::new().insert_hash("a", |h| { 
-//         h.insert_hash("b", |h| {
-//             h.insert_hash("c", |h| {
-//                 h.insert_hash("d", |h| {
-//                     h.insert_hash("e", |h| { 
-//                         h.insert_string("name", "Phil")
-//                     })
-//                 })
-//             })
-//         })
-//     })
-//     .insert_hash("b", |h| {
-//         h.insert_hash("c", |h| {
-//             h.insert_hash("d", |h| {
-//                 h.insert_hash("e", |h| { 
-//                     h.insert_string("name", "Phil")
-//                 })
-//             })
-//         })
-//     });
+#[test]
+fn test_spec_interpolation_dotted_initial_resolution() {
+    let mut w = MemWriter::new();
+    let data = HashBuilder::new()
+                .insert_hash("a", |h| { 
+                    h.insert_hash("b", |h| {
+                        h.insert_hash("c", |h| {
+                            h.insert_hash("d", |h| {
+                                h.insert_hash("e", |h| { 
+                                    h.insert_string("name", "Phil")
+                                })
+                            })
+                        })
+                    })
+                })
+                .insert_hash("b", |h| {
+                    h.insert_hash("c", |h| {
+                        h.insert_hash("d", |h| {
+                            h.insert_hash("e", |h| { 
+                                h.insert_string("name", "Wrong")
+                            })
+                        })
+                    })
+                });
 
-//     rustache::render_text_from_hb("\"{{#a}}{{b.c.d.e.name}}{{/a}}\" == \"Phil\"", &data, &mut w);
+    rustache::render_text_from_hb("\"{{#a}}{{b.c.d.e.name}}{{/a}}\" == \"Phil\"", &data, &mut w);
 
-//     assert_eq!("\"Phil\" == \"Phil\"".to_string(), String::from_utf8(w.unwrap()).unwrap());
-// }
+    assert_eq!("\"Phil\" == \"Phil\"".to_string(), String::from_utf8(w.unwrap()).unwrap());
+}
 
 // - name: Dotted Names - Context Precedence
 //   desc: Dotted names should be resolved against former resolutions.
@@ -375,12 +390,21 @@ fn test_spec_interpolation_dotted_names_ampersand() {
 // #[test]
 // fn test_spec_interpolation_dotted_context_precedence() {
 //     let mut w = MemWriter::new();
-//     let data = HashBuilder::new().insert_hash("a", |h| { h.insert_hash("b", |h| { h })})
-//                                  .insert_hash("b", |h| { h.insert_hash("c", |h| { h.insert_string("name", "Phil") }) });
+//     let data = HashBuilder::new()
+//                 .insert_hash("a", |h| {
+//                     h.insert_hash("b", |h| {
+//                         h
+//                     })
+//                 })
+//                 .insert_hash("b", |h| {
+//                     h.insert_hash("c", |h| {
+//                         h.insert_string("name", "ERROR")
+//                     })
+//                 });
 
 //     rustache::render_text_from_hb("{{#a}}{{b.c}}{{/a}}", &data, &mut w);
 
-//     assert_eq!("''".to_string(), String::from_utf8(w.unwrap()).unwrap());
+//     assert_eq!("\"\"".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
 
 // - name: Interpolation - Surrounding Whitespace
