@@ -382,6 +382,7 @@ mod template_tests {
     use std::str;
 
     use parser;
+    use parser::{Node, Static, Value, Section, Unescaped, Part};
     use rustache;
     use compiler;
     use template::Template;
@@ -395,8 +396,7 @@ mod template_tests {
         let a2 = "1&lt;2 &lt;b&gt;hello&lt;/b&gt;";
 
         let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("{{ value }}");
-        let nodes = parser::parse_nodes(&tokens);
+        let nodes: Vec<Node> = vec![Value("value", "{{ value }}".to_string())];
         let mut data = HashBuilder::new().insert_string("value", s1);
 
         Template::new().render_data(&mut w, &data, &nodes);
@@ -413,8 +413,7 @@ mod template_tests {
     fn test_not_escape_html() {
         let s = "1<2 <b>hello</b>";
         let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("{{& value }}");
-        let nodes = parser::parse_nodes(&tokens);
+        let nodes: Vec<Node> = vec![Unescaped("value", "{{ value }}".to_string())];
         let data = HashBuilder::new().insert_string("value", s);
 
         Template::new().render_data(&mut w, &data, &nodes);
@@ -425,8 +424,7 @@ mod template_tests {
     fn test_render_to_io_stream() {
         let mut w = MemWriter::new();
         let data = HashBuilder::new().insert_string("value1", "The heading");
-        let tokens = compiler::create_tokens("<h1>{{ value1 }}</h1>");
-        let nodes = parser::parse_nodes(&tokens);
+        let nodes: Vec<Node> = vec![Static("<h1>"), Value("value1", "{{ value1 }}".to_string()), Static("</h1>")];
 
         Template::new().render_data(&mut w, &data, &nodes);
         assert_eq!("<h1>The heading</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
@@ -435,8 +433,7 @@ mod template_tests {
     #[test]
     fn test_unescaped_node_correct_string_data() {
         let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("<h1>{{& value1 }}</h1>");
-        let nodes = parser::parse_nodes(&tokens);
+        let nodes: Vec<Node> = vec![Static("<h1>"), Value("value1", "{{ value1 }}".to_string()), Static("</h1>")];
         let data = HashBuilder::new().insert_string("value1", "heading");
 
         Template::new().render_data(&mut w, &data, &nodes);
@@ -449,8 +446,7 @@ mod template_tests {
         let s1 = "a < b > c & d \"spam\"\'";
         let a1 = "<h1>a < b > c & d \"spam\"\'</h1>";
         let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("<h1>{{& value1 }}</h1>");
-        let nodes = parser::parse_nodes(&tokens);
+        let nodes: Vec<Node> = vec![Static("<h1>"), Unescaped("value1", "{{& value1 }}".to_string()), Static("</h1>")];
         let data = HashBuilder::new().insert_string("value1", s1);
 
         Template::new().render_data(&mut w, &data, &nodes);
@@ -461,8 +457,7 @@ mod template_tests {
     #[test]
     fn test_unescaped_node_correct_bool_false_data() {
         let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("<h1>{{& value1 }}</h1>");
-        let nodes = parser::parse_nodes(&tokens);
+        let nodes: Vec<Node> = vec![Static("<h1>"), Unescaped("value1", "{{& value1 }}".to_string()), Static("</h1>")];
         let data = HashBuilder::new().insert_bool("value1", false);
 
         Template::new().render_data(&mut w, &data, &nodes);
@@ -473,8 +468,7 @@ mod template_tests {
     #[test]
     fn test_unescaped_node_correct_bool_true_data() {
         let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("<h1>{{& value1 }}</h1>");
-        let nodes = parser::parse_nodes(&tokens);
+        let nodes: Vec<Node> = vec![Static("<h1>"), Unescaped("value1", "{{& value1 }}".to_string()), Static("</h1>")];
         let data = HashBuilder::new().insert_bool("value1", true);
 
         Template::new().render_data(&mut w, &data, &nodes);
@@ -486,8 +480,7 @@ mod template_tests {
     #[test]
     fn test_section_unescaped_string_data() {
         let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("{{# value1 }}{{& value }}{{/ value1}}");
-        let nodes = parser::parse_nodes(&tokens);
+        let nodes: Vec<Node> = vec![Section("value1", vec![Unescaped("value", "{{& value }}".to_string())], false, "{{# value1 }}".to_string(), "{{/ value1 }}".to_string())];
         let data = HashBuilder::new()
             .insert_hash("value1", |builder| {
                 builder.insert_string("value", "<Section Value>")
@@ -501,8 +494,7 @@ mod template_tests {
     #[test]
     fn test_section_value_string_data() {
         let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("{{# value1 }}{{ value }}{{/ value1 }}");
-        let nodes = parser::parse_nodes(&tokens);
+        let nodes: Vec<Node> = vec![Section("value1", vec![Value("value", "{{ value }}".to_string())], false, "{{# value1 }}".to_string(), "{{/ value1 }}".to_string())];
         let data = HashBuilder::new()
             .insert_hash("value1", |builder| {
                 builder.insert_string("value", "<Section Value>")
@@ -516,8 +508,7 @@ mod template_tests {
     #[test]
     fn test_section_multiple_value_string_data() {
         let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("{{# names }}{{ name }}{{/ names }}");
-        let nodes = parser::parse_nodes(&tokens);
+        let nodes: Vec<Node> = vec![Section("names", vec![Value("name", "{{ name }}".to_string())], false, "{{# names }}".to_string(), "{{/ names }}".to_string())];
         let data = HashBuilder::new()
             .insert_hash("names", |builder| {
                 builder.insert_vector("name", |builder| {
@@ -536,8 +527,7 @@ mod template_tests {
     #[test]
     fn test_excessively_nested_data() {
         let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("{{# hr }}{{# people }}{{ name }}{{/ people }}{{/ hr }}");
-        let nodes = parser::parse_nodes(&tokens);
+        let nodes: Vec<Node> = vec![Section("hr", vec![Section("people", vec![Value("name", "{{ name }}".to_string())], false, "{{# people }}".to_string(), "{{/ people }}".to_string())], false, "{{# hr }}".to_string(), "{{/ hr }}".to_string())];
         let data = HashBuilder::new()
             .insert_hash("hr", |builder| {
                 builder.insert_hash("people", |builder| {
@@ -560,8 +550,7 @@ mod template_tests {
         let s1 = "a < b > c & d \"spam\"\'";
         let a1 = "a &lt; b &gt; c &amp; d &quot;spam&quot;'";
         let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("{{ value1 }}");
-        let nodes = parser::parse_nodes(&tokens);
+        let nodes: Vec<Node> = vec![Value("value1", "{{ value1 }}".to_string())];
         let data = HashBuilder::new().insert_string("value1", s1);
 
         Template::new().render_data(&mut w, &data, &nodes);
@@ -572,41 +561,38 @@ mod template_tests {
     #[test]
     fn test_value_node_correct_string_data() {
         let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("<h1>{{ value1 }}<h1>");
-        let nodes = parser::parse_nodes(&tokens);
+        let nodes: Vec<Node> = vec![Static("<h1>"), Value("value1", "{{ value1 }}".to_string()), Static("</h1>")];
         let data = HashBuilder::new().insert_string("value1", "heading");
 
         Template::new().render_data(&mut w, &data, &nodes);
 
-        assert_eq!("<h1>heading<h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
+        assert_eq!("<h1>heading</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
     fn test_unescaped_node_lambda_data() {
         let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("<h1>{{& func1 }}<h1>");
-        let nodes = parser::parse_nodes(&tokens);
+        let nodes: Vec<Node> = vec![Static("<h1>"), Unescaped("func1", "{{& func1 }}".to_string()), Static("</h1>")];
         let data = HashBuilder::new().insert_lambda("func1", |_| {
             "heading".to_string()
         });
 
         Template::new().render_data(&mut w, &data, &nodes);
 
-        assert_eq!("<h1>heading<h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
+        assert_eq!("<h1>heading</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
     fn test_value_node_lambda_data() {
         let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("<h1>{{ func1 }}<h1>");
-        let nodes = parser::parse_nodes(&tokens);
+        let nodes: Vec<Node> = vec![Static("<h1>"), Value("func1", "{{ func1 }}".to_string()), Static("</h1>")];
         let data = HashBuilder::new().insert_lambda("func1", |_| {
             "heading".to_string()
         });
 
         Template::new().render_data(&mut w, &data, &nodes);
 
-        assert_eq!("<h1>heading<h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
+        assert_eq!("<h1>heading</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
@@ -614,8 +600,7 @@ mod template_tests {
         let s1 = "a < b > c & d \"spam\"\'";
         let a1 = "a &lt; b &gt; c &amp; d &quot;spam&quot;'";
         let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("{{ func1 }}");
-        let nodes = parser::parse_nodes(&tokens);
+        let nodes: Vec<Node> = vec![Value("func1", "{{ func1 }}".to_string())];
         let data = HashBuilder::new().insert_lambda("func1", |_| {
             s1.to_string()
         });
@@ -628,8 +613,7 @@ mod template_tests {
     #[test]
     fn test_value_node_correct_false_bool_data() {
         let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("{{ value1 }}");
-        let nodes = parser::parse_nodes(&tokens);
+        let nodes: Vec<Node> = vec![Value("value1", "{{ value1 }}".to_string())];
         let data = HashBuilder::new().insert_bool("value1", false);
 
         Template::new().render_data(&mut w, &data, &nodes);
@@ -640,8 +624,7 @@ mod template_tests {
     #[test]
     fn test_value_node_correct_true_bool_data() {
         let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("{{ value1 }}");
-        let nodes = parser::parse_nodes(&tokens);
+        let nodes: Vec<Node> = vec![Value("value1", "{{ value1 }}".to_string())];
         let data = HashBuilder::new().insert_bool("value1", true);
 
         Template::new().render_data(&mut w, &data, &nodes);
@@ -652,8 +635,7 @@ mod template_tests {
     #[test]
     fn test_partial_node_correct_data() {
         let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("A wise woman once said: {{> hopper_quote.partial }}");
-        let nodes = parser::parse_nodes(&tokens);
+        let nodes: Vec<Node> = vec![Static("A wise woman once said: "), Part("hopper_quote.partial", "{{> hopper_quote.partial }}")];
         let data = HashBuilder::new().insert_string("author", "Grace Hopper")
                                      .set_partials_path("test_data");
 
@@ -667,8 +649,7 @@ mod template_tests {
     #[test]
     fn test_partial_node_correct_data_with_extra() {
         let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("A wise woman once said: {{> hopper_quote.partial }} something else {{ extra }}");
-        let nodes = parser::parse_nodes(&tokens);
+        let nodes: Vec<Node> = vec![Static("A wise woman once said: "), Part("hopper_quote.partial", "{{> hopper_quote.partial }}"), Static(" something else "), Value("extra", "{{ extra }}".to_string())];
         let data = HashBuilder::new().insert_string("author", "Grace Hopper")
                                      .insert_string("extra", "extra data")
                                      .set_partials_path("test_data");
