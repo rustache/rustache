@@ -1,0 +1,1 @@
+{{content}}<{{#nodes}}{{>test_data/test_spec_partials_recursion}}{{/nodes}}>

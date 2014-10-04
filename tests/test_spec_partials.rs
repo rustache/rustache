@@ -1,7 +1,7 @@
-// extern crate rustache;
+extern crate rustache;
 
-// use std::io::MemWriter;
-// use rustache::HashBuilder;
+use std::io::MemWriter;
+use rustache::HashBuilder;
 
 //   - name: Basic Behavior
 //     desc: The greater-than operator should expand to the named partial.
@@ -9,15 +9,15 @@
 //     template: '"{{>text}}"'
 //     partials: { text: 'from partial' }
 //     expected: '"from partial"'
-// #[test]
-// fn test_spec_partials_basic_behavior() {
-//     let mut w = MemWriter::new();
-//     let data = HashBuilder::new();
+#[test]
+fn test_spec_partials_basic_behavior() {
+    let mut w = MemWriter::new();
+    let data = HashBuilder::new();
 
-//     rustache::render_text_from_hb("\"{{>text}}\"", &data, &mut w);
+    rustache::render_text_from_hb("\"{{>test_data/test_spec_partials_basic}}\"", &data, &mut w);
 
-//     assert_eq!("\"from partial\"".to_string(), String::from_utf8(w.unwrap()).unwrap());
-// }
+    assert_eq!("\"from partial\"".to_string(), String::from_utf8(w.unwrap()).unwrap());
+}
 
 //   - name: Failed Lookup
 //     desc: The empty string should be used when the named partial is not found.
@@ -25,15 +25,15 @@
 //     template: '"{{>text}}"'
 //     partials: { }
 //     expected: '""'
-// #[test]
-// fn test_spec_partials_failed_lookup() {
-//     let mut w = MemWriter::new();
-//     let data = HashBuilder::new();
+#[test]
+fn test_spec_partials_failed_lookup() {
+    let mut w = MemWriter::new();
+    let data = HashBuilder::new();
 
-//     rustache::render_text_from_hb("\"{{>text}}\"", &data, &mut w);
+    rustache::render_text_from_hb("\"{{>text}}\"", &data, &mut w);
 
-//     assert_eq!("\"\"".to_string(), String::from_utf8(w.unwrap()).unwrap());
-// }
+    assert_eq!("\"\"".to_string(), String::from_utf8(w.unwrap()).unwrap());
+}
 
 //   - name: Context
 //     desc: The greater-than operator should operate within the current context.
@@ -41,16 +41,15 @@
 //     template: '"{{>partial}}"'
 //     partials: { partial: '*{{text}}*' }
 //     expected: '"*content*"'
-// #[test]
-// fn test_spec_partials_context() {
-//     let mut w = MemWriter::new();
-//     let data = HashBuilder::new()
-//                 .insert_string("text", "content");
+#[test]
+fn test_spec_partials_context() {
+    let mut w = MemWriter::new();
+    let data = HashBuilder::new().insert_string("text", "content");
 
-//     rustache::render_text_from_hb("\"{{>partial}}\"", &data, &mut w);
+    rustache::render_text_from_hb("\"{{>test_data/test_spec_partials_context}}\"", &data, &mut w);
 
-//     assert_eq!("\"*content*\"".to_string(), String::from_utf8(w.unwrap()).unwrap());
-// }
+    assert_eq!("\"*content*\"".to_string(), String::from_utf8(w.unwrap()).unwrap());
+}
 
 //   - name: Recursion
 //     desc: The greater-than operator should properly recurse.
@@ -72,7 +71,7 @@
 //                     })
 //                 });
 
-//     rustache::render_text_from_hb("{{>node}}", &data, &mut w);
+//     rustache::render_text_from_hb("{{>test_data/test_spec_partials_recursion}}", &data, &mut w);
 
 //     assert_eq!("X<Y<>>".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
@@ -83,15 +82,15 @@
 //     template: '| {{>partial}} |'
 //     partials: { partial: "\t|\t" }
 //     expected: "| \t|\t |"
-// #[test]
-// fn test_spec_partials_surrounding_whitespace() {
-//     let mut w = MemWriter::new();
-//     let data = HashBuilder::new();
+#[test]
+fn test_spec_partials_surrounding_whitespace() {
+    let mut w = MemWriter::new();
+    let data = HashBuilder::new();
 
-//     rustache::render_text_from_hb("| {{>partial}} |", &data, &mut w);
+    rustache::render_text_from_hb("| {{>test_data/test_spec_partials_whitespace}} |", &data, &mut w);
 
-//     assert_eq!("| \t|\t |".to_string(), String::from_utf8(w.unwrap()).unwrap());
-// }
+    assert_eq!("| \t|\t |".to_string(), String::from_utf8(w.unwrap()).unwrap());
+}
 
 //   - name: Inline Indentation
 //     desc: Whitespace should be left untouched.
@@ -99,16 +98,15 @@
 //     template: "  {{data}}  {{> partial}}\n"
 //     partials: { partial: ">\n>" }
 //     expected: "  |  >\n>\n"
-// #[test]
-// fn test_spec_partials_inline_indentation() {
-//     let mut w = MemWriter::new();
-//     let data = HashBuilder::new()
-//                 .insert_string("data", "|");
+#[test]
+fn test_spec_partials_inline_indentation() {
+    let mut w = MemWriter::new();
+    let data = HashBuilder::new().insert_string("data", "|");
 
-//     rustache::render_text_from_hb("  {{data}}  {{> partial}}\n", &data, &mut w);
+    rustache::render_text_from_hb("  {{data}}  {{> test_data/test_spec_partials_inline_indentation}}\n", &data, &mut w);
 
-//     assert_eq!("  |  >\n>\n".to_string(), String::from_utf8(w.unwrap()).unwrap());
-// }
+    assert_eq!("  |  >\n>\n".to_string(), String::from_utf8(w.unwrap()).unwrap());
+}
 
 //   - name: Standalone Line Endings
 //     desc: '"\r\n" should be considered a newline for standalone tags.'
@@ -137,7 +135,7 @@
 //     let mut w = MemWriter::new();
 //     let data = HashBuilder::new();
 
-//     rustache::render_text_from_hb("  {{>partial}}\n>", &data, &mut w);
+//     rustache::render_text_from_hb("  {{>test_data/test_spec_partials_standalone_without_previous_line}}\n>", &data, &mut w);
 
 //     assert_eq!("  >\n  >>".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
@@ -148,12 +146,13 @@
 //     template: ">\n  {{>partial}}"
 //     partials: { partial: ">\n>" }
 //     expected: ">\n  >\n  >"
+// ??? is this test really right?
 // #[test]
 // fn test_spec_partials_standalone_without_newline() {
 //     let mut w = MemWriter::new();
 //     let data = HashBuilder::new();
 
-//     rustache::render_text_from_hb(">\n  {{>partial}}", &data, &mut w);
+//     rustache::render_text_from_hb(">\n  {{>test_data/test_spec_partials_standalone_without_newline}}", &data, &mut w);
 
 //     assert_eq!(">\n  >\n  >".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
@@ -180,10 +179,9 @@
 // #[test]
 // fn test_spec_partials_standalone_indentation() {
 //     let mut w = MemWriter::new();
-//     let data = HashBuilder::new()
-//                 .insert_string("content", "<\n->");
+//     let data = HashBuilder::new().insert_string("content", "<\n->");
 
-//     rustache::render_text_from_hb("|\n\\\n {{>partial}}\n/\n", &data, &mut w);
+//     rustache::render_text_from_hb("|\n\\\n {{>test_data/test_spec_partials_standalone_indentation}}\n/\n", &data, &mut w);
 
 //     assert_eq!("|\n\\\n |\n <\n ->\n |\n/\n".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
@@ -194,13 +192,13 @@
 //     template: "|{{> partial }}|"
 //     partials: { partial: "[]" }
 //     expected: '|[]|'
-// #[test]
-// fn test_spec_partials_padding_whitespace() {
-//     let mut w = MemWriter::new();
-//     let data = HashBuilder::new()
-//                 .insert_bool("boolean", true);
+#[test]
+fn test_spec_partials_padding_whitespace() {
+    let mut w = MemWriter::new();
+    let data = HashBuilder::new()
+                .insert_bool("boolean", true);
 
-//     rustache::render_text_from_hb("|{{> partial }}|", &data, &mut w);
+    rustache::render_text_from_hb("|{{> test_data/test_spec_partials_padding_whitespace }}|", &data, &mut w);
 
-//     assert_eq!("|[]|".to_string(), String::from_utf8(w.unwrap()).unwrap());
-// }
+    assert_eq!("|[]|".to_string(), String::from_utf8(w.unwrap()).unwrap());
+}
