@@ -94,15 +94,20 @@ fn test_spec_lambdas_interpolation_expansion() {
 //         clojure: '(def g (atom 0)) (fn [] (swap! g inc))'
 //     template: '{{lambda}} == {{{lambda}}} == {{lambda}}'
 //     expected: '1 == 2 == 3'
-// #[test]
-// fn test_spec_lambdas_interpolation_multiple_calls() {
-//     let mut w = MemWriter::new();
-//     let data = HashBuilder::new();
+#[test]
+fn test_spec_lambdas_interpolation_multiple_calls() {
+    let mut w = MemWriter::new();
+    let mut calls = 0u;
+    let data = HashBuilder::new()
+                .insert_lambda("lambda", |_| {
+                    calls += 1;
+                    calls.to_string()
+                });
 
-//     rustache::render_text_from_hb("{{lambda}} == {{{lambda}}} == {{lambda}}", &data, &mut w);
+    rustache::render_text_from_hb("{{lambda}} == {{{lambda}}} == {{lambda}}", &data, &mut w);
 
-//     assert_eq!("1 == 2 == 3".to_string(), String::from_utf8(w.unwrap()).unwrap());
-// }
+    assert_eq!("1 == 2 == 3".to_string(), String::from_utf8(w.unwrap()).unwrap());
+}
 
 //   - name: Escaping
 //     desc: Lambda results should be appropriately escaped.
