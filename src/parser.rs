@@ -17,7 +17,6 @@ pub enum Node<'a> {
 
 fn handle_dot_notation<'a>(parts: &[&'a str], unescaped: bool, amp: bool) -> Node<'a> {
     let variable = parts[0];
-    println!("running");
     match parts.len() {
         1 => {
             match unescaped {
