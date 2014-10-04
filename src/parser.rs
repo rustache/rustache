@@ -14,6 +14,51 @@ pub enum Node<'a> {
     Unescaped(&'a str, String),
     Part(&'a str, &'a str)
 }
+
+fn handle_dot_notation<'a>(parts: &[&'a str], unescaped: bool, amp: bool) -> Node<'a> {
+    let variable = parts[0];
+    println!("running");
+    match parts.len() {
+        1 => {
+            match unescaped {
+                true => {
+                    match amp {
+                        true => {
+                            let mut var = "{{&".to_string();
+                            var.push_str(variable);
+                            var.push_str("}}");
+                            return Unescaped(variable, var);
+                        },
+                        false => {
+                            let mut var = "{{{".to_string();
+                            var.push_str(variable);
+                            var.push_str("}}}");
+                            return Unescaped(variable, var);
+                        }
+                    }
+                }
+                false => {
+                    let mut var = "{{".to_string();
+                    var.push_str(variable);
+                    var.push_str("}}");
+                    return Value(variable, var);
+                }
+            }
+        }
+        _ => {
+            let mut otag = "{{#".to_string();
+            let mut ctag = "{{/".to_string();
+
+            otag.push_str(variable);
+            otag.push_str("}}");
+            ctag.push_str(variable);
+            ctag.push_str("}}");
+
+            return Section(variable, vec![handle_dot_notation(parts.slice_from(1), unescaped, amp)], false, otag, ctag);
+        }
+    }
+}
+
 pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
     let mut nodes: Vec<Node> = vec![];
     let mut it = list.iter().enumerate();
@@ -29,50 +74,28 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
                             false => nodes.push(Value(name, raw.to_string())),
                             true => {
                                 let parts: Vec<&str> = name.split_str(".").collect();
-                                let (section, variable) = (parts[0], parts[parts.len() - 1]);
-                                let mut var = "{{".to_string();
-                                let mut otag = "{{#".to_string();
-                                let mut ctag = "{{/".to_string();
-                                var.push_str(variable);
-                                var.push_str("}}");
-                                otag.push_str(section);
-                                otag.push_str("}}");
-                                ctag.push_str(section);
-                                ctag.push_str("}}");
-
-                                nodes.push(Section(section, vec![Value(variable, var)], false, otag, ctag))
+                                let node = handle_dot_notation(parts.as_slice(), false, false);
+                                nodes.push(node);
                             }
                         }
                     },
                     Raw(name, raw) => {
                         let dot_notation = name.contains_char('.');
+                        let ampersand = raw.contains_char('&');
                         match dot_notation {
                             false => nodes.push(Unescaped(name, raw.to_string())),
                             true => {
                                 let parts: Vec<&str> = name.split_str(".").collect();
-                                let (section, variable) = (parts[0], parts[parts.len() - 1]);
-                                let mut var = String::new();
-                                let ampersand = raw.contains_char('&');
                                 match ampersand {
                                     true => {
-                                        var.push_str("{{&");
-                                        var.push_str(variable);
-                                        var.push_str("}}");
+                                        let node = handle_dot_notation(parts.as_slice(), true, true);
+                                        nodes.push(node);
                                     },
                                     false => {
-                                        var.push_str("{{{");
-                                        var.push_str(variable);
-                                        var.push_str("}}}");
+                                        let node = handle_dot_notation(parts.as_slice(), true, false);
+                                        nodes.push(node);
                                     }
-                                }
-                                let mut otag = "{{#".to_string();
-                                let mut ctag = "{{/".to_string();
-                                otag.push_str(section);
-                                otag.push_str("}}");
-                                ctag.push_str(section);
-                                ctag.push_str("}}");
-
-                                nodes.push(Section(section, vec![Unescaped(variable, var)], false, otag, ctag))
+                                };
                             }
                         }
                     }
@@ -138,21 +161,66 @@ mod parser_tests {
     use parser::{Node, Static, Value, Section, Unescaped, Part};
 
     #[test]
-    fn parse_dot_notation() {
+    fn parse_dot_notation_simple() {
         let tokens: Vec<Token> = vec![Variable("section.child_tag", "{{ section.child_tag }}")];
         let nodes = parser::parse_nodes(&tokens);
         let expected: Vec<Node> = vec![Section("section", vec![Value("child_tag", "{{child_tag}}".to_string())], false, "{{#section}}".to_string(), "{{/section}}".to_string())];
         assert_eq!(nodes, expected);
+    }
 
-        let tokens: Vec<Token> = vec![Raw("section.child_tag", "{{& section.child_tag }}")];
-        let nodes = parser::parse_nodes(&tokens);
-        let expected: Vec<Node> = vec![Section("section", vec![Unescaped("child_tag", "{{&child_tag}}".to_string())], false, "{{#section}}".to_string(), "{{/section}}".to_string())];
-        assert_eq!(nodes, expected);
-        
+    #[test]
+    fn parse_dot_notation_triple_mustache() {   
         let tokens: Vec<Token> = vec![Raw("section.child_tag", "{{{ section.child_tag }}}")];
         let nodes = parser::parse_nodes(&tokens);
         let expected: Vec<Node> = vec![Section("section", vec![Unescaped("child_tag", "{{{child_tag}}}".to_string())], false, "{{#section}}".to_string(), "{{/section}}".to_string())];
         assert_eq!(nodes, expected);
+    }
+
+        #[test]
+    fn parse_dot_notation_ampersand() {   
+        let tokens: Vec<Token> = vec![Raw("section.child_tag", "{{& section.child_tag }}")];
+        let nodes = parser::parse_nodes(&tokens);
+        let expected: Vec<Node> = vec![Section("section", vec![Unescaped("child_tag", "{{&child_tag}}".to_string())], false, "{{#section}}".to_string(), "{{/section}}".to_string())];
+        assert_eq!(nodes, expected);
+    }
+
+    #[test]
+    fn parse_nested_dot_notation_basic() {
+        let tokens: Vec<Token> = vec![Variable("section.child.tag", "{{ section.child.tag }}")];
+        let nodes = parser::parse_nodes(&tokens);
+        let expected: Vec<Node> = vec![
+            Section("section", vec![
+                Section("child", vec![
+                    Value("tag", "{{tag}}".to_string())]
+                    ,false, "{{#child}}".to_string(), "{{/child}}".to_string())]
+            , false, "{{#section}}".to_string(), "{{/section}}".to_string())];
+        assert_eq!(nodes, expected);        
+    }
+
+    #[test]
+    fn parse_nested_dot_notation_triple_mustache() {
+        let tokens: Vec<Token> = vec![Raw("section.child.tag", "{{{ section.child.tag }}}")];
+        let nodes = parser::parse_nodes(&tokens);
+        let expected: Vec<Node> = vec![
+            Section("section", vec![
+                Section("child", vec![
+                    Unescaped("tag", "{{{tag}}}".to_string())]
+                    ,false, "{{#child}}".to_string(), "{{/child}}".to_string())]
+            , false, "{{#section}}".to_string(), "{{/section}}".to_string())];
+        assert_eq!(nodes, expected);        
+    }
+
+    #[test]
+    fn parse_nested_dot_notation_ampersand() {
+        let tokens: Vec<Token> = vec![Raw("section.child.tag", "{{& section.child.tag }}")];
+        let nodes = parser::parse_nodes(&tokens);
+        let expected: Vec<Node> = vec![
+            Section("section", vec![
+                Section("child", vec![
+                    Unescaped("tag", "{{&tag}}".to_string())]
+                    ,false, "{{#child}}".to_string(), "{{/child}}".to_string())]
+            , false, "{{#section}}".to_string(), "{{/section}}".to_string())];
+        assert_eq!(nodes, expected);        
     }
 
     #[test]
