@@ -1,5 +1,6 @@
 use std::path::Path;
-use rustache;
+use std::io::fs::PathExtensions;
+use std::io::File;
 use compiler;
 use parser;
 use parser::{Node, Value, Static, Unescaped, Section, Part};
@@ -274,15 +275,18 @@ impl<'a> Template<'a> {
                                               filename: &str, 
                                                   data: &HashMap<String, Data>, 
                                                 writer: &mut W) {
-        let tmp = Path::new(self.partials_path.clone()).join(filename);
-        match tmp.as_str() {
-            None => fail!("path is not a valid UTF-8 sequence"),
-            Some(_) => {
-                let file = rustache::read_file(tmp.clone());
-                let tokens = compiler::create_tokens(file.as_slice());
-                let nodes = parser::parse_nodes(&tokens);
+        let path = Path::new(self.partials_path.clone()).join(filename);
+        if path.exists() {
 
-                self.render(writer, data, &nodes);
+            let file = File::open(&path).read_to_string();
+            match file {
+                Ok(contents) => {
+                    let tokens = compiler::create_tokens(contents.as_slice());
+                    let nodes = parser::parse_nodes(&tokens);
+
+                    self.render(writer, data, &nodes);    
+                },
+                Err(_) => { }
             }
         }
     }
