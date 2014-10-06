@@ -1,16 +1,21 @@
 // The compiler takes in a stringified template file or a string and
 // splits into a list of tokens to be processed by the parser.
 
+// Token represents the basic data source for different sections of
+// text provided within the template string or file.  Raw tag values
+// are stored for eventual use in lambdas.
 #[deriving(Show, PartialEq, Eq)]
 pub enum Token<'a> {
-    Text(&'a str),
-    Variable(&'a str, &'a str),
-    OTag(&'a str, bool, &'a str), // bool denotes whether it is an inverted section tag
-    CTag(&'a str, &'a str),
-    Raw(&'a str, &'a str),
-    Partial(&'a str, &'a str),
+    Text(&'a str), // (text)
+    Variable(&'a str, &'a str), // (name, tag)
+    OTag(&'a str, bool, &'a str), // (name, inverted, tag)
+    CTag(&'a str, &'a str), // (name, tag)
+    Raw(&'a str, &'a str), // (name, tag)
+    Partial(&'a str, &'a str), // (name, tag)
 }
 
+// Create_tokens is the entry point to the template compiler. It compiles a raw list of
+// all applicable tags within a template to send to the parser.
 pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
     let mut tokens: Vec<Token> = Vec::new();
     let re = regex!(r"\{\{(\{?\S?\s*?[\w\.\s]*.*?\s*?\}?)\}\}");
@@ -26,14 +31,15 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
 
         close_pos = c;
         match inner.char_at(0) {
+            // Handle special tags or treat as normal variables
             '!' => continue,
-            '#' => tokens.push(OTag(inner.slice_from(1).trim(), false, outer)),
-            '/' => tokens.push(CTag(inner.slice_from(1).trim(), outer)),
-            '^' => tokens.push(OTag(inner.slice_from(1).trim(), true, outer)),
-            '>' => tokens.push(Partial(inner.slice_from(1).trim(), outer)),
-            '&' => tokens.push(Raw(inner.slice_from(1).trim(), outer)),
-            '{' => tokens.push(Raw(inner.slice(1, inner.len() - 1).trim(), outer)),
-            _   => tokens.push(Variable(inner.trim(), outer))
+            '#' => tokens.push(OTag(inner.slice_from(1).trim(), false, outer)), // Open section
+            '/' => tokens.push(CTag(inner.slice_from(1).trim(), outer)), // Close section
+            '^' => tokens.push(OTag(inner.slice_from(1).trim(), true, outer)), // Open inverted section
+            '>' => tokens.push(Partial(inner.slice_from(1).trim(), outer)), // Partial tag (external file)
+            '&' => tokens.push(Raw(inner.slice_from(1).trim(), outer)), // Unescaped tag, do not HTML escape
+            '{' => tokens.push(Raw(inner.slice(1, inner.len() - 1).trim(), outer)), // Unescaped tag, do not HTML escape
+            _   => tokens.push(Variable(inner.trim(), outer)) // Normal mustache variable
         }
     }
     if close_pos < len { 
