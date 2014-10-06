@@ -61,7 +61,6 @@ fn handle_dot_notation<'a>(parts: &[&'a str], unescaped: bool, amp: bool) -> Nod
 pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
     let mut nodes: Vec<Node> = vec![];
     let mut it = list.iter().enumerate();
-
     loop {
         match it.next() {
             Some((i, &token)) => {
@@ -137,7 +136,7 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
                         }
 
                         // Advance the iterator to the position of the CTAG.  If the 
-                        //OTag is never closed, these children will never be processed.
+                        // OTag is never closed, these children will never be processed.
                         while count > 1 {
                             it.next();
                             count -= 1;

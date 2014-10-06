@@ -1,5 +1,5 @@
-// The compiler tokenizes any template file or string into a list of
-// parser usable tokens
+// The compiler takes in a stringified template file or a string and
+// splits into a list of tokens to be processed by the parser.
 
 #[deriving(Show, PartialEq, Eq)]
 pub enum Token<'a> {
