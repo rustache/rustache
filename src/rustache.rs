@@ -11,14 +11,14 @@ use template::Template;
 //     fn render(self, template: &str) -> R;
 // }
 
-// impl Render<MemStream> for HashBuilder {
+// impl<'a> Render<MemStream> for HashBuilder<'a> {
 //     fn render(self, template: &str) -> MemStream {
 //         // Create the stream we are going to write to.
-//         let mut stream = MemStream::new();
+//         let mut stream = MemStream::new(vec!());
 
 //         // Create our nodes
 //         let tokens = compiler::create_tokens(template);
-//         let nodes = parse::parse_nodes(&tokens);
+//         let nodes = parser::parse_nodes(&tokens);
         
 //         // Write to our stream.
 //         Template::new().render_data(&mut stream, &self, &nodes);
@@ -28,7 +28,7 @@ use template::Template;
 //     } 
 // }
 
-// impl Render<MemStream> for JSON {
+// impl Render<MemStream> for Json {
 //     fn render(self, template: &str) -> MemStream {
 //         parse_json(&self).render(template)
 //     }
