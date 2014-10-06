@@ -5,21 +5,29 @@
 
 use compiler::{Token, Text, Variable, OTag, CTag, Raw, Partial};
 
+// Node signifies the data structure used by the template to
+// determine how to correctly implement data.  Each Node type
+// stores the variable name as well as the raw tag for use by
+// lambdas.
 #[deriving(PartialEq, Eq, Clone, Show)]
 pub enum Node<'a> {
-    Static(&'a str),
-    Value(&'a str, String),
-    // (name, children, inverted)
-    Section(&'a str, Vec<Node<'a>>, bool, String, String),
-    Unescaped(&'a str, String),
-    Part(&'a str, &'a str)
+    Static(&'a str), // (text)
+    Value(&'a str, String), // (name, tag)
+    Section(&'a str, Vec<Node<'a>>, bool, String, String), // (name, children, inverted, otag, ctag)
+    Unescaped(&'a str, String), // (name, tag)
+    Part(&'a str, &'a str) // // (name, tag)
 }
 
+// Function that recursively handles tag names that utilize dot notation
+// shorthand.
 fn handle_dot_notation<'a>(parts: &[&'a str], unescaped: bool, amp: bool) -> Node<'a> {
     let variable = parts[0];
     match parts.len() {
+        // Determine if the remaining portion of the tag name is the
+        // variable or another section.
         1 => {
             match unescaped {
+                // Determine if the matching tag is unesecaped or normal.
                 true => {
                     match amp {
                         true => {
@@ -53,11 +61,14 @@ fn handle_dot_notation<'a>(parts: &[&'a str], unescaped: bool, amp: bool) -> Nod
             ctag.push_str(variable);
             ctag.push_str("}}");
 
+            // Enter recursion and assign the results as children.
             return Section(variable, vec![handle_dot_notation(parts.slice_from(1), unescaped, amp)], false, otag, ctag);
         }
     }
 }
 
+// Parse_nodes signifies the parser entry point passed the results received from
+// the template compiler.
 pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
     let mut nodes: Vec<Node> = vec![];
     let mut it = list.iter().enumerate();
@@ -137,7 +148,7 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
                         }
 
                         // Advance the iterator to the position of the CTAG.  If the 
-                        //OTag is never closed, these children will never be processed.
+                        // OTag is never closed, these children will never be processed.
                         while count > 1 {
                             it.next();
                             count -= 1;
@@ -149,9 +160,9 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
         }
     }
 
+    // Return the populated list of nodes for use by the template engine
     nodes
 }
-
 
 #[cfg(test)]
 mod parser_tests {
