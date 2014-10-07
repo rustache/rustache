@@ -29,8 +29,10 @@ extern crate rustache;
 The main forward interface that users will interact with when using Rustache are the `rustache::render_file` method and the `rustache::render_text` methods like so:
 
 ```rust
+// Renders the given template file
 rustache::render_file("path/to/template.html", &data)
 
+// Renders the given template string
 rustache::render_text("{{ name }}", &data)
 ```
 
