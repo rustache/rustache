@@ -309,7 +309,3 @@ fn test_spec_lambdas_inverted_section_using_render_text() {
 
     assert_eq!("<>".to_string(), String::from_utf8(s.unwrap()).unwrap());
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> 3745d0766586268e9edfcb18ccd9f69171cb5aa1
