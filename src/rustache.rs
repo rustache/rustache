@@ -1,17 +1,12 @@
 use std::io::File;
 use compiler;
 use parser;
-<<<<<<< HEAD
 use memstream::MemStream;
-=======
-// use memstream::MemStream;
->>>>>>> Adding memstream.rs to implement a custom memstream struct
 use serialize::{json};
 use serialize::json::{Json, Boolean, Null, I64, U64, F64, String, List, Object};
 use build::{HashBuilder, VecBuilder};
 use template::Template;
 
-<<<<<<< HEAD
 /// Defines a `renderable` trait
 pub trait Render<R: Reader> {
     /// `render` function on a `renderable` returns a `reader`
@@ -21,7 +16,7 @@ pub trait Render<R: Reader> {
 impl<'a> Render<MemStream> for HashBuilder<'a> {
     fn render(self, template: &str) -> MemStream {
         // Create the stream we are going to write to.
-        let mut stream = MemStream::new(vec!());
+        let mut stream = MemStream::new();
 
         // Create our nodes
         let tokens = compiler::create_tokens(template);
@@ -64,42 +59,6 @@ pub fn render_file<W: Writer, R: Reader, Re: Render<R>>(path: &str, renderable: 
 pub fn render_text<W: Writer, R: Reader, Re: Render<R>>(input: &str, renderable: Re) -> R {
     renderable.render(input)
 }
-=======
-// pub trait Render<R: Reader> {
-//     fn render(self, template: &str) -> R;
-// }
-
-// impl<'a> Render<MemStream> for HashBuilder<'a> {
-//     fn render(self, template: &str) -> MemStream {
-//         // Create the stream we are going to write to.
-//         let mut stream = MemStream::new(vec!());
-
-//         // Create our nodes
-//         let tokens = compiler::create_tokens(template);
-//         let nodes = parser::parse_nodes(&tokens);
-        
-//         // Write to our stream.
-//         Template::new().render_data(&mut stream, &self, &nodes);
-        
-//         // Return the stream as a Reader.
-//         stream
-//     } 
-// }
-
-// impl Render<MemStream> for Json {
-//     fn render(self, template: &str) -> MemStream {
-//         parse_json(&self).render(template)
-//     }
-// }
-
-// pub fn render_file<W: Writer, R: Reader, Re: Render<R>>(path: &str, renderable: Re) -> R {
-//     renderable.render(File::open(Path::new(path)).read_to_string().as_slice())
-// }
-
-// pub fn render_text<W: Writer, R: Reader, Re: Render<R>>(input: &str, renderable: Re) -> R {
-//     renderable.render(input)
-// }
->>>>>>> Adding memstream.rs to implement a custom memstream struct
 
 /// Render a template file from a HashBuilder to a specified writer
 ///
