@@ -16,11 +16,7 @@ pub trait Render<R: Reader> {
 impl<'a> Render<MemStream> for HashBuilder<'a> {
     fn render(self, template: &str) -> MemStream {
         // Create the stream we are going to write to.
-<<<<<<< HEAD
         let mut stream = MemStream::new();
-=======
-        let mut stream = MemStream::new(vec!());
->>>>>>> 3a8f11ed26e533fc87c0c880d93d90ab9ad03d05
 
         // Create our nodes
         let tokens = compiler::create_tokens(template);
