@@ -11,15 +11,18 @@
 //! Rustache is a flexible template engine for Rust.
 
 // StdLib dependencies
-#[phase(plugin)] extern crate regex_macros;
+#[phase(plugin)] 
+extern crate regex_macros;
 extern crate regex;
 extern crate serialize;
+extern crate memstream;
 
 use std::fmt;
 use std::cell::RefCell;
 use std::collections::HashMap;
 
 pub use build::{HashBuilder, VecBuilder};
+pub use rustache::{render_file, render_text};
 pub use rustache::{render_file_from_hb, render_file_from_json_enum,
                    render_file_from_json_string, render_file_from_json_file,
                    render_text_from_hb, render_text_from_json_enum,
@@ -74,4 +77,3 @@ mod compiler;
 mod parser;
 mod build;
 mod template;
-mod memstream;
