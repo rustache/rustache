@@ -81,4 +81,3 @@ mod compiler;
 mod parser;
 mod build;
 mod template;
-mod memstream;
