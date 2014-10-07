@@ -43,7 +43,8 @@ impl Render<MemStream> for Json {
 ///
 /// let data = json::from_str(r#"{"name": "Bob"}"#);
 /// rustache::render_file("path/to/template.html", data);
-pub fn render_file<W: Writer, R: Reader, Re: Render<R>>(path: &str, renderable: Re) -> R {
+/// ```
+pub fn render_file<R: Reader, Re: Render<R>>(path: &str, renderable: Re) -> R {
     renderable.render(File::open(&Path::new(path)).read_to_string().as_slice()[0].as_slice())
 }
 
@@ -56,7 +57,8 @@ pub fn render_file<W: Writer, R: Reader, Re: Render<R>>(path: &str, renderable: 
 ///     .insert_string("name", "Bob");
 ///
 /// rustache::render_text("{{ name }}", &data);
-pub fn render_text<W: Writer, R: Reader, Re: Render<R>>(input: &str, renderable: Re) -> R {
+/// ```
+pub fn render_text<R: Reader, Re: Render<R>>(input: &str, renderable: Re) -> R {
     renderable.render(input)
 }
 
