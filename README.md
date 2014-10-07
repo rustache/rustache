@@ -26,7 +26,7 @@ extern crate rustache;
 
 ## API Methods
 
-The main forward interface that users will interact with when using Rustache is the `rustache::render` method liks so:
+The main forward interface that users will interact with when using Rustache are the `rustache::render_file` method and the `rustache::render_text` methods like so:
 
 ```rust
 // Renders the given template file
