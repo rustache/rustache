@@ -23,10 +23,6 @@ use std::collections::HashMap;
 
 pub use build::{HashBuilder, VecBuilder};
 pub use rustache::{render_file, render_text, Render};
-<<<<<<< HEAD
-pub use rustache::{render_file, render_text, Render};
-=======
->>>>>>> 3745d0766586268e9edfcb18ccd9f69171cb5aa1
 pub use rustache::{render_file_from_hb, render_file_from_json_enum,
                    render_file_from_json_string, render_file_from_json_file,
                    render_text_from_hb, render_text_from_json_enum,
