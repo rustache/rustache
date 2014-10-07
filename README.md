@@ -30,10 +30,10 @@ The main forward interface that users will interact with when using Rustache are
 
 ```rust
 // Renders the given template file
-rustache::render_file("path/to/template.html", &data)
+rustache::render_file("path/to/template.html", data)
 
 // Renders the given template string
-rustache::render_text("{{ name }}", &data)
+rustache::render_text("{{ name }}", data)
 ```
 
 Users also have the option to utilize more focused API methods for 
