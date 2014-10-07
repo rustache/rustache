@@ -60,13 +60,13 @@ impl<'a> PartialEq for Data<'a> {
 impl<'a> fmt::Show for Data<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Strng(ref val)  => write!(f, "String({})", val),
-            Bool(val)       => write!(f, "Boolean({})", val),
-            Integer(ref val)    => write!(f, "Integer({})", val),
-            Float(ref val)      => write!(f, "Float({})", val),
-            Vector(ref val) => write!(f, "Vector({})", val),
-            Hash(ref val)   => write!(f, "Hash({})", val),
-            Lambda(_)       => write!(f, "Lambda(...)") 
+            Strng(ref val)   => write!(f, "String({})", val),
+            Bool(val)        => write!(f, "Boolean({})", val),
+            Integer(ref val) => write!(f, "Integer({})", val),
+            Float(ref val)   => write!(f, "Float({})", val),
+            Vector(ref val)  => write!(f, "Vector({})", val),
+            Hash(ref val)    => write!(f, "Hash({})", val),
+            Lambda(_)        => write!(f, "Lambda(...)") 
         }
     }
 }
@@ -77,3 +77,4 @@ mod compiler;
 mod parser;
 mod build;
 mod template;
+mod memstream;
