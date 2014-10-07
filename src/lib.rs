@@ -22,11 +22,8 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 
 pub use build::{HashBuilder, VecBuilder};
-<<<<<<< HEAD
 pub use rustache::{render_file, render_text, Render};
-=======
-pub use rustache::{render_file, render_text};
->>>>>>> Exported memstream to a crate that is now a rustache dependency
+pub use rustache::{render_file, render_text, Render};
 pub use rustache::{render_file_from_hb, render_file_from_json_enum,
                    render_file_from_json_string, render_file_from_json_file,
                    render_text_from_hb, render_text_from_json_enum,
