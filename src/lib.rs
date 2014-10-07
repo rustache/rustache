@@ -11,15 +11,18 @@
 //! Rustache is a flexible template engine for Rust.
 
 // StdLib dependencies
-#[phase(plugin)] extern crate regex_macros;
+#[phase(plugin)] 
+extern crate regex_macros;
 extern crate regex;
 extern crate serialize;
+extern crate memstream;
 
 use std::fmt;
 use std::cell::RefCell;
 use std::collections::HashMap;
 
 pub use build::{HashBuilder, VecBuilder};
+pub use rustache::{render_file, render_text, Render};
 pub use rustache::{render_file_from_hb, render_file_from_json_enum,
                    render_file_from_json_string, render_file_from_json_file,
                    render_text_from_hb, render_text_from_json_enum,
@@ -57,13 +60,13 @@ impl<'a> PartialEq for Data<'a> {
 impl<'a> fmt::Show for Data<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Strng(ref val)  => write!(f, "String({})", val),
-            Bool(val)       => write!(f, "Boolean({})", val),
-            Integer(ref val)    => write!(f, "Integer({})", val),
-            Float(ref val)      => write!(f, "Float({})", val),
-            Vector(ref val) => write!(f, "Vector({})", val),
-            Hash(ref val)   => write!(f, "Hash({})", val),
-            Lambda(_)       => write!(f, "Lambda(...)") 
+            Strng(ref val)   => write!(f, "String({})", val),
+            Bool(val)        => write!(f, "Boolean({})", val),
+            Integer(ref val) => write!(f, "Integer({})", val),
+            Float(ref val)   => write!(f, "Float({})", val),
+            Vector(ref val)  => write!(f, "Vector({})", val),
+            Hash(ref val)    => write!(f, "Hash({})", val),
+            Lambda(_)        => write!(f, "Lambda(...)") 
         }
     }
 }
