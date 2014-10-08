@@ -3,6 +3,32 @@ extern crate rustache;
 use std::io::MemWriter;
 use rustache::HashBuilder;
 
+
+
+
+
+// bobthecow
+// it is supposed to recurse infinitely.
+// bobthecow
+// or rather, it's supposed to recurse until it has no reason to recurse.
+// bobthecow
+// your problem is that you're not rendering the partial with the correct context.
+// bobthecow
+// you're probably rendering it with the original context, not the section context?
+// fleur__
+// ohhhh.  i see now, in the data.  got it.  thanks!
+// bobthecow
+// no problem.
+// bobthecow
+// oh, make sure you render it with the full context stack, not just the section's context.
+
+
+
+
+
+
+
+
 //   - name: Basic Behavior
 //     desc: The greater-than operator should expand to the named partial.
 //     data: { }

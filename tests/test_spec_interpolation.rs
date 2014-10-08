@@ -387,25 +387,25 @@ fn test_spec_interpolation_dotted_initial_resolution() {
 //     b: { c: 'ERROR' }
 //   template: '{{#a}}{{b.c}}{{/a}}'
 //   expected: ''
-// #[test]
-// fn test_spec_interpolation_dotted_context_precedence() {
-//     let mut w = MemWriter::new();
-//     let data = HashBuilder::new()
-//                 .insert_hash("a", |h| {
-//                     h.insert_hash("b", |h| {
-//                         h
-//                     })
-//                 })
-//                 .insert_hash("b", |h| {
-//                     h.insert_hash("c", |h| {
-//                         h.insert_string("name", "ERROR")
-//                     })
-//                 });
+#[test]
+fn test_spec_interpolation_dotted_context_precedence() {
+    let mut w = MemWriter::new();
+    let data = HashBuilder::new()
+                .insert_hash("a", |h| {
+                    h.insert_hash("b", |h| {
+                        h
+                    })
+                })
+                .insert_hash("b", |h| {
+                    h.insert_hash("c", |h| {
+                        h.insert_string("name", "ERROR")
+                    })
+                });
 
-//     rustache::render_text_from_hb("{{#a}}{{b.c}}{{/a}}", &data, &mut w);
+    rustache::render_text_from_hb("{{#a}}{{b.c}}{{/a}}", &data, &mut w);
 
-//     assert_eq!("\"\"".to_string(), String::from_utf8(w.unwrap()).unwrap());
-// }
+    assert_eq!("".to_string(), String::from_utf8(w.unwrap()).unwrap());
+}
 
 // - name: Interpolation - Surrounding Whitespace
 //   desc: Interpolation should not alter surrounding whitespace.
