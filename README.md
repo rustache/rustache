@@ -101,7 +101,13 @@ cargo test
 
 ## Roadmap
 
-`//TODO`
+ - 74 of 106 Mustache spec tests passing.
+
+ - Whitespace handling  
+
+ - More robust error handling 
+
+ - API improvements 
 
 ## Contribute
 
