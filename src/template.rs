@@ -20,6 +20,9 @@ impl<'a> Template<'a> {
         tmpl
     }  
 
+    // utility method to write out rendered template with error handling
+    //
+    // TODO: error handling needs to be revamped to return IOResult
     fn write_to_stream<'a, W: Writer>(&self, writer: &mut W, data: &str, errstr: &str) {
 
         let rv = writer.write_str(data);
@@ -32,6 +35,7 @@ impl<'a> Template<'a> {
         }
     }
 
+    // method to escape HTML for default value tags
     fn escape_html(&self, input: &str) -> Box<String> {
         let mut rv = box String::new();
         for c in input.chars() {
@@ -46,80 +50,100 @@ impl<'a> Template<'a> {
         rv
     }
 
-        // any kind of tag may be in a nested section, in which case it's data
-    // may be in a context further up, so we have to have a way to search
-    // up those contexts for a value for some key.
     //
-    // the sections parameter is a vector that contains the list of nested
-    // sections we're in when the method is called
+    // key:       the key we're looking for
+    // sections:  an array of the nested sections to look through, e.g. [e, d, c, b, a]
+    // datastore: the hash of the data to search for key in
+    //
+    // TODO: handle vector data for real, change to not build vector, but 
+    // iterate the same way until data is found
+    //
     fn look_up_section_data<'a>(&self, 
-                        key: &String,
-                   sections: &Vec<String>, 
-                  datastore: &'a HashMap<String, Data<'a>>) -> Option<&'a Data<'a>> {
-        println!("in look up section data: sections: {}", sections);
-        println!("in look up section data: datastore: {}", datastore);
+                                key: &String,
+                                sections: &Vec<String>, 
+                                datastore: &'a HashMap<String, Data<'a>>) -> Option<&'a Data<'a>> {
         let mut rv: Option<&Data<'a>> = None;
-
-        // we're only in the current context
-        if sections.len() == 0 {
-
-            rv = datastore.find(key);
-
-        } else {
-
-            let mut hashes: Vec<&HashMap<String, Data>> = Vec::new();
-            // iterate through vector looking for data
-            let mut hash = datastore;
-
-            for section in sections.iter() {
-
-                match datastore.find(section) {
-                    None => { },
-                    Some(data) => {
-                        match *data {
-                            Hash(ref h) => {
-                                hashes.insert(0, h);
-                            }, 
-                            Vector(ref v) => {
-                                println!("in look_up_section_data: found vector");
-                                return Some(data);
-                            }
-                            _ => { }
-                        }
-                    }                    
-                }
+        let mut hashes: Vec<&HashMap<String, Data>> = Vec::new();
+        let mut hash = datastore;
 
 
-                match hash.find(section) {
-                    None => { },
-                    Some(data) => {
-                        match *data {
-                            Hash(ref h) => {
-                                hashes.insert(0, h);
-                                hash = h;
-                            }, 
-                            _ => { }
-                        }
+        // any kind of tag may be in a nested section, in which case it's data
+        // may be in a context further up, so we have to have a way to search
+        // up those contexts for a value for some key.
+        //
+        // so a template of {{#a}}{{#b}}{{#c}}{{value}}{{/c}}{{/b}}{{/a}}
+        // and data of { a: { b: { "value": "foo", c: {}}}
+        // we should be able to find "foo" even though it is not under "c"'s data    
+        //
+        // to do this, we look, first through a nested path.  we take the hash
+        // found for each section, starting with the most nested to the outside, 
+        // and push references their sub-hashes onto a vector.
+        //
+        // so with data of { a: { b: { "value": "foo", c: {"cdata": foo}}}
+        // we end up with a vector: [{"cdata":"foo"}, 
+        //                           {"value": "foo", "c": { "cdata": foo }},
+        //                           { b: { "value": "foo", c: {"cdata": foo}}]   
+        for section in sections.iter() {
+            match hash.find(section) {
+                None => { },
+                Some(data) => {
+                    match *data {
+                        Hash(ref h) => {
+                            hashes.insert(0, h);
+                            hash = h;
+                        }, 
+                        _ => { }
                     }
                 }
             }
-            println!("hashes: {}, key: {}", hashes, key);
+        }
 
-            for hash in hashes.iter() {
-
-                rv = hash.find(key);
-                if rv.is_some() {
-                    break;
-                }
-            }
-
-            if rv.is_none() {
-                rv = datastore.find(key);
+        // data for nested sections may also be in the top level of data, 
+        // so not only do we have to check up the nested structure, we have
+        // to check the top level for each section data
+        //
+        // so a template of {{#a}}{{#b}}{{#c}}{{value}}{{/c}}{{/b}}{{/a}}
+        // and data of { a: {}, b: { "value", "foo"}, c{} }
+        // we should be able to find the value "foo"
+        //
+        // after this, we do the same for the top level datastore.  we need to do it
+        // in this order so we look through nested first.
+        // so with data { a: {}, b: { "value", "foo"}, c{} }
+        // we end up with the previous vector plus: [{}, { "value", "foo"}, {}]
+        //
+        for section in sections.iter() {
+            match datastore.find(section) {
+                None => { },
+                Some(data) => {
+                    match *data {
+                        Hash(ref h) => {
+                            hashes.insert(0, h);
+                        }, 
+                        Vector(ref v) => {
+                            println!("in look_up_section_data: found vector");
+                            return Some(data);
+                        }
+                        _ => { }
+                    }
+                }                    
             }
         }
 
+        // once we've assembled the vector of hashes to look through
+        // we iterate through it looking for the data
+        for hash in hashes.iter() {
 
-        println!("in look up section data: rv: {}", rv);
+            rv = hash.find(key);
+            if rv.is_some() {
+                break;
+            }
+        }
+
+        // last but not least, check the top level if we didn't find anything
+        if rv.is_none() {
+            rv = datastore.find(key);
+        }
+
         return rv;
     }
 
@@ -150,6 +174,7 @@ impl<'a> Template<'a> {
         self.render(writer, data, &nodes);
     }
 
+    // TODO: factor handle_unescaped_node and handle_value_node together
     fn handle_unescaped_node<'a, W: Writer>(&mut self, 
                                             data: &Data<'a>, 
                                             key: String, 
@@ -191,7 +216,6 @@ impl<'a> Template<'a> {
                 let raw = "".to_string();
                 self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, raw, writer);
             }
-
         }
     }
 
@@ -269,6 +293,7 @@ impl<'a> Template<'a> {
                                           datastore: &'a HashMap<String,Data<'a>>, 
                                            sections: &mut Vec<String>,
                                              writer: &mut W) {
+        println!("in handle section node: section key: {}", sectionkey);
         match *data {
             Lambda(ref f) => {
                 let raw = self.get_section_text(nodes);
@@ -465,7 +490,6 @@ impl<'a> Template<'a> {
     }
 
 }
-//} // end mod template
 
 
 #[cfg(test)]
@@ -564,6 +588,18 @@ mod template_tests {
         Template::new().render_data(&mut w, &newdata, &nodes);
         assert_eq!(a2, str::from_utf8(w.get_ref()).unwrap());
     }
+
+
+    // #[test]
+    // fn test_spec_sections_test() {
+    //     let contents = "{{#a.b.c}}Here{{/a.b.c}}";
+    //     let tokens = compiler::create_tokens(contents);
+    //     let nodes = parser::parse_nodes(&tokens);
+
+    //     println!("nodes: {}", nodes);
+    //     assert!(false);
+    // }
+
 
     #[test]
     fn test_not_escape_html() {
@@ -869,4 +905,5 @@ mod template_tests {
 
         assert_eq!("Saturn == Earth == Jupiter".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
+
 }
