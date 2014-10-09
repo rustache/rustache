@@ -101,7 +101,7 @@ cargo test
 
 ## Roadmap
 
- - 74 of 106 Mustache spec tests passing.
+ - 74 of 106 Mustache spec tests passing
 
  - Whitespace handling  
 
