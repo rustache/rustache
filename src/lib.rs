@@ -1,5 +1,3 @@
-#![crate_name = "rustache"]
-#![comment = "A flexible template engine for Rust"]
 #![license = "MIT"]
 
 #![deny(missing_doc)]
