@@ -7,12 +7,12 @@ use serialize::json::{Json, Boolean, Null, I64, U64, F64, String, List, Object};
 use build::{HashBuilder, VecBuilder};
 use template::Template;
 
-// /// Defines a `renderable` trait
+// /// Defines a `renderable` trait, so that all of our data is renderable
 // pub trait Render<R: Reader> {
 //     /// `render` function on a `renderable` returns a `reader`
 //     fn render(self, template: &str) -> R;
 // }
-
+    /// Implement the `renderable` trait on the HashBuilder type
 // impl<'a> Render<MemStream> for HashBuilder<'a> {
 //     fn render(self, template: &str) -> MemStream {
 //         // Create the stream we are going to write to.
@@ -29,7 +29,7 @@ use template::Template;
 //         stream
 //     } 
 // }
-
+    /// Implement the `renderable` trait on the JSON type
 // impl Render<MemStream> for Json {
 //     fn render(self, template: &str) -> MemStream {
 //         parse_json(&self).render(template)
@@ -221,6 +221,8 @@ pub fn render_text_from_json_file<W: Writer>(input: &str, data: &str, writer: &m
     render_text_from_json_enum(input, json, writer);
 }
 
+// parses a Rust JSON hash and matches all possible types that may be passed in
+// returning a HashBuilder 
 fn parse_json(json: &Json) -> HashBuilder {
     let mut data = HashBuilder::new();
     for (k, v) in json.as_object().unwrap().iter() {
@@ -270,6 +272,8 @@ fn parse_json(json: &Json) -> HashBuilder {
     data
 }
 
+// parses a Rust JSON vector and matches all possible types that may be passed in
+// returning a VecBuider
 fn parse_json_vector(json: &Json) -> VecBuilder {
     let mut data = VecBuilder::new();
     for v in json.as_list().unwrap().iter() {
