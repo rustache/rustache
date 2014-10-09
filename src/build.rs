@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use super::{Data, Strng, Bool, Integer, Float, Vector, Hash, Lambda};
+use {Data, Strng, Bool, Integer, Float, Vector, Hash, Lambda};
 
 /// `HashBuilder` is a helper type that constructs `Data` types in a HashMap
 #[deriving(Show)]
