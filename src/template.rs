@@ -174,7 +174,18 @@ impl<'a> Template<'a> {
         self.render(writer, data, &nodes);
     }
 
+    //
+    // data:      the data value for the tag/node we're handling
+    // key:       the name of the tag we're handling, i.e. the key into the data hash
+    // datastore: all the data for the template
+    // writer:    the output stream to write rendered template to
+    //
+    // the Data enum, which is how we hold different types of data in one hash,
+    // can be, well, several different types.  this method matches them all and
+    // handles the data appropriately.
+    //
     // TODO: factor handle_unescaped_node and handle_value_node together
+    // TODO: really don't need to be handling Bool, Vector or Hash
     fn handle_unescaped_node<'a, W: Writer>(&mut self, 
                                             data: &Data<'a>, 
                                             key: String, 
@@ -182,10 +193,12 @@ impl<'a> Template<'a> {
                                             writer: &mut W) {
         let mut tmp: String = String::new();
         match *data {
+            // simple value-for-tag exchange, write out the string
             Strng(ref val) => {
                 tmp = tmp + *val;
                 self.write_to_stream(writer, tmp.as_slice(), "render: unescaped node string fail");
             },
+            // TODO: this one doesn't quite make sense.  i don't think we need it.
             Bool(ref val) => {
                 match val {
                     &true  => tmp.push_str("true"),
@@ -193,25 +206,31 @@ impl<'a> Template<'a> {
                 }
                 self.write_to_stream(writer, tmp.as_slice(), "render: unescaped node bool");
             },
+            // if the data is an integer, convert it to a string and write that
             Integer(ref val) => {
                 tmp = tmp + val.to_string();
                 self.write_to_stream(writer, tmp.as_slice(), "render: unescaped node int");
             },
+            // if the data is a float, convert it to a string and write that
             Float(ref val) => {
                 tmp = tmp + val.to_string();
                 self.write_to_stream(writer, tmp.as_slice(), "render: unescaped node float");
             },
+            // TODO: this one doesn't quite make sense.  i don't think we need it.
             Vector(ref list) => {
                 for item in list.iter() {
                     self.handle_unescaped_node(item, key.to_string(), datastore, writer);
                 }
             },
+            // TODO: this one doesn't quite make sense.  i don't think we need it.
             Hash(ref hash) => {
                 if hash.contains_key(&key) {
                     let ref tmp = hash[key];
                     self.handle_unescaped_node(tmp, key.to_string(), datastore, writer);
                 }
             },
+            // if we have a lambda for the data, the return value of the
+            // lambda is what we substitute for the tag
             Lambda(ref f) => {
                 let raw = "".to_string();
                 self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, raw, writer);
@@ -219,6 +238,19 @@ impl<'a> Template<'a> {
         }
     }
 
+    //
+    // data:      the data value for the tag/node we're handling
+    // key:       the name of the tag we're handling, i.e. the key into the data hash
+    // datastore: all the data for the template
+    // writer:    the output stream to write rendered template to
+    //
+    // the Data enum, which is how we hold different types of data in one hash,
+    // can be, well, several different types.  this method matches them all and
+    // handles the data appropriately.
+    //
+    // TODO: factor handle_unescaped_node and handle_value_node together
+    // TODO: really don't need to be handling Bool, Vector or Hash
+    //
     fn handle_value_node<'a, W: Writer>(&mut self, 
                                         data: &Data<'a>, 
                                         key: String, 
@@ -230,6 +262,7 @@ impl<'a> Template<'a> {
                 tmp = *self.escape_html(&(*val.as_slice()));
                 self.write_to_stream(writer, tmp.as_slice(), "render: value node string");
             },
+            // TODO: this one doesn't quite make sense.  i don't think we need it.
             Bool(ref val) => {
                 match val {
                     &true  => tmp.push_str("true"),
@@ -237,27 +270,33 @@ impl<'a> Template<'a> {
                 }
                 self.write_to_stream(writer, tmp.as_slice(), "render: value node bool");
             },
+            // if the data is an integer, convert it to a string and write that
             Integer(ref val) => {
                 let val = val.to_string();
                 tmp = *self.escape_html(&(*val.as_slice()));
                 self.write_to_stream(writer, tmp.as_slice(), "render: value node int");
             },
+            // if the data is a float, convert it to a string and write that
             Float(ref val) => {
                 let val = val.to_string();
                 tmp = *self.escape_html(&(*val.as_slice()));
                 self.write_to_stream(writer, tmp.as_slice(), "render: value node float");
             },
+            // TODO: this one doesn't quite make sense.  i don't think we need it.
             Vector(ref list) => {
                 for item in list.iter() {
                     self.handle_value_node(item, key.to_string(), datastore, writer);
                 }
             },
+            // TODO: this one doesn't quite make sense.  i don't think we need it.
             Hash(ref hash) => {
                 if hash.contains_key(&key) {
                     let ref tmp = hash[key];
                     self.handle_value_node(tmp, key.to_string(), datastore, writer);
                 }
             },
+            // if we have a lambda for the data, the return value of the
+            // lambda is what we substitute for the tag
             Lambda(ref f) => {
                 let raw = "".to_string();
                 self.handle_escaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, raw, writer);
@@ -265,85 +304,108 @@ impl<'a> Template<'a> {
         }       
     }
 
+    //
+    // nodes:     children of the inverted section tag
+    // datastore: all the data for the template
+    // writer:    the io stream to write the rendered template to
+    //
+    // inverted nodes only contain static text to render and are only rendered
+    // if the data in the template data for the tag name is "falsy"
+    //
     fn handle_inverted_node<'a, W:Writer>(&mut self, 
                                           nodes: &Vec<Node>, 
-                                          data: &'a HashMap<String, Data<'a>>, 
+                                          datastore: &'a HashMap<String, Data<'a>>, 
                                           writer: &mut W) {
         for node in nodes.iter() {
             match *node {
                 Static(key) => {
                     self.write_to_stream(writer, key.as_slice(), "render: inverted node static");
                 },
+                // TODO: this one doesn't quite make sense.  i don't think we need it.
                 Part(filename, _) => {
-                    self.handle_partial_file_node(filename, data, writer);
+                    self.handle_partial_file_node(filename, datastore, writer);
                 },
-                _ => {}
+                _ => { }
             }
         }
     }
 
-    // nodes: the section's children
-    // data: data from section key from HashBuilder store
+    // nodes:     the section's children
+    // data:      data from section key from HashBuilder store
     // datastore: HashBuilder data
-    // writer: io stream
+    // writer:    io stream
     fn handle_section_node<'a, W: Writer>(&mut self, 
-                                              nodes: &Vec<Node>, 
-                                         sectionkey: &String, 
-                                               data: &Data<'a>, 
-                                          datastore: &'a HashMap<String,Data<'a>>, 
-                                           sections: &mut Vec<String>,
-                                             writer: &mut W) {
-        println!("in handle section node: section key: {}", sectionkey);
+      nodes: &Vec<Node>, 
+      sectionkey: &String, 
+      data: &Data<'a>, 
+      datastore: &'a HashMap<String,Data<'a>>, 
+      sections: &mut Vec<String>,
+      writer: &mut W) {
+        // there's a special case if the section tag data was a lambda
+        // if so, the lambda is used to generate the values for the tag inside the section
         match *data {
-            Lambda(ref f) => {
-                let raw = self.get_section_text(nodes);
-                self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, *raw, writer);
-                return;
-            },
-            _ => {}
+          Lambda(ref f) => {
+            let raw = self.get_section_text(nodes);
+            self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, *raw, writer);
+            return;
+          },
+          _ => {}
         }
+        // in a section tag, there are child tags to fill out,
+        // we need to iterate through each one
         for node in nodes.iter() {
-            match *node {
+          match *node {
+                // unescaped is simple, just look up the data in the
+                // special way sections need to and handle the node
                 Unescaped(key, _)  => {
-                    let tmpkey = key.to_string();
-                    let tmpdata = self.look_up_section_data(&tmpkey, sections, datastore);
-                    if tmpdata.is_some() {
-                        self.handle_unescaped_node(tmpdata.unwrap(), key.to_string(), datastore, writer);
-                    }
+                  let tmpkey = key.to_string();
+                  let tmpdata = self.look_up_section_data(&tmpkey, sections, datastore);
+                  if tmpdata.is_some() {
+                    self.handle_unescaped_node(tmpdata.unwrap(), key.to_string(), datastore, writer);
+                  }
                 }
+                // unescaped is simple, just look up the data in the
+                // special way sections need to and handle the node
                 Value(key, _) => {
-                    let tmpkey = key.to_string();
-                    let tmpdata = self.look_up_section_data(&tmpkey, sections, datastore);
-                    if tmpdata.is_some() {
-                        self.handle_value_node(tmpdata.unwrap(), key.to_string(), datastore, writer);
-                    }
+                  let tmpkey = key.to_string();
+                  let tmpdata = self.look_up_section_data(&tmpkey, sections, datastore);
+                  if tmpdata.is_some() {
+                    self.handle_value_node(tmpdata.unwrap(), key.to_string(), datastore, writer);
+                  }
                 }
+                // most simple, just write the static data out, nothing to replace
                 Static(key) => {
-                    self.write_to_stream(writer, key.as_slice(), "render: section node static");
+                  self.write_to_stream(writer, key.as_slice(), "render: section node static");
                 }
+                // sections are special and may be inverted
                 Section(ref key, ref children, ref inverted, ref open, ref close) => {
-                    match inverted {
+                  match inverted {
+                        // a normal, not inverted tag is more complicated and may recurse
+                        // we need to save what sections we have been in, so the data
+                        // lookup can happen correctly.  data lookup is special for sections
                         &false => {
-                            let foo = sectionkey;
-                            let tmpkey = key.to_string();
-                            sections.push(tmpkey.clone());
-                            let tmpdata = self.look_up_section_data(&tmpkey, sections, datastore);
-                            if tmpdata.is_some() {
-                                self.handle_section_node(children, &tmpkey, tmpdata.unwrap(), datastore, sections, writer);
-                            }
+                          let foo = sectionkey;
+                          let tmpkey = key.to_string();
+                          sections.push(tmpkey.clone());
+                          let tmpdata = self.look_up_section_data(&tmpkey, sections, datastore);
+                          if tmpdata.is_some() {
+                            self.handle_section_node(children, &tmpkey, tmpdata.unwrap(), datastore, sections, writer);
+                          }
                         },
+                        // inverted only has internal static text, so is easy to handle
                         &true => {
-                            self.handle_inverted_node(children, datastore, writer);
+                          self.handle_inverted_node(children, datastore, writer);
                         }
-                    }
-                },
+                      }
+                    },
+                // if it's a partial, we have a file to read in and render
                 Part(path, _) => {
-                    self.handle_partial_file_node(path, datastore, writer);
+                  self.handle_partial_file_node(path, datastore, writer);
                 }
             }
         }
     }
-
+    
     // section data is considered false in a few cases:
     // there is no data for the key in the data hashmap
     // the data is a bool with a value of false
@@ -365,6 +427,16 @@ impl<'a> Template<'a> {
         return rv;
     }
 
+    //
+    // children: a vector of nodes representing the template text
+    //           found between the section tags
+    //
+    // in the case of values for a section being lambdas, we need to pass
+    // the raw text of the inside of the section tags to the lambda.
+    // we store the raw text of each tag in the tag enum itself, 
+    // so we iterate through the children of the section, pulling out
+    // the raw text and creating a string of it to pass to the lambda.
+    //
     fn get_section_text(&self, children: &Vec<Node>) -> Box<String> {
         let mut temp = box String::new();
         for child in children.iter() {
@@ -384,9 +456,21 @@ impl<'a> Template<'a> {
         temp
     }
 
+    //
+    // filename:  the filename of the partial template to include, 
+    //            a.k.a the value inside the tag
+    // datastore: all the template data
+    // writer:    the io stream to write the rendered template out to
+    //
+    // in the mustache spec, it says parials are rendered at runtime,
+    // so we call render in this method.  datastore and writer are taken
+    // in as parameters because we have to do this
+    //
+    // TODO: throw error if partials file doesn't exist, if file read fails
+    //
     fn handle_partial_file_node<'a, W: Writer>(&mut self,
                                               filename: &str, 
-                                                  data: &'a HashMap<String, Data<'a>>, 
+                                             datastore: &'a HashMap<String, Data<'a>>, 
                                                 writer: &mut W) {
         let path = Path::new(self.partials_path.clone()).join(filename);
         if path.exists() {
@@ -397,7 +481,7 @@ impl<'a> Template<'a> {
                     let tokens = compiler::create_tokens(contents.as_slice());
                     let nodes = parser::parse_nodes(&tokens);
 
-                    self.render(writer, data, &nodes);    
+                    self.render(writer, datastore, &nodes);    
                 },
                 Err(_) => { }
             }
