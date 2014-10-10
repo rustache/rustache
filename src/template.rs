@@ -12,6 +12,13 @@ pub struct Template<'a> {
    partials_path: String
 }
 
+pub enum TemplateError<'a> {
+    StreamWriteError(IoResult<()>),
+    HandlePartialError(IoResult<()>),
+    RenderError(IoResult<()>),
+    RenderDataError(IoResult<()>)
+}
+
 impl<'a> Template<'a> {
     pub fn new() -> Template<'a> {
         let tmpl = Template {

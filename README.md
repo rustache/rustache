@@ -101,18 +101,18 @@ cargo test
 
 ## Roadmap
 
-	- [ ] 106 of 106 Mustache spec tests passing. Current(74)
-	- [ ] Rewrite the parser and compiler to handle all mustache cases
-	- [ ] Thread errors through the parser and compiler by having something like:
-	  - type RustacheResult<T> = Result<T, RustacheError>;
-	  - pub enum RustacheError {
+ [ ] 106 of 106 Mustache spec tests passing. Current(74)
+ [ ] Rewrite the parser and compiler to handle all mustache cases
+ [ ] Rebuild API surface to have only the Render trait, render() and render_file()
+	 - impl Render for HashBuilder, Json, etc.
+ [ ] Thread errors through the parser and compiler by having something like:
+	 - type RustacheResult<T> = Result<T, RustacheError>;
+	 - pub enum RustacheError {
 	      ParseErrorType(ParseError)
-	  }
-	  - pub enum ParseError {
+	   }
+	 - pub enum ParseError {
 
-	  }
-	- [ ] Rebuild API surface to have only the Render trait, render() and render_file()
-	   - impl Render for HashBuilder, Json, etc.
+	   }
 
 ## Contribute
 
