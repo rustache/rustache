@@ -64,7 +64,7 @@ impl<'a> PartialEq for Data<'a> {
 impl<'a> fmt::Show for Data<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Strng(ref val)   => write!(f, "String({})", val),
+            Strng(ref val)   => write!(f, "Strng({})", val),
             Bool(val)        => write!(f, "Boolean({})", val),
             Integer(ref val) => write!(f, "Integer({})", val),
             Float(ref val)   => write!(f, "Float({})", val),
