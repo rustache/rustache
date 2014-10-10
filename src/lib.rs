@@ -26,6 +26,12 @@ pub use rustache::{render_file_from_hb, render_file_from_json_enum,
                    render_text_from_hb, render_text_from_json_enum,
                    render_text_from_json_string, render_text_from_json_file, read_file};
 
+// pub enum RustacheError<'a> {
+//     ParserErrorType(ParserError),
+//     CompilerErrorType(CompilerError),
+//     TemplateErrorType(TemplateError)
+// }
+
 // Represents the possible types that passed in data may take on
 #[doc(hidden)]
 pub enum Data<'a> {
@@ -58,7 +64,7 @@ impl<'a> PartialEq for Data<'a> {
 impl<'a> fmt::Show for Data<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Strng(ref val)   => write!(f, "String({})", val),
+            Strng(ref val)   => write!(f, "Strng({})", val),
             Bool(val)        => write!(f, "Boolean({})", val),
             Integer(ref val) => write!(f, "Integer({})", val),
             Float(ref val)   => write!(f, "Float({})", val),
