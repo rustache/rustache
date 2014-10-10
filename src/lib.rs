@@ -26,11 +26,19 @@ pub use rustache::{render_file_from_hb, render_file_from_json_enum,
                    render_text_from_hb, render_text_from_json_enum,
                    render_text_from_json_string, render_text_from_json_file, read_file};
 
+<<<<<<< HEAD
 // pub enum RustacheError<'a> {
 //     ParserErrorType(ParserError),
 //     CompilerErrorType(CompilerError),
 //     TemplateErrorType(TemplateError)
 // }
+=======
+pub enum RustacheError<'a> {
+    ParserErrorType(ParserError),
+    CompilerErrorType(CompilerError),
+    TemplateErrorType(TemplateError)
+}
+>>>>>>> 871f46c6abe768000aa091f6e3225cc0e0e3df34
 
 // Represents the possible types that passed in data may take on
 #[doc(hidden)]
