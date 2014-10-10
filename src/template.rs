@@ -13,10 +13,10 @@ pub struct Template<'a> {
 }
 
 pub enum TemplateError<'a> {
-    StreamWriteError(IoResult<()>),
-    HandlePartialError(IoResult<()>),
-    RenderError(IoResult<()>),
-    RenderDataError(IoResult<()>)
+    StreamWriteError(&str),
+    HandlePartialError(&str),
+    RenderError(&str),
+    RenderDataError(&str)
 }
 
 impl<'a> Template<'a> {
