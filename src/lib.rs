@@ -28,14 +28,14 @@ pub use rustache::{render_file_from_hb, render_file_from_json_enum,
                    render_text_from_hb, render_text_from_json_enum,
                    render_text_from_json_string, render_text_from_json_file, read_file};
 
-pub type RustacheResult<'a, T> = Result<T, RustacheError<'a>>;
+pub type RustacheResult<T> = Result<T, RustacheError>;
 
 /// Enum to handle errors from the Rustache library.
-pub enum RustacheError<'a> {
+pub enum RustacheError {
     //ParserErrorType(ParserError),
     //CompilerErrorType(CompilerError),
     /// Generic enum value for any errors from the template module.
-    TemplateErrorType(TemplateError<'a>)
+    TemplateErrorType(TemplateError)
 }
 
 // Represents the possible types that passed in data may take on
