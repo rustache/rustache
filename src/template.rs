@@ -21,9 +21,6 @@ pub enum TemplateError {
     StreamWriteError(String),
     FileReadError(String),
     FileNotFoundError(String),
-    //HandlePartialError(&'a str),
-    //RenderError(&'a str),
-    //RenderDataError(&'a str),
 }
 
 impl fmt::Show for TemplateError {
@@ -44,8 +41,6 @@ impl Template {
     }  
 
     // utility method to write out rendered template with error handling
-    //
-    // TODO: error handling needs to be revamped to return IOResult
     fn write_to_stream<'a, W: Writer>(&self, writer: &mut W, 
                                                data: &String, 
                                              errstr: &str
@@ -148,7 +143,6 @@ impl Template {
                             hashes.insert(0, h);
                         }, 
                         Vector(ref v) => {
-                            println!("in look_up_section_data: found vector");
                             return Some(data);
                         }
                         _ => { }
