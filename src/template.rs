@@ -16,9 +16,9 @@ pub struct Template {
 }
 
 pub enum TemplateError<'a> {
-    StreamWriteError,
-    FileReadError,
-    FileNotFoundError
+    StreamWriteError(String),
+    FileReadError(String),
+    FileNotFoundError(String),
     //HandlePartialError(&'a str),
     //RenderError(&'a str),
     //RenderDataError(&'a str),
@@ -36,15 +36,14 @@ impl Template {
     // TODO: error handling needs to be revamped to return IOResult
     fn write_to_stream<'a, W: Writer>(&self, writer: &mut W, 
                                                data: &String, 
-                                             //errstr: &str
+                                             errstr: &str
                                       ) -> RustacheResult<'a, ()> {
         let mut rv: RustacheResult<()> = Ok(());
         let status = writer.write_str(data.as_slice());
         match status {
-            Err(_) => {
-                //let msg = format!("{}: {}", err, errstr);
-                rv = Err(TemplateErrorType(StreamWriteError));
-                //fail!(msg);
+            Err(err) => {
+                let msg = format!("{}: {}", err, errstr);
+                rv = Err(TemplateErrorType(StreamWriteError(msg)));
             }
             Ok(_) => {}
         }
@@ -216,7 +215,7 @@ impl Template {
             // simple value-for-tag exchange, write out the string
             Strng(ref val) => {
                 tmp = tmp + *val;
-                rv = self.write_to_stream(writer, &tmp/*, "render: unescaped node string fail"*/);
+                rv = self.write_to_stream(writer, &tmp, "render: unescaped node string fail");
             },
             // TODO: this one doesn't quite make sense.  i don't think we need it.
             Bool(ref val) => {
@@ -224,17 +223,17 @@ impl Template {
                     &true  => tmp.push_str("true"),
                     &false => tmp.push_str("false")
                 }
-                rv = self.write_to_stream(writer, &tmp/*, "render: unescaped node bool"*/);
+                rv = self.write_to_stream(writer, &tmp, "render: unescaped node bool");
             },
             // if the data is an integer, convert it to a string and write that
             Integer(ref val) => {
                 tmp = tmp + val.to_string();
-                rv = self.write_to_stream(writer, &tmp/*, "render: unescaped node int"*/);
+                rv = self.write_to_stream(writer, &tmp, "render: unescaped node int");
             },
             // if the data is a float, convert it to a string and write that
             Float(ref val) => {
                 tmp = tmp + val.to_string();
-                rv = self.write_to_stream(writer, &tmp/*, "render: unescaped node float"*/);
+                rv = self.write_to_stream(writer, &tmp, "render: unescaped node float");
             },
             // TODO: this one doesn't quite make sense.  i don't think we need it.
             Vector(ref list) => {
@@ -291,7 +290,7 @@ impl Template {
         match *data {
             Strng(ref val) => {
                 tmp = *self.escape_html(&(*val.as_slice()));
-                rv = self.write_to_stream(writer, &tmp/*, "render: value node string"*/);
+                rv = self.write_to_stream(writer, &tmp, "render: value node string");
             },
             // TODO: this one doesn't quite make sense.  i don't think we need it.
             Bool(ref val) => {
@@ -299,19 +298,19 @@ impl Template {
                     &true  => tmp.push_str("true"),
                     &false => tmp.push_str("false")
                 }
-                rv = self.write_to_stream(writer, &tmp/*, "render: value node bool"*/);
+                rv = self.write_to_stream(writer, &tmp, "render: value node bool");
             },
             // if the data is an integer, convert it to a string and write that
             Integer(ref val) => {
                 let val = val.to_string();
                 tmp = *self.escape_html(&(*val.as_slice()));
-                rv = self.write_to_stream(writer, &tmp/*, "render: value node int"*/);
+                rv = self.write_to_stream(writer, &tmp, "render: value node int");
             },
             // if the data is a float, convert it to a string and write that
             Float(ref val) => {
                 let val = val.to_string();
                 tmp = *self.escape_html(&(*val.as_slice()));
-                rv = self.write_to_stream(writer, &tmp/*, "render: value node float"*/);
+                rv = self.write_to_stream(writer, &tmp, "render: value node float");
             },
             // TODO: this one doesn't quite make sense.  i don't think we need it.
             Vector(ref list) => {
@@ -361,7 +360,7 @@ impl Template {
         for node in nodes.iter() {
             match *node {
                 Static(key) => {
-                    rv = self.write_to_stream(writer, &key.to_string()/*, "render: inverted node static"*/);
+                    rv = self.write_to_stream(writer, &key.to_string(), "render: inverted node static");
                 },
                 // TODO: this one doesn't quite make sense.  i don't think we need it.
                 Part(filename, _) => {
@@ -419,7 +418,7 @@ impl Template {
                 }
                 // most simple, just write the static data out, nothing to replace
                 Static(key) => {
-                  rv = self.write_to_stream(writer, &key.to_string()/*, "render: section node static"*/);
+                  rv = self.write_to_stream(writer, &key.to_string(), "render: section node static");
                 }
                 // sections are special and may be inverted
                 Section(ref key, ref children, ref inverted, ref open, ref close) => {
@@ -530,10 +529,12 @@ impl Template {
 
                     rv = self.render(writer, datastore, &nodes);    
                 },
-                Err(_) => { rv = Err(TemplateErrorType(FileReadError)); }
+                Err(err) => { 
+                    let msg = format!("{}: {}", err, filename);
+                    rv = Err(TemplateErrorType(FileReadError(msg))); }
             }
         } else {
-            rv = Err(TemplateErrorType(FileNotFoundError));
+            rv = Err(TemplateErrorType(FileNotFoundError(filename.to_string())));
         }
 
         return rv;
@@ -573,7 +574,7 @@ impl Template {
                 // static nodes are the test in the template that doesn't get modified, 
                 // just gets written out character for character
                 Static(key) => {
-                    rv = self.write_to_stream(writer, &key.to_string()/*, "render: static"*/);
+                    rv = self.write_to_stream(writer, &key.to_string(), "render: static");
                 }
                 // sections come in two kinds, normal and inverted
                 //
