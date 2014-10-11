@@ -80,7 +80,7 @@ use RustacheResult;
 /// ```
 pub fn render_file_from_hb<'a, W: Writer>(path: &str, 
                                           data: &'a HashBuilder<'a>, 
-                                          writer: &mut W) -> RustacheResult<'a, ()>{
+                                          writer: &mut W) -> RustacheResult<()>{
     let file = read_file(Path::new(path));
     let tokens = compiler::create_tokens(file.as_slice());
     let nodes = parser::parse_nodes(&tokens);
@@ -101,7 +101,7 @@ pub fn render_file_from_hb<'a, W: Writer>(path: &str,
 ///
 /// rustache::render_file_from_json_enum("path/to/template.html", data, &mut w);
 /// ```
-pub fn render_file_from_json_enum<'a, W: Writer>(template: &str, json: Json, writer: &mut W)  -> RustacheResult<'a, ()>{
+pub fn render_file_from_json_enum<'a, W: Writer>(template: &str, json: Json, writer: &mut W)  -> RustacheResult<()>{
     let data = parse_json(&json);
     return render_file_from_hb(template, &data, writer);
 }
@@ -117,7 +117,7 @@ pub fn render_file_from_json_enum<'a, W: Writer>(template: &str, json: Json, wri
 ///
 /// rustache::render_file_from_json_string("path/to/template.html", data, &mut w);
 /// ```
-pub fn render_file_from_json_string<'a, W: Writer>(template: &str, data: &str, writer: &mut W)  -> RustacheResult<'a, ()>{
+pub fn render_file_from_json_string<'a, W: Writer>(template: &str, data: &str, writer: &mut W)  -> RustacheResult<()>{
     let json = match json::from_str(data) {
         Ok(json) => json,
         Err(err) => fail!("Invalid JSON. {}", err)
@@ -136,7 +136,7 @@ pub fn render_file_from_json_string<'a, W: Writer>(template: &str, data: &str, w
 ///
 /// rustache::render_file_from_json_file("path/to/template.html", "data/data.json", &mut w);
 /// ```
-pub fn render_file_from_json_file<'a, W: Writer>(template: &str, data: &str, writer: &mut W)  -> RustacheResult<'a, ()>{
+pub fn render_file_from_json_file<'a, W: Writer>(template: &str, data: &str, writer: &mut W)  -> RustacheResult<()>{
     let data_string = read_file(Path::new(data));
 
     let json = match json::from_str(data_string.as_slice()) {
@@ -160,7 +160,7 @@ pub fn render_file_from_json_file<'a, W: Writer>(template: &str, data: &str, wri
 ///
 /// rustache::render_text_from_hb("{{ name }}", &data, &mut w);
 /// ```
-pub fn render_text_from_hb<'a, W: Writer>(input: &str, data: &'a HashBuilder<'a>, writer: &mut W)  -> RustacheResult<'a, ()>{
+pub fn render_text_from_hb<'a, W: Writer>(input: &str, data: &'a HashBuilder<'a>, writer: &mut W)  -> RustacheResult<()>{
     let tokens = compiler::create_tokens(input);
     let nodes = parser::parse_nodes(&tokens);
     return Template::new().render_data(writer, data, &nodes);
@@ -180,7 +180,7 @@ pub fn render_text_from_hb<'a, W: Writer>(input: &str, data: &'a HashBuilder<'a>
 ///
 /// rustache::render_text_from_json_enum("{{ name }}", data, &mut w);
 /// ```
-pub fn render_text_from_json_enum<'a, W: Writer>(input: &str, json: Json, writer: &mut W)  -> RustacheResult<'a, ()>{
+pub fn render_text_from_json_enum<'a, W: Writer>(input: &str, json: Json, writer: &mut W)  -> RustacheResult<()>{
     let data = parse_json(&json);
     return render_text_from_hb(input, &data, writer);
 }
@@ -196,7 +196,7 @@ pub fn render_text_from_json_enum<'a, W: Writer>(input: &str, json: Json, writer
 ///
 /// rustache::render_text_from_json_string("{{ name }}", data, &mut w);
 /// ```
-pub fn render_text_from_json_string<'a, W: Writer>(input: &str, data: &str, writer: &mut W)  -> RustacheResult<'a, ()>{
+pub fn render_text_from_json_string<'a, W: Writer>(input: &str, data: &str, writer: &mut W)  -> RustacheResult<()>{
     let json = match json::from_str(data) {
         Ok(json) => json,
         Err(err) => fail!("Invalid JSON. {}", err)
@@ -215,7 +215,7 @@ pub fn render_text_from_json_string<'a, W: Writer>(input: &str, data: &str, writ
 ///
 /// rustache::render_text_from_json_file("{{ name }}", "data/data.json", &mut w);
 /// ```
-pub fn render_text_from_json_file<'a, W: Writer>(input: &str, data: &str, writer: &mut W)  -> RustacheResult<'a, ()>{
+pub fn render_text_from_json_file<'a, W: Writer>(input: &str, data: &str, writer: &mut W)  -> RustacheResult<()>{
     let data_string = read_file(Path::new(data));
 
     let json = match json::from_str(data_string.as_slice()) {

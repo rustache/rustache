@@ -1,6 +1,8 @@
 use std::path::Path;
 use std::io::fs::PathExtensions;
 use std::io::File;
+use std::fmt;
+
 use compiler;
 use parser;
 use parser::{Node, Value, Static, Unescaped, Section, Part};
@@ -15,13 +17,23 @@ pub struct Template {
    partials_path: String
 }
 
-pub enum TemplateError<'a> {
+pub enum TemplateError {
     StreamWriteError(String),
     FileReadError(String),
     FileNotFoundError(String),
     //HandlePartialError(&'a str),
     //RenderError(&'a str),
     //RenderDataError(&'a str),
+}
+
+impl fmt::Show for TemplateError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &StreamWriteError(ref val)  => write!(f, "StreamWriteError({})", val),
+            &FileReadError(ref val)         => write!(f, "FileReadError({})", val),
+            &FileNotFoundError(ref val) => write!(f, "FileNotFoundError({})", val),
+        }
+    }
 }
 
 impl Template {
@@ -37,7 +49,7 @@ impl Template {
     fn write_to_stream<'a, W: Writer>(&self, writer: &mut W, 
                                                data: &String, 
                                              errstr: &str
-                                      ) -> RustacheResult<'a, ()> {
+                                      ) -> RustacheResult<()> {
         let mut rv: RustacheResult<()> = Ok(());
         let status = writer.write_str(data.as_slice());
         match status {
