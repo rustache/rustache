@@ -175,7 +175,7 @@ impl Template {
                                                         f: &mut |String|: 'a -> String, 
                                                         data: &'b HashMap<String, Data<'b>>, 
                                                         raw: String, 
-                                                        writer: &mut W)  -> RustacheResult<()> {
+                                                        writer: &mut W) -> RustacheResult<()> {
         println!("in handle_unescaped_lambda_interpolation");
         let val = (*f)(raw);
         let tokens = compiler::create_tokens(val.as_slice());
@@ -188,7 +188,7 @@ impl Template {
                                                       f: &mut |String|: 'a -> String, 
                                                       data: &'b HashMap<String, Data<'b>>, 
                                                       raw: String, 
-                                                      writer: &mut W)  -> RustacheResult<()> {
+                                                      writer: &mut W) -> RustacheResult<()> {
         println!("in handle_escaped_lambda_interpolation");
         let val = (*f)(raw);
         let value = self.escape_html(val.as_slice());
@@ -290,7 +290,7 @@ impl Template {
                                         data: &Data<'a>, 
                                         key: String, 
                                         datastore: &'a HashMap<String, Data<'a>>, 
-                                        writer: &mut W)  -> RustacheResult<()> {
+                                        writer: &mut W) -> RustacheResult<()> {
         let mut rv = Ok(());
         let mut tmp: String = String::new();
         match *data {
@@ -361,7 +361,7 @@ impl Template {
     fn handle_inverted_node<'a, W:Writer>(&mut self, 
                                           nodes: &Vec<Node>, 
                                           datastore: &'a HashMap<String, Data<'a>>, 
-                                          writer: &mut W)  -> RustacheResult<()> {
+                                          writer: &mut W) -> RustacheResult<()> {
         let mut rv = Ok(());
         for node in nodes.iter() {
             match *node {
@@ -389,7 +389,7 @@ impl Template {
       data: &Data<'a>, 
       datastore: &'a HashMap<String,Data<'a>>, 
       sections: &mut Vec<String>,
-      writer: &mut W)  -> RustacheResult<()> {
+      writer: &mut W) -> RustacheResult<()> {
         let mut rv = Ok(());
         // there's a special case if the section tag data was a lambda
         // if so, the lambda is used to generate the values for the tag inside the section
@@ -522,7 +522,7 @@ impl Template {
     fn handle_partial_file_node<'a, W: Writer>(&mut self,
                                               filename: &str, 
                                              datastore: &'a HashMap<String, Data<'a>>, 
-                                                writer: &mut W)  -> RustacheResult<()> {
+                                                writer: &mut W) -> RustacheResult<()> {
         let mut rv: RustacheResult<()>;
         let path = Path::new(self.partials_path.clone()).join(filename);
         if path.exists() {
@@ -549,7 +549,7 @@ impl Template {
     // writer: an io::stream to write the rendered template out to
     // data:   the internal HashBuilder data store
     // parser: the parser object that has the parsed nodes, see src/parse.js
-    pub fn render<'a, W: Writer>(&mut self, writer: &mut W, data: &'a HashMap<String, Data<'a>>, nodes: &Vec<Node>)  -> RustacheResult<()> {
+    pub fn render<'a, W: Writer>(&mut self, writer: &mut W, data: &'a HashMap<String, Data<'a>>, nodes: &Vec<Node>) -> RustacheResult<()> {
         let mut rv = Ok(());
         let mut tmp: String = String::new();
 
@@ -624,7 +624,7 @@ impl Template {
     pub fn render_data<'a, W: Writer>(&mut self, 
                                       writer: &mut W, 
                                       datastore: &'a HashBuilder<'a>, 
-                                      nodes: &Vec<Node>)  -> RustacheResult<()> {
+                                      nodes: &Vec<Node>) -> RustacheResult<()> {
         // we need to hang on to the partials path internally,
         // if there is one, for class methods to use.
         self.partials_path.truncate(0);
