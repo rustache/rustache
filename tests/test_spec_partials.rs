@@ -40,7 +40,8 @@ fn test_spec_partials_basic_behavior() {
     let mut w = MemWriter::new();
     let data = HashBuilder::new();
 
-    rustache::render_text_from_hb("\"{{>test_data/test_spec_partials_basic}}\"", &data, &mut w);
+    let rv = rustache::render_text_from_hb("\"{{>test_data/test_spec_partials_basic}}\"", &data, &mut w);
+    match rv { _ => {} }
 
     assert_eq!("\"from partial\"".to_string(), String::from_utf8(w.unwrap()).unwrap());
 }
@@ -56,7 +57,8 @@ fn test_spec_partials_failed_lookup() {
     let mut w = MemWriter::new();
     let data = HashBuilder::new();
 
-    rustache::render_text_from_hb("\"{{>text}}\"", &data, &mut w);
+    let rv = rustache::render_text_from_hb("\"{{>text}}\"", &data, &mut w);
+    match rv { _ => {} }
 
     assert_eq!("\"\"".to_string(), String::from_utf8(w.unwrap()).unwrap());
 }
@@ -72,7 +74,8 @@ fn test_spec_partials_context() {
     let mut w = MemWriter::new();
     let data = HashBuilder::new().insert_string("text", "content");
 
-    rustache::render_text_from_hb("\"{{>test_data/test_spec_partials_context}}\"", &data, &mut w);
+    let rv = rustache::render_text_from_hb("\"{{>test_data/test_spec_partials_context}}\"", &data, &mut w);
+    match rv { _ => {} }
 
     assert_eq!("\"*content*\"".to_string(), String::from_utf8(w.unwrap()).unwrap());
 }
@@ -97,7 +100,8 @@ fn test_spec_partials_context() {
 //                     })
 //                 });
 
-//     rustache::render_text_from_hb("{{>test_data/test_spec_partials_recursion}}", &data, &mut w);
+//     let rv = rustache::render_text_from_hb("{{>test_data/test_spec_partials_recursion}}", &data, &mut w);
+//    match rv { _ => {} }
 
 //     assert_eq!("X<Y<>>".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
@@ -113,7 +117,8 @@ fn test_spec_partials_surrounding_whitespace() {
     let mut w = MemWriter::new();
     let data = HashBuilder::new();
 
-    rustache::render_text_from_hb("| {{>test_data/test_spec_partials_whitespace}} |", &data, &mut w);
+    let rv = rustache::render_text_from_hb("| {{>test_data/test_spec_partials_whitespace}} |", &data, &mut w);
+    match rv { _ => {} }
 
     assert_eq!("| \t|\t |".to_string(), String::from_utf8(w.unwrap()).unwrap());
 }
@@ -129,7 +134,8 @@ fn test_spec_partials_inline_indentation() {
     let mut w = MemWriter::new();
     let data = HashBuilder::new().insert_string("data", "|");
 
-    rustache::render_text_from_hb("  {{data}}  {{> test_data/test_spec_partials_inline_indentation}}\n", &data, &mut w);
+    let rv = rustache::render_text_from_hb("  {{data}}  {{> test_data/test_spec_partials_inline_indentation}}\n", &data, &mut w);
+    match rv { _ => {} }
 
     assert_eq!("  |  >\n>\n".to_string(), String::from_utf8(w.unwrap()).unwrap());
 }
@@ -145,7 +151,8 @@ fn test_spec_partials_inline_indentation() {
 //     let mut w = MemWriter::new();
 //     let data = HashBuilder::new();
 
-//     rustache::render_text_from_hb("|\r\n{{>partial}}\r\n|", &data, &mut w);
+//     let rv = rustache::render_text_from_hb("|\r\n{{>partial}}\r\n|", &data, &mut w);
+//    match rv { _ => {} }
 
 //     assert_eq!("|\r\n>|".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
@@ -161,7 +168,8 @@ fn test_spec_partials_inline_indentation() {
 //     let mut w = MemWriter::new();
 //     let data = HashBuilder::new();
 
-//     rustache::render_text_from_hb("  {{>test_data/test_spec_partials_standalone_without_previous_line}}\n>", &data, &mut w);
+//     let rv = rustache::render_text_from_hb("  {{>test_data/test_spec_partials_standalone_without_previous_line}}\n>", &data, &mut w);
+//    match rv { _ => {} }
 
 //     assert_eq!("  >\n  >>".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
@@ -178,7 +186,8 @@ fn test_spec_partials_inline_indentation() {
 //     let mut w = MemWriter::new();
 //     let data = HashBuilder::new();
 
-//     rustache::render_text_from_hb(">\n  {{>test_data/test_spec_partials_standalone_without_newline}}", &data, &mut w);
+//     let rv = rustache::render_text_from_hb(">\n  {{>test_data/test_spec_partials_standalone_without_newline}}", &data, &mut w);
+//    match rv { _ => {} }
 
 //     assert_eq!(">\n  >\n  >".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
@@ -207,7 +216,8 @@ fn test_spec_partials_inline_indentation() {
 //     let mut w = MemWriter::new();
 //     let data = HashBuilder::new().insert_string("content", "<\n->");
 
-//     rustache::render_text_from_hb("|\n\\\n {{>test_data/test_spec_partials_standalone_indentation}}\n/\n", &data, &mut w);
+//     let rv = rustache::render_text_from_hb("|\n\\\n {{>test_data/test_spec_partials_standalone_indentation}}\n/\n", &data, &mut w);
+//    match rv { _ => {} }
 
 //     assert_eq!("|\n\\\n |\n <\n ->\n |\n/\n".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
@@ -224,7 +234,8 @@ fn test_spec_partials_padding_whitespace() {
     let data = HashBuilder::new()
                 .insert_bool("boolean", true);
 
-    rustache::render_text_from_hb("|{{> test_data/test_spec_partials_padding_whitespace }}|", &data, &mut w);
+    let rv = rustache::render_text_from_hb("|{{> test_data/test_spec_partials_padding_whitespace }}|", &data, &mut w);
+    match rv { _ => {} }
 
     assert_eq!("|[]|".to_string(), String::from_utf8(w.unwrap()).unwrap());
 }

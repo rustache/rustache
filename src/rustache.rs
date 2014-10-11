@@ -7,6 +7,9 @@ use serialize::json::{Json, Boolean, Null, I64, U64, F64, String, List, Object};
 use build::{HashBuilder, VecBuilder};
 use template::Template;
 
+use RustacheResult;
+
+
 // /// Defines a `renderable` trait, so that all of our data is renderable
 // pub trait Render<R: Reader> {
 //     /// `render` function on a `renderable` returns a `reader`
@@ -75,11 +78,13 @@ use template::Template;
 ///
 /// rustache::render_file_from_hb("path/to/template.html", &data, &mut w);
 /// ```
-pub fn render_file_from_hb<'a, W: Writer>(path: &str, data: &'a HashBuilder<'a>, writer: &mut W) {
+pub fn render_file_from_hb<'a, W: Writer>(path: &str, 
+                                          data: &'a HashBuilder<'a>, 
+                                          writer: &mut W) -> RustacheResult<'a, ()>{
     let file = read_file(Path::new(path));
     let tokens = compiler::create_tokens(file.as_slice());
     let nodes = parser::parse_nodes(&tokens);
-    Template::new().render_data(writer, data, &nodes);
+    return Template::new().render_data(writer, data, &nodes);
 }
 
 /// Render a template file from a Rust JSON Enum to a specified writer
@@ -96,9 +101,9 @@ pub fn render_file_from_hb<'a, W: Writer>(path: &str, data: &'a HashBuilder<'a>,
 ///
 /// rustache::render_file_from_json_enum("path/to/template.html", data, &mut w);
 /// ```
-pub fn render_file_from_json_enum<W: Writer>(template: &str, json: Json, writer: &mut W) {
+pub fn render_file_from_json_enum<'a, W: Writer>(template: &str, json: Json, writer: &mut W)  -> RustacheResult<'a, ()>{
     let data = parse_json(&json);
-    render_file_from_hb(template, &data, writer);
+    return render_file_from_hb(template, &data, writer);
 }
 
 /// Render a template file from a JSON string to a specified writer
@@ -112,13 +117,13 @@ pub fn render_file_from_json_enum<W: Writer>(template: &str, json: Json, writer:
 ///
 /// rustache::render_file_from_json_string("path/to/template.html", data, &mut w);
 /// ```
-pub fn render_file_from_json_string<W: Writer>(template: &str, data: &str, writer: &mut W) {
+pub fn render_file_from_json_string<'a, W: Writer>(template: &str, data: &str, writer: &mut W)  -> RustacheResult<'a, ()>{
     let json = match json::from_str(data) {
         Ok(json) => json,
         Err(err) => fail!("Invalid JSON. {}", err)
     };
     
-    render_file_from_json_enum(template, json, writer);
+    return render_file_from_json_enum(template, json, writer);
 }
 
 /// Render a template file from a JSON file to a specified writer
@@ -131,7 +136,7 @@ pub fn render_file_from_json_string<W: Writer>(template: &str, data: &str, write
 ///
 /// rustache::render_file_from_json_file("path/to/template.html", "data/data.json", &mut w);
 /// ```
-pub fn render_file_from_json_file<W: Writer>(template: &str, data: &str, writer: &mut W) {
+pub fn render_file_from_json_file<'a, W: Writer>(template: &str, data: &str, writer: &mut W)  -> RustacheResult<'a, ()>{
     let data_string = read_file(Path::new(data));
 
     let json = match json::from_str(data_string.as_slice()) {
@@ -139,7 +144,7 @@ pub fn render_file_from_json_file<W: Writer>(template: &str, data: &str, writer:
         Err(err) => fail!("Invalid JSON. {}", err)
     };
     
-    render_file_from_json_enum(template, json, writer);
+    return render_file_from_json_enum(template, json, writer);
 }
 
 /// Render template text from a HashBuilder to a specified writer
@@ -155,10 +160,10 @@ pub fn render_file_from_json_file<W: Writer>(template: &str, data: &str, writer:
 ///
 /// rustache::render_text_from_hb("{{ name }}", &data, &mut w);
 /// ```
-pub fn render_text_from_hb<'a, W: Writer>(input: &str, data: &'a HashBuilder<'a>, writer: &mut W) {
+pub fn render_text_from_hb<'a, W: Writer>(input: &str, data: &'a HashBuilder<'a>, writer: &mut W)  -> RustacheResult<'a, ()>{
     let tokens = compiler::create_tokens(input);
     let nodes = parser::parse_nodes(&tokens);
-    Template::new().render_data(writer, data, &nodes);
+    return Template::new().render_data(writer, data, &nodes);
 }
 
 /// Render template text from a Rust JSON Enum to a specified writer
@@ -175,9 +180,9 @@ pub fn render_text_from_hb<'a, W: Writer>(input: &str, data: &'a HashBuilder<'a>
 ///
 /// rustache::render_text_from_json_enum("{{ name }}", data, &mut w);
 /// ```
-pub fn render_text_from_json_enum<W: Writer>(input: &str, json: Json, writer: &mut W) {
+pub fn render_text_from_json_enum<'a, W: Writer>(input: &str, json: Json, writer: &mut W)  -> RustacheResult<'a, ()>{
     let data = parse_json(&json);
-    render_text_from_hb(input, &data, writer);
+    return render_text_from_hb(input, &data, writer);
 }
 
 /// Render template text from a JSON string to a specified writer
@@ -191,13 +196,13 @@ pub fn render_text_from_json_enum<W: Writer>(input: &str, json: Json, writer: &m
 ///
 /// rustache::render_text_from_json_string("{{ name }}", data, &mut w);
 /// ```
-pub fn render_text_from_json_string<W: Writer>(input: &str, data: &str, writer: &mut W) {
+pub fn render_text_from_json_string<'a, W: Writer>(input: &str, data: &str, writer: &mut W)  -> RustacheResult<'a, ()>{
     let json = match json::from_str(data) {
         Ok(json) => json,
         Err(err) => fail!("Invalid JSON. {}", err)
     };
     
-    render_text_from_json_enum(input, json, writer);
+    return render_text_from_json_enum(input, json, writer);
 }
 
 /// Render template text from a JSON file to a specified writer
@@ -210,7 +215,7 @@ pub fn render_text_from_json_string<W: Writer>(input: &str, data: &str, writer: 
 ///
 /// rustache::render_text_from_json_file("{{ name }}", "data/data.json", &mut w);
 /// ```
-pub fn render_text_from_json_file<W: Writer>(input: &str, data: &str, writer: &mut W) {
+pub fn render_text_from_json_file<'a, W: Writer>(input: &str, data: &str, writer: &mut W)  -> RustacheResult<'a, ()>{
     let data_string = read_file(Path::new(data));
 
     let json = match json::from_str(data_string.as_slice()) {
@@ -218,7 +223,7 @@ pub fn render_text_from_json_file<W: Writer>(input: &str, data: &str, writer: &m
         Err(err) => fail!("Invalid JSON. {}", err)
     };
     
-    render_text_from_json_enum(input, json, writer);
+    return render_text_from_json_enum(input, json, writer);
 }
 
 // parses a Rust JSON hash and matches all possible types that may be passed in
