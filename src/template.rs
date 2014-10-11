@@ -8,38 +8,48 @@ use super::{Data, Strng, Bool, Integer, Float, Vector, Hash, Lambda};
 use build::HashBuilder;
 use std::collections::HashMap;
 
-pub struct Template<'a> {
+use RustacheResult;
+use TemplateErrorType;
+
+pub struct Template {
    partials_path: String
 }
 
-// pub enum TemplateError<'a> {
-//     StreamWriteError(&'a str),
-//     HandlePartialError(&'a str),
-//     RenderError(&'a str),
-//     RenderDataError(&'a str)
-// }
+pub enum TemplateError<'a> {
+    StreamWriteError,
+    FileReadError,
+    FileNotFoundError
+    //HandlePartialError(&'a str),
+    //RenderError(&'a str),
+    //RenderDataError(&'a str),
+}
 
-impl<'a> Template<'a> {
-    pub fn new() -> Template<'a> {
-        let tmpl = Template {
+impl Template {
+    pub fn new() -> Template {
+        Template {
             partials_path: String::new()
-        };
-        tmpl
+        }
     }  
 
     // utility method to write out rendered template with error handling
     //
     // TODO: error handling needs to be revamped to return IOResult
-    fn write_to_stream<'a, W: Writer>(&self, writer: &mut W, data: &str, errstr: &str) {
-
-        let rv = writer.write_str(data);
-        match rv {
-            Err(err) => {
-                let msg = format!("{}: {}", err, errstr);
-                fail!(msg);
+    fn write_to_stream<'a, W: Writer>(&self, writer: &mut W, 
+                                               data: &String, 
+                                             //errstr: &str
+                                      ) -> RustacheResult<'a, ()> {
+        let mut rv: RustacheResult<()> = Ok(());
+        let status = writer.write_str(data.as_slice());
+        match status {
+            Err(_) => {
+                //let msg = format!("{}: {}", err, errstr);
+                rv = Err(TemplateErrorType(StreamWriteError));
+                //fail!(msg);
             }
             Ok(_) => {}
         }
+
+        return rv;
     }
 
     // method to escape HTML for default value tags
@@ -156,29 +166,31 @@ impl<'a> Template<'a> {
 
 
 
-    fn handle_unescaped_lambda_interpolation<'b, W: Writer>(&mut self, 
+    fn handle_unescaped_lambda_interpolation<'a, 'b, W: Writer>(&mut self, 
                                                         f: &mut |String|: 'a -> String, 
                                                         data: &'b HashMap<String, Data<'b>>, 
                                                         raw: String, 
-                                                        writer: &mut W) {
+                                                        writer: &mut W)  -> RustacheResult<()> {
+        println!("in handle_unescaped_lambda_interpolation");
         let val = (*f)(raw);
         let tokens = compiler::create_tokens(val.as_slice());
         let nodes = parser::parse_nodes(&tokens);
 
-        self.render(writer, data, &nodes);
+        return self.render(writer, data, &nodes);
     }
 
-    fn handle_escaped_lambda_interpolation<'b, W: Writer>(&mut self, 
+    fn handle_escaped_lambda_interpolation<'a, 'b, W: Writer>(&mut self, 
                                                       f: &mut |String|: 'a -> String, 
                                                       data: &'b HashMap<String, Data<'b>>, 
                                                       raw: String, 
-                                                      writer: &mut W) {
+                                                      writer: &mut W)  -> RustacheResult<()> {
+        println!("in handle_escaped_lambda_interpolation");
         let val = (*f)(raw);
         let value = self.escape_html(val.as_slice());
         let tokens = compiler::create_tokens(value.as_slice());
         let nodes = parser::parse_nodes(&tokens);
 
-        self.render(writer, data, &nodes);
+        return self.render(writer, data, &nodes);
     }
 
     //
@@ -197,13 +209,14 @@ impl<'a> Template<'a> {
                                             data: &Data<'a>, 
                                             key: String, 
                                             datastore: &'a HashMap<String, Data<'a>>, 
-                                            writer: &mut W) {
+                                            writer: &mut W) -> RustacheResult<()>{
+        let mut rv = Ok(());
         let mut tmp: String = String::new();
         match *data {
             // simple value-for-tag exchange, write out the string
             Strng(ref val) => {
                 tmp = tmp + *val;
-                self.write_to_stream(writer, tmp.as_slice(), "render: unescaped node string fail");
+                rv = self.write_to_stream(writer, &tmp/*, "render: unescaped node string fail"*/);
             },
             // TODO: this one doesn't quite make sense.  i don't think we need it.
             Bool(ref val) => {
@@ -211,38 +224,48 @@ impl<'a> Template<'a> {
                     &true  => tmp.push_str("true"),
                     &false => tmp.push_str("false")
                 }
-                self.write_to_stream(writer, tmp.as_slice(), "render: unescaped node bool");
+                rv = self.write_to_stream(writer, &tmp/*, "render: unescaped node bool"*/);
             },
             // if the data is an integer, convert it to a string and write that
             Integer(ref val) => {
                 tmp = tmp + val.to_string();
-                self.write_to_stream(writer, tmp.as_slice(), "render: unescaped node int");
+                rv = self.write_to_stream(writer, &tmp/*, "render: unescaped node int"*/);
             },
             // if the data is a float, convert it to a string and write that
             Float(ref val) => {
                 tmp = tmp + val.to_string();
-                self.write_to_stream(writer, tmp.as_slice(), "render: unescaped node float");
+                rv = self.write_to_stream(writer, &tmp/*, "render: unescaped node float"*/);
             },
             // TODO: this one doesn't quite make sense.  i don't think we need it.
             Vector(ref list) => {
                 for item in list.iter() {
-                    self.handle_unescaped_node(item, key.to_string(), datastore, writer);
+                    rv = self.handle_unescaped_node(item, key.to_string(), datastore, writer);
+                    match rv {
+                        Ok(_) => { },
+                        _ => { return rv; }
+                    }
                 }
             },
             // TODO: this one doesn't quite make sense.  i don't think we need it.
             Hash(ref hash) => {
                 if hash.contains_key(&key) {
                     let ref tmp = hash[key];
-                    self.handle_unescaped_node(tmp, key.to_string(), datastore, writer);
+                    rv = self.handle_unescaped_node(tmp, key.to_string(), datastore, writer);
+                    match rv {
+                        Ok(_) => { },
+                        _ => { return rv; }
+                    }
                 }
             },
             // if we have a lambda for the data, the return value of the
             // lambda is what we substitute for the tag
             Lambda(ref f) => {
                 let raw = "".to_string();
-                self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, raw, writer);
+                rv = self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, raw, writer);
             }
         }
+
+        return rv;
     }
 
     //
@@ -262,12 +285,13 @@ impl<'a> Template<'a> {
                                         data: &Data<'a>, 
                                         key: String, 
                                         datastore: &'a HashMap<String, Data<'a>>, 
-                                        writer: &mut W) {
+                                        writer: &mut W)  -> RustacheResult<()> {
+        let mut rv = Ok(());
         let mut tmp: String = String::new();
         match *data {
             Strng(ref val) => {
                 tmp = *self.escape_html(&(*val.as_slice()));
-                self.write_to_stream(writer, tmp.as_slice(), "render: value node string");
+                rv = self.write_to_stream(writer, &tmp/*, "render: value node string"*/);
             },
             // TODO: this one doesn't quite make sense.  i don't think we need it.
             Bool(ref val) => {
@@ -275,40 +299,50 @@ impl<'a> Template<'a> {
                     &true  => tmp.push_str("true"),
                     &false => tmp.push_str("false")
                 }
-                self.write_to_stream(writer, tmp.as_slice(), "render: value node bool");
+                rv = self.write_to_stream(writer, &tmp/*, "render: value node bool"*/);
             },
             // if the data is an integer, convert it to a string and write that
             Integer(ref val) => {
                 let val = val.to_string();
                 tmp = *self.escape_html(&(*val.as_slice()));
-                self.write_to_stream(writer, tmp.as_slice(), "render: value node int");
+                rv = self.write_to_stream(writer, &tmp/*, "render: value node int"*/);
             },
             // if the data is a float, convert it to a string and write that
             Float(ref val) => {
                 let val = val.to_string();
                 tmp = *self.escape_html(&(*val.as_slice()));
-                self.write_to_stream(writer, tmp.as_slice(), "render: value node float");
+                rv = self.write_to_stream(writer, &tmp/*, "render: value node float"*/);
             },
             // TODO: this one doesn't quite make sense.  i don't think we need it.
             Vector(ref list) => {
                 for item in list.iter() {
-                    self.handle_value_node(item, key.to_string(), datastore, writer);
+                    rv = self.handle_value_node(item, key.to_string(), datastore, writer);
+                    match rv {
+                        Ok(_) => { },
+                        _ => { return rv; }
+                    }
                 }
             },
             // TODO: this one doesn't quite make sense.  i don't think we need it.
             Hash(ref hash) => {
                 if hash.contains_key(&key) {
                     let ref tmp = hash[key];
-                    self.handle_value_node(tmp, key.to_string(), datastore, writer);
+                    rv = self.handle_value_node(tmp, key.to_string(), datastore, writer);
+                    match rv {
+                        Ok(_) => { },
+                        _ => { return rv; }
+                    }
                 }
             },
             // if we have a lambda for the data, the return value of the
             // lambda is what we substitute for the tag
             Lambda(ref f) => {
                 let raw = "".to_string();
-                self.handle_escaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, raw, writer);
+                rv = self.handle_escaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, raw, writer);
             }
-        }       
+        }
+
+        return rv;       
     }
 
     //
@@ -322,19 +356,22 @@ impl<'a> Template<'a> {
     fn handle_inverted_node<'a, W:Writer>(&mut self, 
                                           nodes: &Vec<Node>, 
                                           datastore: &'a HashMap<String, Data<'a>>, 
-                                          writer: &mut W) {
+                                          writer: &mut W)  -> RustacheResult<()> {
+        let mut rv = Ok(());
         for node in nodes.iter() {
             match *node {
                 Static(key) => {
-                    self.write_to_stream(writer, key.as_slice(), "render: inverted node static");
+                    rv = self.write_to_stream(writer, &key.to_string()/*, "render: inverted node static"*/);
                 },
                 // TODO: this one doesn't quite make sense.  i don't think we need it.
                 Part(filename, _) => {
-                    self.handle_partial_file_node(filename, datastore, writer);
+                    rv = self.handle_partial_file_node(filename, datastore, writer);
                 },
                 _ => { }
             }
         }
+
+        return rv;
     }
 
     // nodes:     the section's children
@@ -347,14 +384,14 @@ impl<'a> Template<'a> {
       data: &Data<'a>, 
       datastore: &'a HashMap<String,Data<'a>>, 
       sections: &mut Vec<String>,
-      writer: &mut W) {
+      writer: &mut W)  -> RustacheResult<()> {
+        let mut rv = Ok(());
         // there's a special case if the section tag data was a lambda
         // if so, the lambda is used to generate the values for the tag inside the section
         match *data {
           Lambda(ref f) => {
             let raw = self.get_section_text(nodes);
-            self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, *raw, writer);
-            return;
+            return self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, *raw, writer);
           },
           _ => {}
         }
@@ -368,7 +405,7 @@ impl<'a> Template<'a> {
                   let tmpkey = key.to_string();
                   let tmpdata = self.look_up_section_data(&tmpkey, sections, datastore);
                   if tmpdata.is_some() {
-                    self.handle_unescaped_node(tmpdata.unwrap(), key.to_string(), datastore, writer);
+                    rv = self.handle_unescaped_node(tmpdata.unwrap(), key.to_string(), datastore, writer);
                   }
                 }
                 // unescaped is simple, just look up the data in the
@@ -377,12 +414,12 @@ impl<'a> Template<'a> {
                   let tmpkey = key.to_string();
                   let tmpdata = self.look_up_section_data(&tmpkey, sections, datastore);
                   if tmpdata.is_some() {
-                    self.handle_value_node(tmpdata.unwrap(), key.to_string(), datastore, writer);
+                    rv = self.handle_value_node(tmpdata.unwrap(), key.to_string(), datastore, writer);
                   }
                 }
                 // most simple, just write the static data out, nothing to replace
                 Static(key) => {
-                  self.write_to_stream(writer, key.as_slice(), "render: section node static");
+                  rv = self.write_to_stream(writer, &key.to_string()/*, "render: section node static"*/);
                 }
                 // sections are special and may be inverted
                 Section(ref key, ref children, ref inverted, ref open, ref close) => {
@@ -396,21 +433,23 @@ impl<'a> Template<'a> {
                           sections.push(tmpkey.clone());
                           let tmpdata = self.look_up_section_data(&tmpkey, sections, datastore);
                           if tmpdata.is_some() {
-                            self.handle_section_node(children, &tmpkey, tmpdata.unwrap(), datastore, sections, writer);
+                            rv = self.handle_section_node(children, &tmpkey, tmpdata.unwrap(), datastore, sections, writer);
                           }
                         },
                         // inverted only has internal static text, so is easy to handle
                         &true => {
-                          self.handle_inverted_node(children, datastore, writer);
+                          rv = self.handle_inverted_node(children, datastore, writer);
                         }
                       }
                     },
                 // if it's a partial, we have a file to read in and render
                 Part(path, _) => {
-                  self.handle_partial_file_node(path, datastore, writer);
+                  rv = self.handle_partial_file_node(path, datastore, writer);
                 }
             }
         }
+
+        return rv;
     }
     
     // section data is considered false in a few cases:
@@ -478,7 +517,8 @@ impl<'a> Template<'a> {
     fn handle_partial_file_node<'a, W: Writer>(&mut self,
                                               filename: &str, 
                                              datastore: &'a HashMap<String, Data<'a>>, 
-                                                writer: &mut W) {
+                                                writer: &mut W)  -> RustacheResult<()> {
+        let mut rv: RustacheResult<()>;
         let path = Path::new(self.partials_path.clone()).join(filename);
         if path.exists() {
 
@@ -488,17 +528,22 @@ impl<'a> Template<'a> {
                     let tokens = compiler::create_tokens(contents.as_slice());
                     let nodes = parser::parse_nodes(&tokens);
 
-                    self.render(writer, datastore, &nodes);    
+                    rv = self.render(writer, datastore, &nodes);    
                 },
-                Err(_) => { }
+                Err(_) => { rv = Err(TemplateErrorType(FileReadError)); }
             }
+        } else {
+            rv = Err(TemplateErrorType(FileNotFoundError));
         }
+
+        return rv;
     }
 
     // writer: an io::stream to write the rendered template out to
     // data:   the internal HashBuilder data store
     // parser: the parser object that has the parsed nodes, see src/parse.js
-    pub fn render<'a, W: Writer>(&mut self, writer: &mut W, data: &'a HashMap<String, Data<'a>>, nodes: &Vec<Node>) {
+    pub fn render<'a, W: Writer>(&mut self, writer: &mut W, data: &'a HashMap<String, Data<'a>>, nodes: &Vec<Node>)  -> RustacheResult<()> {
+        let mut rv = Ok(());
         let mut tmp: String = String::new();
 
         // nodes are what the template file is parsed into
@@ -513,7 +558,7 @@ impl<'a> Template<'a> {
                     let tmp = key.to_string();
                     if data.contains_key(&tmp) {
                         let ref val = data[tmp];
-                        self.handle_unescaped_node(val, "".to_string(), data, writer);
+                        rv = self.handle_unescaped_node(val, "".to_string(), data, writer);
                     }
                 }
                 // value nodes contain tags who's data gets HTML escaped
@@ -522,14 +567,13 @@ impl<'a> Template<'a> {
                     let tmp = key.to_string();
                     if data.contains_key(&tmp) {
                         let ref val = data[tmp];
-                        self.handle_value_node(val, "".to_string(), data, writer);
+                        rv = self.handle_value_node(val, "".to_string(), data, writer);
                     }
                 }
                 // static nodes are the test in the template that doesn't get modified, 
                 // just gets written out character for character
                 Static(key) => {
-                    self.write_to_stream(writer, key, "render: static");
-                    //writer.write_str(key).ok().expect("write failed in render");
+                    rv = self.write_to_stream(writer, &key.to_string()/*, "render: static"*/);
                 }
                 // sections come in two kinds, normal and inverted
                 //
@@ -551,33 +595,35 @@ impl<'a> Template<'a> {
                         (true, false) => {
                             let ref val = data[tmp];
                             let mut sections = vec![tmp.clone()];
-                            self.handle_section_node(children, &tmp, val, data, &mut sections, writer);
+                            rv = self.handle_section_node(children, &tmp, val, data, &mut sections, writer);
                         },
                         (false, true) => {
-                            self.handle_inverted_node(children, data, writer);
+                            rv = self.handle_inverted_node(children, data, writer);
                         }
                     }
                 }
                 // partials include external template files and compile and process them
                 // at runtime, inserting them into the document at the point the tag is found
                 Part(name, _) => {
-                    self.handle_partial_file_node(name, data, writer);
+                    rv = self.handle_partial_file_node(name, data, writer);
                 }
             }
         }
+
+        return rv;
     }
 
     // main entry point to Template
     pub fn render_data<'a, W: Writer>(&mut self, 
                                       writer: &mut W, 
                                       datastore: &'a HashBuilder<'a>, 
-                                      nodes: &Vec<Node>) {
+                                      nodes: &Vec<Node>)  -> RustacheResult<()> {
         // we need to hang on to the partials path internally,
         // if there is one, for class methods to use.
         self.partials_path.truncate(0);
         self.partials_path.push_str(datastore.partials_path);
 
-        self.render(writer, &datastore.data, nodes);
+        return self.render(writer, &datastore.data, nodes);
     }
 
 }
@@ -670,13 +716,16 @@ mod template_tests {
         let nodes: Vec<Node> = vec![Value("value", "{{ value }}".to_string())];
         let data = HashBuilder::new().insert_string("value", s1);
 
-        Template::new().render_data(&mut w, &data, &nodes);
+        let rv = Template::new().render_data(&mut w, &data, &nodes);
+        match rv { _ => {} }
 
         assert_eq!(a1, str::from_utf8(w.get_ref()).unwrap());
 
         w = MemWriter::new();
         let newdata = HashBuilder::new().insert_string("value", s2);
-        Template::new().render_data(&mut w, &newdata, &nodes);
+        let rv = Template::new().render_data(&mut w, &newdata, &nodes);
+        match rv { _ => {} }
+
         assert_eq!(a2, str::from_utf8(w.get_ref()).unwrap());
     }
 
@@ -699,7 +748,9 @@ mod template_tests {
         let nodes: Vec<Node> = vec![Unescaped("value", "{{ value }}".to_string())];
         let data = HashBuilder::new().insert_string("value", s);
 
-        Template::new().render_data(&mut w, &data, &nodes);
+        let rv = Template::new().render_data(&mut w, &data, &nodes);
+        match rv { _ => {} }
+
         assert_eq!(s, str::from_utf8(w.get_ref()).unwrap());        
     }
 
@@ -709,32 +760,10 @@ mod template_tests {
         let data = HashBuilder::new().insert_string("value1", "The heading");
         let nodes: Vec<Node> = vec![Static("<h1>"), Value("value1", "{{ value1 }}".to_string()), Static("</h1>")];
 
-        Template::new().render_data(&mut w, &data, &nodes);
+        let rv = Template::new().render_data(&mut w, &data, &nodes);
+        match rv { _ => {} }
+
         assert_eq!("<h1>The heading</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
-    }
-
-    #[test]
-    fn test_unescaped_node_correct_string_data() {
-        let mut w = MemWriter::new();
-        let nodes: Vec<Node> = vec![Static("<h1>"), Value("value1", "{{ value1 }}".to_string()), Static("</h1>")];
-        let data = HashBuilder::new().insert_string("value1", "heading");
-
-        Template::new().render_data(&mut w, &data, &nodes);
-
-        assert_eq!("<h1>heading</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
-    }
-
-    #[test]
-    fn test_unescaped_node_correct_html_string_data() {
-        let s1 = "a < b > c & d \"spam\"\'";
-        let a1 = "<h1>a < b > c & d \"spam\"\'</h1>";
-        let mut w = MemWriter::new();
-        let nodes: Vec<Node> = vec![Static("<h1>"), Unescaped("value1", "{{& value1 }}".to_string()), Static("</h1>")];
-        let data = HashBuilder::new().insert_string("value1", s1);
-
-        Template::new().render_data(&mut w, &data, &nodes);
-
-        assert_eq!(a1.to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
@@ -743,7 +772,8 @@ mod template_tests {
         let nodes: Vec<Node> = vec![Static("<h1>"), Unescaped("value1", "{{& value1 }}".to_string()), Static("</h1>")];
         let data = HashBuilder::new().insert_bool("value1", false);
 
-        Template::new().render_data(&mut w, &data, &nodes);
+        let rv = Template::new().render_data(&mut w, &data, &nodes);
+        match rv { _ => {} }
 
         assert_eq!("<h1>false</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -754,24 +784,10 @@ mod template_tests {
         let nodes: Vec<Node> = vec![Static("<h1>"), Unescaped("value1", "{{& value1 }}".to_string()), Static("</h1>")];
         let data = HashBuilder::new().insert_bool("value1", true);
 
-        Template::new().render_data(&mut w, &data, &nodes);
+        let rv = Template::new().render_data(&mut w, &data, &nodes);
+        match rv { _ => {} }
 
         assert_eq!("<h1>true</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
-    }
-
-
-    #[test]
-    fn test_section_unescaped_string_data() {
-        let mut w = MemWriter::new();
-        let nodes: Vec<Node> = vec![Section("value1", vec![Unescaped("value", "{{& value }}".to_string())], false, "{{# value1 }}".to_string(), "{{/ value1 }}".to_string())];
-        let data = HashBuilder::new()
-            .insert_hash("value1", |builder| {
-                builder.insert_string("value", "<Section Value>")
-            });
-
-        Template::new().render_data(&mut w, &data, &nodes);
-
-        assert_eq!("<Section Value>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
     #[test]
@@ -783,7 +799,8 @@ mod template_tests {
                 builder.insert_string("value", "<Section Value>")
             });
 
-        Template::new().render_data(&mut w, &data, &nodes);
+        let rv = Template::new().render_data(&mut w, &data, &nodes);
+        match rv { _ => {} }
 
         assert_eq!("&lt;Section Value&gt;".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -802,7 +819,8 @@ mod template_tests {
                 })
             });
 
-        Template::new().render_data(&mut w, &data, &nodes);
+        let rv = Template::new().render_data(&mut w, &data, &nodes);
+        match rv { _ => {} }
 
         assert_eq!("tomrobertjoe".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -824,33 +842,9 @@ mod template_tests {
     //             })
     //         });
 
-    //     Template::new().render_data(&mut w, &data, &nodes);
+    //     let rv = Template::new().render_data(&mut w, &data, &nodes);
     //     assert_eq!("tomrobertjoe".to_string(), String::from_utf8(w.unwrap()).unwrap());
     // }    
-
-    #[test]
-    fn test_value_node_correct_html_string_data() {
-        let s1 = "a < b > c & d \"spam\"\'";
-        let a1 = "a &lt; b &gt; c &amp; d &quot;spam&quot;'";
-        let mut w = MemWriter::new();
-        let nodes: Vec<Node> = vec![Value("value1", "{{ value1 }}".to_string())];
-        let data = HashBuilder::new().insert_string("value1", s1);
-
-        Template::new().render_data(&mut w, &data, &nodes);
-
-        assert_eq!(a1.to_string(), String::from_utf8(w.unwrap()).unwrap());
-    }
-
-    #[test]
-    fn test_value_node_correct_string_data() {
-        let mut w = MemWriter::new();
-        let nodes: Vec<Node> = vec![Static("<h1>"), Value("value1", "{{ value1 }}".to_string()), Static("</h1>")];
-        let data = HashBuilder::new().insert_string("value1", "heading");
-
-        Template::new().render_data(&mut w, &data, &nodes);
-
-        assert_eq!("<h1>heading</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
-    }
 
     #[test]
     fn test_unescaped_node_lambda_data() {
@@ -860,7 +854,8 @@ mod template_tests {
             "heading".to_string()
         });
 
-        Template::new().render_data(&mut w, &data, &nodes);
+        let rv = Template::new().render_data(&mut w, &data, &nodes);
+        match rv { _ => {} }
 
         assert_eq!("<h1>heading</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -873,25 +868,36 @@ mod template_tests {
             "heading".to_string()
         });
 
-        Template::new().render_data(&mut w, &data, &nodes);
+        let rv = Template::new().render_data(&mut w, &data, &nodes);
+        match rv { _ => {} }
 
         assert_eq!("<h1>heading</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 
-    #[test]
-    fn test_value_node_correct_html_string_lambda_data() {
-        let s1 = "a < b > c & d \"spam\"\'";
-        let a1 = "a &lt; b &gt; c &amp; d &quot;spam&quot;'";
-        let mut w = MemWriter::new();
-        let nodes: Vec<Node> = vec![Value("func1", "{{ func1 }}".to_string())];
-        let data = HashBuilder::new().insert_lambda("func1", |_| {
-            s1.to_string()
-        });
+    // #[test]
+    // fn test_spec_lambdas_interpolation_using_render_text() {
+    //     let mut s = MemWriter::new();
+    //     let data = HashBuilder::new()
+    //                 .insert_lambda("lambda", |_| {
+    //                      "world".to_string()               
+    //                  });
+    //     let s = rustache::render_text("Hello, {{lambda}}!", data);
 
-        Template::new().render_data(&mut w, &data, &nodes);
+    //     assert_eq!("Hello, world!".to_string(), String::from_utf8(s.unwrap()).unwrap());
+    // }
 
-        assert_eq!(a1.to_string(), String::from_utf8(w.unwrap()).unwrap());
-    }
+    // #[test]
+    // fn test_spec_lambdas_inverted_section_using_render_text() {
+    //     let data = HashBuilder::new()
+    //                 .insert_string("static", "static")
+    //                 .insert_lambda("lambda", |_| {
+    //                     "false".to_string()
+    //                 });
+
+    //     let s = rustache::render_text("<{{^lambda}}{{static}}{{/lambda}}>", data);
+
+    //     assert_eq!("<>".to_string(), String::from_utf8(s.unwrap()).unwrap());
+    // }
 
     #[test]
     fn test_value_node_correct_false_bool_data() {
@@ -899,7 +905,8 @@ mod template_tests {
         let nodes: Vec<Node> = vec![Value("value1", "{{ value1 }}".to_string())];
         let data = HashBuilder::new().insert_bool("value1", false);
 
-        Template::new().render_data(&mut w, &data, &nodes);
+        let rv = Template::new().render_data(&mut w, &data, &nodes);
+        match rv { _ => {} }
 
         assert_eq!("false".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -910,7 +917,8 @@ mod template_tests {
         let nodes: Vec<Node> = vec![Value("value1", "{{ value1 }}".to_string())];
         let data = HashBuilder::new().insert_bool("value1", true);
 
-        Template::new().render_data(&mut w, &data, &nodes);
+        let rv = Template::new().render_data(&mut w, &data, &nodes);
+        match rv { _ => {} }
 
         assert_eq!("true".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
@@ -925,7 +933,9 @@ mod template_tests {
         let mut s: String = String::new();
         s.push_str("A wise woman once said: It's easier to get forgiveness than permission.-Grace Hopper");
 
-        Template::new().render_data(&mut w, &data, &nodes);
+        let rv = Template::new().render_data(&mut w, &data, &nodes);
+        match rv { _ => {} }
+
         assert_eq!(s, String::from_utf8(w.unwrap()).unwrap());
     }
 
@@ -940,7 +950,9 @@ mod template_tests {
         let mut s: String = String::new();
         s.push_str("A wise woman once said: It's easier to get forgiveness than permission.-Grace Hopper something else extra data");
 
-        Template::new().render_data(&mut w, &data, &nodes);
+        let rv = Template::new().render_data(&mut w, &data, &nodes);
+        match rv { _ => {} }
+
         assert_eq!(s, String::from_utf8(w.unwrap()).unwrap());
     }
 
@@ -964,7 +976,8 @@ mod template_tests {
         let tokens = compiler::create_tokens(file.as_slice());
         let nodes = parser::parse_nodes(&tokens);
 
-        Template::new().render_data(&mut w, &data, &nodes);
+        let rv = Template::new().render_data(&mut w, &data, &nodes);
+        match rv { _ => {} }
 
         let mut f = File::create(&Path::new("test_data/section_with_partial.html"));
         let completed = f.write(w.unwrap().as_slice());
@@ -992,8 +1005,8 @@ mod template_tests {
         let data = HashBuilder::new().insert_lambda("lambda", |_| { planets.pop().unwrap().to_string() } )
                                      .insert_string("planet", "world");
 
-        Template::new().render_data(&mut w, &data, &nodes);
-
+        let rv = Template::new().render_data(&mut w, &data, &nodes);
+        match rv { _ => {} }
         assert_eq!("Saturn == Earth == Jupiter".to_string(), String::from_utf8(w.unwrap()).unwrap());
     }
 

@@ -26,7 +26,8 @@ fn test_spec_lambdas_interpolation() {
                      "world".to_string()               
                  });
 
-    rustache::render_text_from_hb("Hello, {{lambda}}!", &data, &mut w);
+    let rv = rustache::render_text_from_hb("Hello, {{lambda}}!", &data, &mut w);
+    match rv { _ => {} }
 
     assert_eq!("Hello, world!".to_string(), String::from_utf8(w.unwrap()).unwrap());
 }
@@ -53,7 +54,8 @@ fn test_spec_lambdas_interpolation_expansion() {
                      "{{planet}}".to_string()               
                  });
 
-    rustache::render_text_from_hb("Hello, {{lambda}}!", &data, &mut w);
+    let rv = rustache::render_text_from_hb("Hello, {{lambda}}!", &data, &mut w);
+    match rv { _ => {} }
 
     assert_eq!("Hello, world!".to_string(), String::from_utf8(w.unwrap()).unwrap());
 }
@@ -80,7 +82,8 @@ fn test_spec_lambdas_interpolation_expansion() {
 //                     "|planet| => {{planet}}".to_string()               
 //                 });
 
-//     rustache::render_text_from_hb("{{= | | =}}\nHello, (|&lambda|)!", &data, &mut w);
+//     let rv = rustache::render_text_from_hb("{{= | | =}}\nHello, (|&lambda|)!", &data, &mut w);
+//    match rv { _ => {} }
 
 //     assert_eq!("Hello, (|planet| => world)!".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
@@ -107,7 +110,8 @@ fn test_spec_lambdas_interpolation_multiple_calls() {
                     calls.to_string()
                 });
 
-    rustache::render_text_from_hb("{{lambda}} == {{{lambda}}} == {{lambda}}", &data, &mut w);
+    let rv = rustache::render_text_from_hb("{{lambda}} == {{{lambda}}} == {{lambda}}", &data, &mut w);
+    match rv { _ => {} }
 
     assert_eq!("1 == 2 == 3".to_string(), String::from_utf8(w.unwrap()).unwrap());
 }
@@ -133,7 +137,8 @@ fn test_spec_lambdas_escaping() {
                 });
 
 
-    rustache::render_text_from_hb("<{{lambda}}{{{lambda}}}", &data, &mut w);
+    let rv = rustache::render_text_from_hb("<{{lambda}}{{{lambda}}}", &data, &mut w);
+    match rv { _ => {} }
 
     assert_eq!("<&gt;>".to_string(), String::from_utf8(w.unwrap()).unwrap());
 }
@@ -164,7 +169,8 @@ fn test_spec_lambdas_section() {
                     }
                 });
 
-    rustache::render_text_from_hb("<{{#lambda}}{{x}}{{/lambda}}>", &data, &mut w);
+    let rv = rustache::render_text_from_hb("<{{#lambda}}{{x}}{{/lambda}}>", &data, &mut w);
+    match rv { _ => {} }
 
     assert_eq!("<yes>".to_string(), String::from_utf8(w.unwrap()).unwrap());
 }
@@ -194,7 +200,8 @@ fn test_spec_lambdas_section_expansion() {
                     result
                  });
 
-    rustache::render_text_from_hb("<{{#lambda}}-{{/lambda}}>", &data, &mut w);
+    let rv = rustache::render_text_from_hb("<{{#lambda}}-{{/lambda}}>", &data, &mut w);
+    match rv { _ => {} }
 
     assert_eq!("<-Earth->".to_string(), String::from_utf8(w.unwrap()).unwrap());
 }
@@ -224,7 +231,8 @@ fn test_spec_lambdas_section_expansion() {
 //                     result
 //                 });
 
-//     rustache::render_text_from_hb("{{= | | =}}<|#lambda|-|/lambda|>", &data, &mut w);
+//     let rv = rustache::render_text_from_hb("{{= | | =}}<|#lambda|-|/lambda|>", &data, &mut w);
+//    match rv { _ => {} }
 
 //     assert_eq!("<-{{planet}} => Earth->".to_string(), String::from_utf8(w.unwrap()).unwrap());
 // }
@@ -252,7 +260,8 @@ fn test_spec_lambdas_section_multiple_calls() {
                     result
                 });
 
-    rustache::render_text_from_hb("{{#lambda}}FILE{{/lambda}} != {{#lambda}}LINE{{/lambda}}", &data, &mut w);
+    let rv = rustache::render_text_from_hb("{{#lambda}}FILE{{/lambda}} != {{#lambda}}LINE{{/lambda}}", &data, &mut w);
+    match rv { _ => {} }
 
     assert_eq!("__FILE__ != __LINE__".to_string(), String::from_utf8(w.unwrap()).unwrap());
 }
@@ -279,33 +288,11 @@ fn test_spec_lambdas_inverted_section() {
                     "false".to_string()
                 });
 
-    rustache::render_text_from_hb("<{{^lambda}}{{static}}{{/lambda}}>", &data, &mut w);
+    let rv = rustache::render_text_from_hb("<{{^lambda}}{{static}}{{/lambda}}>", &data, &mut w);
+    match rv { _ => {} }
 
     assert_eq!("<>".to_string(), String::from_utf8(w.unwrap()).unwrap());
 }
 
 
-// #[test]
-// fn test_spec_lambdas_interpolation_using_render_text() {
-//     let mut s = MemStream::new();
-//     let data = HashBuilder::new()
-//                 .insert_lambda("lambda", |_| {
-//                      "world".to_string()               
-//                  });
-//     let s = rustache::render_text("Hello, {{lambda}}!", data);
 
-//     assert_eq!("Hello, world!".to_string(), String::from_utf8(s.unwrap()).unwrap());
-// }
-
-// #[test]
-// fn test_spec_lambdas_inverted_section_using_render_text() {
-//     let data = HashBuilder::new()
-//                 .insert_string("static", "static")
-//                 .insert_lambda("lambda", |_| {
-//                     "false".to_string()
-//                 });
-
-//     let s = rustache::render_text("<{{^lambda}}{{static}}{{/lambda}}>", data);
-
-//     assert_eq!("<>".to_string(), String::from_utf8(s.unwrap()).unwrap());
-// }

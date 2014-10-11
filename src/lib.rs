@@ -19,6 +19,8 @@ use std::fmt;
 use std::cell::RefCell;
 use std::collections::HashMap;
 
+use template::TemplateError;
+
 pub use build::{HashBuilder, VecBuilder};
 // pub use rustache::{render_file, render_text, Render};
 pub use rustache::{render_file_from_hb, render_file_from_json_enum,
@@ -26,11 +28,15 @@ pub use rustache::{render_file_from_hb, render_file_from_json_enum,
                    render_text_from_hb, render_text_from_json_enum,
                    render_text_from_json_string, render_text_from_json_file, read_file};
 
-// pub enum RustacheError<'a> {
-//     ParserErrorType(ParserError),
-//     CompilerErrorType(CompilerError),
-//     TemplateErrorType(TemplateError)
-// }
+pub type RustacheResult<'a, T> = Result<T, RustacheError<'a>>;
+
+/// Enum to handle errors from the Rustache library.
+pub enum RustacheError<'a> {
+    //ParserErrorType(ParserError),
+    //CompilerErrorType(CompilerError),
+    /// Generic enum value for any errors from the template module.
+    TemplateErrorType(TemplateError<'a>)
+}
 
 // Represents the possible types that passed in data may take on
 #[doc(hidden)]
