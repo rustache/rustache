@@ -1,7 +1,7 @@
 #![license = "MIT"]
 
-#![deny(missing_doc)]
-#![deny(warnings)]
+#![warn(missing_doc)]
+#![warn(warnings)]
 
 #![feature(phase)]
 //! The main crate for the Rustache library.
