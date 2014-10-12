@@ -41,10 +41,10 @@ impl Template {
     }  
 
     // utility method to write out rendered template with error handling
-    fn write_to_stream<'a, W: Writer>(&self, writer: &mut W, 
-                                               data: &String, 
-                                             errstr: &str
-                                      ) -> RustacheResult<()> {
+    fn write_to_stream<W: Writer>(&self,
+                                  writer: &mut W, 
+                                  data: &String, 
+                                  errstr: &str) -> RustacheResult<()> {
         let mut rv: RustacheResult<()> = Ok(());
         let status = writer.write_str(data.as_slice());
         match status {
@@ -81,12 +81,12 @@ impl Template {
     // TODO: handle vector data for real, change to not build vector, but 
     // iterate the same way until data is found
     //
-    fn look_up_section_data<'a>(&self, 
-                                key: &String,
-                                sections: &Vec<String>, 
-                                datastore: &'a HashMap<String, Data<'a>>) -> Option<&'a Data<'a>> {
-        let mut rv: Option<&Data<'a>> = None;
-        let mut hashes: Vec<&HashMap<String, Data>> = Vec::new();
+    fn look_up_section_data<'a, 'b>(&self, 
+                                    key: &String,
+                                    sections: &Vec<String>, 
+                                    datastore: &'b HashMap<String, Data<'a>>) -> Option<&'b Data<'a>> {
+        let mut rv = None;
+        let mut hashes = Vec::new();
         let mut hash = datastore;
 
 
@@ -171,9 +171,9 @@ impl Template {
 
 
 
-    fn handle_unescaped_lambda_interpolation<'a, 'b, W: Writer>(&mut self, 
-                                                        f: &mut |String|: 'a -> String, 
-                                                        data: &'b HashMap<String, Data<'b>>, 
+    fn handle_unescaped_lambda_interpolation<W: Writer>(&mut self, 
+                                                        f: &mut |String| -> String, 
+                                                        data: &HashMap<String, Data>, 
                                                         raw: String, 
                                                         writer: &mut W) -> RustacheResult<()> {
         println!("in handle_unescaped_lambda_interpolation");
@@ -184,9 +184,9 @@ impl Template {
         return self.render(writer, data, &nodes);
     }
 
-    fn handle_escaped_lambda_interpolation<'a, 'b, W: Writer>(&mut self, 
-                                                      f: &mut |String|: 'a -> String, 
-                                                      data: &'b HashMap<String, Data<'b>>, 
+    fn handle_escaped_lambda_interpolation<W: Writer>(&mut self, 
+                                                      f: &mut |String| -> String, 
+                                                      data: &HashMap<String, Data>, 
                                                       raw: String, 
                                                       writer: &mut W) -> RustacheResult<()> {
         println!("in handle_escaped_lambda_interpolation");
@@ -210,11 +210,11 @@ impl Template {
     //
     // TODO: factor handle_unescaped_node and handle_value_node together
     // TODO: really don't need to be handling Bool, Vector or Hash
-    fn handle_unescaped_node<'a, W: Writer>(&mut self, 
-                                            data: &Data<'a>, 
-                                            key: String, 
-                                            datastore: &'a HashMap<String, Data<'a>>, 
-                                            writer: &mut W) -> RustacheResult<()>{
+    fn handle_unescaped_node<W: Writer>(&mut self, 
+                                        data: &Data, 
+                                        key: String, 
+                                        datastore: &HashMap<String, Data>, 
+                                        writer: &mut W) -> RustacheResult<()>{
         let mut rv = Ok(());
         let mut tmp: String = String::new();
         match *data {
@@ -286,11 +286,11 @@ impl Template {
     // TODO: factor handle_unescaped_node and handle_value_node together
     // TODO: really don't need to be handling Bool, Vector or Hash
     //
-    fn handle_value_node<'a, W: Writer>(&mut self, 
-                                        data: &Data<'a>, 
-                                        key: String, 
-                                        datastore: &'a HashMap<String, Data<'a>>, 
-                                        writer: &mut W) -> RustacheResult<()> {
+    fn handle_value_node<W: Writer>(&mut self, 
+                                    data: &Data, 
+                                    key: String, 
+                                    datastore: &HashMap<String, Data>, 
+                                    writer: &mut W) -> RustacheResult<()> {
         let mut rv = Ok(());
         let mut tmp: String = String::new();
         match *data {
@@ -358,10 +358,10 @@ impl Template {
     // inverted nodes only contain static text to render and are only rendered
     // if the data in the template data for the tag name is "falsy"
     //
-    fn handle_inverted_node<'a, W:Writer>(&mut self, 
-                                          nodes: &Vec<Node>, 
-                                          datastore: &'a HashMap<String, Data<'a>>, 
-                                          writer: &mut W) -> RustacheResult<()> {
+    fn handle_inverted_node<W:Writer>(&mut self, 
+                                      nodes: &Vec<Node>, 
+                                      datastore: &HashMap<String, Data>, 
+                                      writer: &mut W) -> RustacheResult<()> {
         let mut rv = Ok(());
         for node in nodes.iter() {
             match *node {
@@ -383,13 +383,13 @@ impl Template {
     // data:      data from section key from HashBuilder store
     // datastore: HashBuilder data
     // writer:    io stream
-    fn handle_section_node<'a, W: Writer>(&mut self, 
-      nodes: &Vec<Node>, 
-      sectionkey: &String, 
-      data: &Data<'a>, 
-      datastore: &'a HashMap<String,Data<'a>>, 
-      sections: &mut Vec<String>,
-      writer: &mut W) -> RustacheResult<()> {
+    fn handle_section_node<W: Writer>(&mut self, 
+                                      nodes: &Vec<Node>, 
+                                      sectionkey: &String, 
+                                      data: &Data, 
+                                      datastore: &HashMap<String,Data>, 
+                                      sections: &mut Vec<String>,
+                                      writer: &mut W) -> RustacheResult<()> {
         let mut rv = Ok(());
         // there's a special case if the section tag data was a lambda
         // if so, the lambda is used to generate the values for the tag inside the section
@@ -519,10 +519,10 @@ impl Template {
     //
     // TODO: throw error if partials file doesn't exist, if file read fails
     //
-    fn handle_partial_file_node<'a, W: Writer>(&mut self,
-                                              filename: &str, 
-                                             datastore: &'a HashMap<String, Data<'a>>, 
-                                                writer: &mut W) -> RustacheResult<()> {
+    fn handle_partial_file_node<W: Writer>(&mut self,
+                                           filename: &str, 
+                                           datastore: &HashMap<String, Data>, 
+                                           writer: &mut W) -> RustacheResult<()> {
         let mut rv: RustacheResult<()>;
         let path = Path::new(self.partials_path.clone()).join(filename);
         if path.exists() {
@@ -549,7 +549,10 @@ impl Template {
     // writer: an io::stream to write the rendered template out to
     // data:   the internal HashBuilder data store
     // parser: the parser object that has the parsed nodes, see src/parse.js
-    pub fn render<'a, W: Writer>(&mut self, writer: &mut W, data: &'a HashMap<String, Data<'a>>, nodes: &Vec<Node>) -> RustacheResult<()> {
+    pub fn render<W: Writer>(&mut self, 
+                             writer: &mut W, 
+                             data: &HashMap<String, Data>, 
+                             nodes: &Vec<Node>) -> RustacheResult<()> {
         let mut rv = Ok(());
         let mut tmp: String = String::new();
 
@@ -621,10 +624,10 @@ impl Template {
     }
 
     // main entry point to Template
-    pub fn render_data<'a, W: Writer>(&mut self, 
-                                      writer: &mut W, 
-                                      datastore: &'a HashBuilder<'a>, 
-                                      nodes: &Vec<Node>) -> RustacheResult<()> {
+    pub fn render_data<W: Writer>(&mut self, 
+                                  writer: &mut W, 
+                                  datastore: &HashBuilder, 
+                                  nodes: &Vec<Node>) -> RustacheResult<()> {
         // we need to hang on to the partials path internally,
         // if there is one, for class methods to use.
         self.partials_path.truncate(0);
