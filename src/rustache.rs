@@ -83,8 +83,8 @@ pub fn render_file_from_hb<'a, W: Writer>(path: &str,
                                           data: &'a HashBuilder<'a>, 
                                           writer: &mut W) -> RustacheResult<()>{
     let file = read_file(Path::new(path));
-    let tokens = compiler::create_tokens(file.as_slice());
-    let nodes = parser::parse_nodes(&tokens);
+    let mut tokens = compiler::create_tokens(file.as_slice());
+    let nodes = parser::parse_nodes(&mut tokens);
     return Template::new().render_data(writer, data, &nodes);
 }
 
@@ -162,8 +162,8 @@ pub fn render_file_from_json_file<'a, W: Writer>(template: &str, data: &str, wri
 /// rustache::render_text_from_hb("{{ name }}", &data, &mut w);
 /// ```
 pub fn render_text_from_hb<'a, W: Writer>(input: &str, data: &'a HashBuilder<'a>, writer: &mut W)  -> RustacheResult<()>{
-    let tokens = compiler::create_tokens(input);
-    let nodes = parser::parse_nodes(&tokens);
+    let mut tokens = compiler::create_tokens(input);
+    let nodes = parser::parse_nodes(&mut tokens);
     return Template::new().render_data(writer, data, &nodes);
 }
 
