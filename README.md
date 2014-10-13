@@ -107,19 +107,17 @@ cargo test
 
 - [ ] Rebuild API surface to have only the Render trait, render() and render_file()
 
-	 - impl Render for HashBuilder, Json, etc.
+	 - [ ] impl Render for HashBuilder, Json, etc.
 
 - [ ] Thread errors through the parser and compiler by having something like:
 
-	 - type RustacheResult<T> = Result<T, RustacheError>;
+	 - [ ] type RustacheResult<T> = Result<T, RustacheError>;
 
-	 - pub enum RustacheError {
+	 - [ ] pub enum RustacheError {
 	      ParseErrorType(ParseError)
 	   }
 
-	 - pub enum ParseError {
-
-	   }
+	 - [ ] pub enum ParseError { }
 
 ## Contribute
 
