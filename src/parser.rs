@@ -3,7 +3,7 @@
 // Nodes contain only the necessary information to be used
 // to seek out appropriate data for injection.
 
-use compiler::{Token, Text, Variable, OTag, CTag, Raw, Partial};
+use compiler::{Token, Text, Variable, OTag, CTag, Raw, Partial, Comment};
 
 // Node signifies the data structure used by the template to
 // determine how to correctly implement data.  Each Node type
@@ -77,6 +77,7 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
         match it.next() {
             Some((i, &token)) => {
                 match token {
+                    Comment => {},
                     Text(text) => nodes.push(Static(text)),
                     Variable(name, raw) => {
                         let dot_notation = name.contains_char('.');

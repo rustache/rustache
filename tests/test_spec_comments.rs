@@ -51,16 +51,16 @@ fn test_spec_multiline_comment() {
 //   expected: |
 //     Begin.
 //     End.
-//#[test]
-// fn test_spec_standalone_comment() {
-//     let mut w = MemWriter::new();
-//     let data = HashBuilder::new();
+#[test]
+fn test_spec_standalone_comment() {
+    let mut w = MemWriter::new();
+    let data = HashBuilder::new();
 
-//     let rv = rustache::render_text_from_hb("Begin.\n{{! Comment Block! }}\nEnd.", &data, &mut w);
-//    match rv { _ => {} }
+    let rv = rustache::render_text_from_hb("Begin.\n{{! Comment Block! }}\nEnd.", &data, &mut w);
+   match rv { _ => {} }
 
-//     assert_eq!("Begin\nEnd.".to_string(), String::from_utf8(w.unwrap()).unwrap());
-// }
+    assert_eq!("Begin\nEnd.".to_string(), String::from_utf8(w.unwrap()).unwrap());
+}
 
 // - name: Indented Standalone
 //   desc: All standalone comment lines should be removed.

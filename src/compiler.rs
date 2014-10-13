@@ -13,6 +13,7 @@ pub enum Token<'a> {
     CTag(&'a str, &'a str), // (name, tag, whitespace)
     Raw(&'a str, &'a str), // (name, tag)
     Partial(&'a str, &'a str), // (name, tag)
+    Comment
 }
 
 enum Status {
@@ -153,7 +154,7 @@ fn add_token<'a>(text: &'a str, tokens: &mut Vec<Token<'a>>) {
     let len = text.len();
     match text.char_at(2) {
         // Handle token assignments based on the third character
-        '!' => return, // Skip comments
+        '!' => tokens.push(Comment), // Mark comments for whitespace removal
         '#' => tokens.push(OTag(text.slice(3, len - 2).trim(), false, text)), // Open section
         '/' => tokens.push(CTag(text.slice(3, len - 2).trim(), text)), // Close section
         '^' => tokens.push(OTag(text.slice(3, len - 2).trim(), true, text)), // Open inverted section
@@ -167,7 +168,7 @@ fn add_token<'a>(text: &'a str, tokens: &mut Vec<Token<'a>>) {
 #[cfg(test)]
 mod compiler_tests {
     use compiler;
-    use compiler::{Text, Variable, OTag, CTag, Raw, Partial};
+    use compiler::{Text, Variable, OTag, CTag, Raw, Partial, Comment};
 
     #[test]
     fn test_one_char() {
@@ -205,7 +206,8 @@ mod compiler_tests {
     fn test_all_directives() {
         let contents = "{{!comment}}{{#section}}{{/section}}{{^isection}}{{/isection}}{{>partial}}{{&unescaped}}{{value}}other crap";
         let tokens = compiler::create_tokens(contents);
-        let expected = vec![OTag("section", false, "{{#section}}"), 
+        let expected = vec![Comment,
+                            OTag("section", false, "{{#section}}"), 
                             CTag("section", "{{/section}}"),
                             OTag("isection", true, "{{^isection}}"), 
                             CTag("isection", "{{/isection}}"), 
@@ -228,7 +230,7 @@ mod compiler_tests {
     fn test_working_comment() {
         let contents = "{{!comment}}";
         let tokens = compiler::create_tokens(contents);
-        let expected = vec![];
+        let expected = vec![Comment];
         assert_eq!(expected, tokens);
     }
 
