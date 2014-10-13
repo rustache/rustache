@@ -4,10 +4,10 @@
 // Token represents the basic data source for different sections of
 // text provided within the template.  Raw tag values are stored
 // for use in lambdas.
+
 #[deriving(Show, PartialEq, Eq)]
 pub enum Token<'a> {
     Text(&'a str), // (text)
-    Comment, // no data stored, will be passed over by the parser
     Variable(&'a str, &'a str), // (name, tag)
     OTag(&'a str, bool, &'a str), // (name, inverted, tag, whitespace)
     CTag(&'a str, &'a str), // (name, tag, whitespace)
@@ -19,46 +19,68 @@ enum Status {
     TAG,
     TEXT
 }
-
-// Create_tokens is the entry point to the template compiler. It compiles a raw list of
+// Entry point to the template compiler. It compiles a raw list of
 // all applicable tags within a template to send to the parser.
 pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
+    println!("{}", contents);
     let mut tokens: Vec<Token> = Vec::new();
-
     let mut char = contents.chars().enumerate();
-    let mut line_number = 1u;
-    let mut close = 0u;
-    let mut open = 0u;
+    let mut close = 0;
+    let mut open = 0;
     let mut status = TEXT;
+    let mut newline = 0;
 
     loop {
         // Advance character
         match char.next() {
             Some((i, ch)) => {
                 match ch {
-                    '{' => {
-                        handle_otag(contents, i, &mut status, &mut open);
+                    '{' => handle_otag(contents, i, &mut status, &mut open),
+                    '}' => handle_ctag(contents, i, &mut status, open, &mut close, &mut tokens),
+                    // Update the previous line.
+                    '\n' => {
+                        newline = i;
+                        handle_newline(contents, i, &mut status, &mut close, &mut tokens);
                     },
-                    '}' => {
-                        handle_ctag(contents, i, &mut status, open, &mut close, &mut tokens);
-                    },
-                    // Increment the line count
-                    '\n' => line_number += 1,
                     _ => continue,
                 }
             },
             // Reached the end of the input, handle the uncategorized text
             None => {
                 if close == 0 {
-                    tokens.push(Text(contents.slice_from(0)));
-                } else if close != contents.len() - 1 {
+                    tokens.push(Text(contents));
+                } else if newline != contents.len() - 1 && close != contents.len() - 1 {
                     tokens.push(Text(contents.slice_from(close + 1)));
-                } 
+                }
                 break;
             }
         }
     }
+    println!("{}", tokens);
     tokens
+}
+
+fn handle_newline<'a>(contents: &'a str, i: uint, status: &mut Status, close: &mut uint, tokens: &mut Vec<Token<'a>>) {
+    match *status {
+        TEXT => {
+            // Handle case of newline as the last character of the contents
+            if i == contents.len() - 1 {
+                tokens.push(Text(contents.slice_from(*close + 1)));
+            }
+            // Handle case of raw text from beggining to first new line
+            else if *close == 0 {
+                tokens.push(Text(contents.slice(*close, i + 1)));
+                *close = i;
+            }
+            // Handle all other cases
+            else {
+                tokens.push(Text(contents.slice(*close + 1, i + 1)));
+                *close = i;
+            }
+        },
+        // Do not create new lines in the middle of a potential tag
+        TAG => return
+    }
 }
 
 fn handle_otag(contents: &str, i: uint, status: &mut Status, open:  &mut uint) {
@@ -70,7 +92,6 @@ fn handle_otag(contents: &str, i: uint, status: &mut Status, open:  &mut uint) {
                     TAG => {
                         // Account for triple tags, without duplicate entries
                         if i == *open + 1 { return; }
-
                         // Reset the opening point in the event of an erroneous entry
                         *open = i;
                     },
@@ -80,7 +101,7 @@ fn handle_otag(contents: &str, i: uint, status: &mut Status, open:  &mut uint) {
                     },
                 }
             },
-            // Not an opening tag
+            // Not an opening tag, continue
             _ => return
         }
     }
@@ -118,7 +139,7 @@ fn handle_ctag<'a>(contents: &'a str, i: uint, status: &mut Status,  open: uint,
                                 _ => {},
                             }
                         }
-                        tokens.push(categorize_token(contents.slice(open, *close + 1)));
+                        add_token(contents.slice(open, *close + 1), tokens);
                     },
                     TEXT => return,
                 }
@@ -128,25 +149,34 @@ fn handle_ctag<'a>(contents: &'a str, i: uint, status: &mut Status,  open: uint,
     }
 }
 
-fn categorize_token<'a>(text: &'a str) -> Token<'a> {
+fn add_token<'a>(text: &'a str, tokens: &mut Vec<Token<'a>>) {
     let len = text.len();
     match text.char_at(2) {
-        // Handle special tags or treat as normal variables
-        '!' => return Comment,
-        '#' => return OTag(text.slice(3, len - 2).trim(), false, text), // Open section
-        '/' => return CTag(text.slice(3, len - 2).trim(), text), // Close section
-        '^' => return OTag(text.slice(3, len - 2).trim(), true, text), // Open inverted section
-        '>' => return Partial(text.slice(3, len - 2).trim(), text), // Partial tag (external file)
-        '&' => return Raw(text.slice(3, len - 2).trim(), text), // Unescaped tag, do not HTML escape
-        '{' => return Raw(text.slice(3, len - 3).trim(), text), // Unescaped tag, do not HTML escape
-        _   => return Variable(text.slice(2, len - 2).trim(), text) // Normal mustache variable
+        // Handle token assignments based on the third character
+        '!' => return, // Skip comments
+        '#' => tokens.push(OTag(text.slice(3, len - 2).trim(), false, text)), // Open section
+        '/' => tokens.push(CTag(text.slice(3, len - 2).trim(), text)), // Close section
+        '^' => tokens.push(OTag(text.slice(3, len - 2).trim(), true, text)), // Open inverted section
+        '>' => tokens.push(Partial(text.slice(3, len - 2).trim(), text)), // Partial tag (external file)
+        '&' => tokens.push(Raw(text.slice(3, len - 2).trim(), text)), // Unescaped tag, do not HTML escape
+        '{' => tokens.push(Raw(text.slice(3, len - 3).trim(), text)), // Unescaped tag, do not HTML escape
+        _   => tokens.push(Variable(text.slice(2, len - 2).trim(), text)) // Normal mustache variable
     }
 }
 
 #[cfg(test)]
 mod compiler_tests {
     use compiler;
-    use compiler::{Text, Variable, OTag, CTag, Raw, Partial, Comment};
+    use compiler::{Text, Variable, OTag, CTag, Raw, Partial};
+
+    #[test]
+    fn test_one_char() {
+        let contents = "c";
+        let tokens = compiler::create_tokens(contents);
+        let expected = vec![Text("c")];
+
+        assert_eq!(expected, tokens);
+    }
 
     #[test]
     fn test_extended_dot_notation() {
@@ -175,8 +205,7 @@ mod compiler_tests {
     fn test_all_directives() {
         let contents = "{{!comment}}{{#section}}{{/section}}{{^isection}}{{/isection}}{{>partial}}{{&unescaped}}{{value}}other crap";
         let tokens = compiler::create_tokens(contents);
-        let expected = vec![Comment,
-                            OTag("section", false, "{{#section}}"), 
+        let expected = vec![OTag("section", false, "{{#section}}"), 
                             CTag("section", "{{/section}}"),
                             OTag("isection", true, "{{^isection}}"), 
                             CTag("isection", "{{/isection}}"), 
@@ -199,7 +228,7 @@ mod compiler_tests {
     fn test_working_comment() {
         let contents = "{{!comment}}";
         let tokens = compiler::create_tokens(contents);
-        let expected = vec![Comment];
+        let expected = vec![];
         assert_eq!(expected, tokens);
     }
 

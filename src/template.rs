@@ -175,8 +175,7 @@ impl Template {
                                                         f: &mut |String| -> String, 
                                                         data: &HashMap<String, Data>, 
                                                         raw: String, 
-                                                        writer: &mut W) -> RustacheResult<()> {
-        println!("in handle_unescaped_lambda_interpolation");
+                                                        writer: &mut W)  -> RustacheResult<()> {
         let val = (*f)(raw);
         let tokens = compiler::create_tokens(val.as_slice());
         let nodes = parser::parse_nodes(&tokens);
@@ -188,8 +187,7 @@ impl Template {
                                                       f: &mut |String| -> String, 
                                                       data: &HashMap<String, Data>, 
                                                       raw: String, 
-                                                      writer: &mut W) -> RustacheResult<()> {
-        println!("in handle_escaped_lambda_interpolation");
+                                                      writer: &mut W)  -> RustacheResult<()> {
         let val = (*f)(raw);
         let value = self.escape_html(val.as_slice());
         let tokens = compiler::create_tokens(value.as_slice());

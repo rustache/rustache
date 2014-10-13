@@ -153,8 +153,7 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
                             it.next();
                             count -= 1;
                         }
-                    },
-                    Comment => continue,
+                    }
                 }
             },
             None => break
