@@ -31,6 +31,7 @@ pub use rustache::{render_file_from_hb, render_file_from_json_enum,
 pub type RustacheResult<T> = Result<T, RustacheError>;
 
 /// Enum to handle errors from the Rustache library.
+#[deriving(Show)]
 pub enum RustacheError {
     //ParserErrorType(ParserError),
     //CompilerErrorType(CompilerError),
