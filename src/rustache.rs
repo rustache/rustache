@@ -168,19 +168,21 @@ fn parse_json_vector(json: &Json) -> VecBuilder {
 
 // Hide from documentation
 #[doc(hidden)]
-pub fn read_file(path: Path) -> String {
-    // Open the file path
+#[allow(dead_code)]
+pub fn read_file(path: Path) -> Result<String, String> {
     let display = path.display();
+    let mut rv: Result<String, String>; //Err(format!("read file failed: {}", display));
+    // Open the file path
     let mut file = match File::open(&path) {
-        Err(why) => fail!("{} {}",display ,why.desc),
-        Ok(file) => file,
+        Err(why) => { rv = Err(format!("{} {}", display ,why.desc)); return rv; },
+        Ok(file) => { file },
     };
 
     // Read the file contents into a heap allocated string
-    let contents = match file.read_to_string() {
-        Err(why) => fail!("{}", why.desc),
-        Ok(text) => text,
+    match file.read_to_string() {
+        Err(why) => return { rv = Err(format!("{}", why.desc)); return rv; },
+        Ok(text) => { rv = Ok(text); },
     };
 
-    contents
+    rv
 }
