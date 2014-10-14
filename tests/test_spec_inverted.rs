@@ -1,7 +1,5 @@
 extern crate rustache;
 
-use std::io::MemWriter;
-
 use rustache::HashBuilder;
 
 // - name: Falsey
@@ -11,13 +9,11 @@ use rustache::HashBuilder;
 //   expected: '"This should be rendered."'
 #[test]
 fn test_spec_inverted_falsy_bool() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new().insert_bool("boolean", false);
 
-    let rv = rustache::render_text_from_hb("{{^boolean}}This should be rendered.{{/boolean}}", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("{{^boolean}}This should be rendered.{{/boolean}}", data);
 
-    assert_eq!("This should be rendered.".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("This should be rendered.".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 // - name: Truthy
@@ -27,13 +23,11 @@ fn test_spec_inverted_falsy_bool() {
 //   expected: '""'
 #[test]
 fn test_spec_inverted_truthy_bool() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new().insert_bool("boolean", true);
 
-    let rv = rustache::render_text_from_hb("{{^boolean}}This should not be rendered.{{/boolean}}", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("{{^boolean}}This should not be rendered.{{/boolean}}", data);
 
-    assert_eq!("".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 // - name: Context
@@ -43,13 +37,11 @@ fn test_spec_inverted_truthy_bool() {
 //   expected: '""'
 #[test]
 fn test_spec_inverted_truthy_hash() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new().insert_hash("context", |builder| { builder.insert_string("name", "joe") });
 
-    let rv = rustache::render_text_from_hb("{{^context}}Hi {{name}}.{{/context}}", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("{{^context}}Hi {{name}}.{{/context}}", data);
 
-    assert_eq!("".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 // - name: List
@@ -59,7 +51,6 @@ fn test_spec_inverted_truthy_hash() {
 //   expected: '""'
 #[test]
 fn test_spec_inverted_truthy_vec() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new().insert_vector("list", |vec| {
         vec.push_hash(|h| { 
           h.insert_string("n", "1")
@@ -68,10 +59,9 @@ fn test_spec_inverted_truthy_vec() {
          })
     });
 
-    let rv = rustache::render_text_from_hb("{{^list}}{{n}}{{/list}}", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("{{^list}}{{n}}{{/list}}", data);
 
-    assert_eq!("".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 // - name: Empty List
@@ -81,15 +71,13 @@ fn test_spec_inverted_truthy_vec() {
 //   expected: '"Yay lists!"'
 #[test]
 fn test_spec_inverted_falsy_on_empty_vec() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new().insert_vector("list", |vec| {
         vec
     });
 
-    let rv = rustache::render_text_from_hb("{{^list}}Yay lists!{{/list}}", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("{{^list}}Yay lists!{{/list}}", data);
 
-    assert_eq!("Yay lists!".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("Yay lists!".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 // - name: Doubled
@@ -109,13 +97,11 @@ fn test_spec_inverted_falsy_on_empty_vec() {
 //     * third
 // #[test]
 // fn test_spec_inverted_multiple() {
-//     let mut w = MemWriter::new();
 //     let data = HashBuilder::new().insert_bool("bool", false).insert_string("two", "second");
 
-//     let rv = rustache::render_text_from_hb("{{^bool}}\n* first\n{{/bool}}\n* {{two}}\n{{^bool}}\n* third\n{{/bool}}", &data, &mut w);
-//    match rv { _ => {} }
+//     let rv = rustache::render_text("{{^bool}}\n* first\n{{/bool}}\n* {{two}}\n{{^bool}}\n* third\n{{/bool}}", data)
 
-//     assert_eq!("* first\n* second\n* third".to_string(), String::from_utf8(w.unwrap()).unwrap());
+//     assert_eq!("* first\n* second\n* third".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 // }
 
 // - name: Nested (Falsey)
@@ -125,13 +111,12 @@ fn test_spec_inverted_falsy_on_empty_vec() {
 //   expected: "| A B C D E |"
 // #[test]
 // fn test_spec_inverted_nested_falsy() {
-//     let mut w = MemWriter::new();
+//
 //     let data = HashBuilder::new().insert_bool("bool", false);
 
-//     let rv = rustache::render_text_from_hb("| A {{^bool}}B {{^bool}}C{{/bool}} D{{/bool}} E |", &data, &mut w);
-//    match rv { _ => {} }
+//     let rv = rustache::render_text("| A {{^bool}}B {{^bool}}C{{/bool}} D{{/bool}} E |", data)
 
-//     assert_eq!("| A B C D E |".to_string(), String::from_utf8(w.unwrap()).unwrap());
+//     assert_eq!("| A B C D E |".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 // }
 
 // - name: Nested (Truthy)
@@ -141,13 +126,11 @@ fn test_spec_inverted_falsy_on_empty_vec() {
 //   expected: "| A  E |"
 #[test]
 fn test_spec_inverted_nested_truthy() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new().insert_bool("bool", true);
 
-    let rv = rustache::render_text_from_hb("| A {{^bool}}B {{^bool}}C{{/bool}} D{{/bool}} E |", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("| A {{^bool}}B {{^bool}}C{{/bool}} D{{/bool}} E |", data);
 
-    assert_eq!("| A  E |".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("| A  E |".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 // - name: Context Misses
@@ -157,13 +140,11 @@ fn test_spec_inverted_nested_truthy() {
 //   expected: "[Cannot find key 'missing'!]"
 #[test]
 fn test_spec_inverted_missing_falsey() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new();
 
-    let rv = rustache::render_text_from_hb("[{{^missing}}Cannot find key 'missing'!{{/missing}}]", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("[{{^missing}}Cannot find key 'missing'!{{/missing}}]", data);
 
-    assert_eq!("[Cannot find key 'missing'!]".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("[Cannot find key 'missing'!]".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 // - name: Dotted Names - Truthy
@@ -173,7 +154,6 @@ fn test_spec_inverted_missing_falsey() {
 //   expected: '"" == ""'
 // #[test]
 // fn test_spec_truthy_dotted_names_valid_inverted_section_tags() {
-//     let mut w = MemWriter::new();
 //     let data = HashBuilder::new()
 //         .insert_hash("a", |builder| {
 //             builder
@@ -183,10 +163,9 @@ fn test_spec_inverted_missing_falsey() {
 //                 })
 //         });
 
-//     let rv = rustache::render_text_from_hb("'{{^a.b.c}}Not Here{{/a.b.c}}' == ''", &data, &mut w);
-//    match rv { _ => {} }
+//     let rv = rustache::render_text("'{{^a.b.c}}Not Here{{/a.b.c}}' == ''", data)
 
-//     assert_eq!("'' == ''".to_string(), String::from_utf8(w.unwrap()).unwrap());
+//     assert_eq!("'' == ''".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 // }
 
 // - name: Dotted Names - Falsey
@@ -196,7 +175,6 @@ fn test_spec_inverted_missing_falsey() {
 //   expected: '"Not Here" == "Not Here"'
 #[test]
 fn test_spec_falsey_dotted_names_valid_inverted_section_tags() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new()
         .insert_hash("a", |builder| {
             builder
@@ -206,10 +184,9 @@ fn test_spec_falsey_dotted_names_valid_inverted_section_tags() {
                 })
         });
 
-    let rv = rustache::render_text_from_hb("'{{^a.b.c}}Not Here{{/a.b.c}}' == 'Not Here'", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("'{{^a.b.c}}Not Here{{/a.b.c}}' == 'Not Here'", data);
 
-    assert_eq!("'Not Here' == 'Not Here'".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("'Not Here' == 'Not Here'".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 // - name: Dotted Names - Broken Chains
@@ -225,13 +202,11 @@ fn test_spec_falsey_dotted_names_valid_inverted_section_tags() {
 //   expected: " | \t|\t | \n"
 #[test]
 fn test_spec_inverted_surrounding_whitespace() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new().insert_bool("boolean", false);
 
-    let rv = rustache::render_text_from_hb(" | {{^boolean}}\t|\t{{/boolean}} | \n", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text(" | {{^boolean}}\t|\t{{/boolean}} | \n", data);
 
-    assert_eq!(" | \t|\t | \n".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!(" | \t|\t | \n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 // - name: Internal Whitespace
@@ -241,13 +216,11 @@ fn test_spec_inverted_surrounding_whitespace() {
 //   expected: " |  \n  | \n"
 #[test]
 fn test_spec_inverted_internal_whitespace() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new().insert_bool("boolean", false);
 
-    let rv = rustache::render_text_from_hb(" | {{^boolean}} {{! Important Whitespace }}\n {{/boolean}} | \n", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text(" | {{^boolean}} {{! Important Whitespace }}\n {{/boolean}} | \n", data);
 
-    assert_eq!(" |  \n  | \n".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!(" |  \n  | \n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 // - name: Indented Inline Sections
@@ -257,13 +230,11 @@ fn test_spec_inverted_internal_whitespace() {
 //   expected: " NO\n WAY\n"
 #[test]
 fn test_spec_inverted_indented_inline_sections() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new().insert_bool("boolean", false);
 
-    let rv = rustache::render_text_from_hb(" {{^boolean}}NO{{/boolean}}\n {{^boolean}}WAY{{/boolean}}\n", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text(" {{^boolean}}NO{{/boolean}}\n {{^boolean}}WAY{{/boolean}}\n", data);
 
-    assert_eq!(" NO\n WAY\n".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!(" NO\n WAY\n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 // - name: Standalone Lines
@@ -281,13 +252,11 @@ fn test_spec_inverted_indented_inline_sections() {
 //     | A Line
 // #[test]
 // fn test_spec_inverted_standalone_lines() {
-//     let mut w = MemWriter::new();
 //     let data = HashBuilder::new().insert_bool("boolean", false);
 
-//     let rv = rustache::render_text_from_hb("| This Is\n{{^boolean}}\n|\n{{/boolean}}\n| A Line", &data, &mut w);
-//    match rv { _ => {} }
+//     let rv = rustache::render_text("| This Is\n{{^boolean}}\n|\n{{/boolean}}\n| A Line", data)
 
-//     assert_eq!("| This Is\n|\n| A Line".to_string(), String::from_utf8(w.unwrap()).unwrap());
+//     assert_eq!("| This Is\n|\n| A Line".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 // }
 
 // - name: Standalone Indented Lines
@@ -305,13 +274,11 @@ fn test_spec_inverted_indented_inline_sections() {
 //     | A Line
 // #[test]
 // fn test_spec_inverted_standalone_indented_lines() {
-//     let mut w = MemWriter::new();
 //     let data = HashBuilder::new().insert_bool("boolean", false);
 
-//     let rv = rustache::render_text_from_hb("| This Is\n  {{^boolean}}\n|\n  {{/boolean}}\n| A Line", &data, &mut w);
-//    match rv { _ => {} }
+//     let rv = rustache::render_text("| This Is\n  {{^boolean}}\n|\n  {{/boolean}}\n| A Line", data)
 
-//     assert_eq!("| This Is\n|\n| A Line".to_string(), String::from_utf8(w.unwrap()).unwrap());
+//     assert_eq!("| This Is\n|\n| A Line".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 // }
 
 // - name: Standalone Line Endings
@@ -321,13 +288,11 @@ fn test_spec_inverted_indented_inline_sections() {
 //   expected: "|\r\n|"
 // #[test]
 // fn test_spec_inverted_standalone_rn_is_linebreak() {
-//     let mut w = MemWriter::new();
 //     let data = HashBuilder::new().insert_bool("boolean", false);
 
-//     let rv = rustache::render_text_from_hb("|\r\n{{^boolean}}\r\n{{/boolean}}\r\n|", &data, &mut w);
-//    match rv { _ => {} }
+//     let rv = rustache::render_text("|\r\n{{^boolean}}\r\n{{/boolean}}\r\n|", data)
 
-//     assert_eq!("|\r\n|".to_string(), String::from_utf8(w.unwrap()).unwrap());
+//     assert_eq!("|\r\n|".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 // }
 
 // - name: Standalone Without Previous Line
@@ -337,13 +302,11 @@ fn test_spec_inverted_indented_inline_sections() {
 //   expected: "^\n/"
 // #[test]
 // fn test_spec_inverted_standalone_without_previous_line() {
-//     let mut w = MemWriter::new();
 //     let data = HashBuilder::new().insert_bool("boolean", false);
 
-//     let rv = rustache::render_text_from_hb("  {{^boolean}}\n^{{/boolean}}\n/", &data, &mut w);
-//     match rv { _ => {} }
+//     let rv = rustache::render_text("  {{^boolean}}\n^{{/boolean}}\n/", data);
 
-//     assert_eq!("^\n/".to_string(), String::from_utf8(w.unwrap()).unwrap());
+//     assert_eq!("^\n/".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 // }
 
 // - name: Standalone Without Newline
@@ -353,13 +316,11 @@ fn test_spec_inverted_indented_inline_sections() {
 //   expected: "^\n/\n"
 // #[test]
 // fn test_spec_inverted_standalone_without_newline() {
-//     let mut w = MemWriter::new();
 //     let data = HashBuilder::new().insert_bool("boolean", false);
 
-//     let rv = rustache::render_text_from_hb("^{{^boolean}}\n/\n  {{/boolean}}", &data, &mut w);
-//    match rv { _ => {} }
+//     let rv = rustache::render_text("^{{^boolean}}\n/\n  {{/boolean}}", data);
 
-//     assert_eq!("^\n/\n".to_string(), String::from_utf8(w.unwrap()).unwrap());
+//     assert_eq!("^\n/\n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 // }
 
 // - name: Padding
@@ -369,13 +330,11 @@ fn test_spec_inverted_indented_inline_sections() {
 //   expected: '|=|'
 #[test]
 fn test_spec_inverted_whitespace_insensitivity() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new().insert_bool("boolean", false);
 
-    let rv = rustache::render_text_from_hb("|{{^ boolean }}={{/ boolean }}|", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("|{{^ boolean }}={{/ boolean }}|", data);
 
-    assert_eq!("|=|".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("|=|".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 

@@ -9,6 +9,7 @@ use compiler::{Token, Text, Variable, OTag, CTag, Raw, Partial, Comment};
 // determine how to correctly implement data.  Each Node type
 // stores the variable name as well as the raw tag for use by
 // lambdas.
+
 #[deriving(PartialEq, Eq, Clone, Show)]
 pub enum Node<'a> {
     Static(&'a str), // (text)
