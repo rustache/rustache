@@ -2,9 +2,9 @@ extern crate rustache;
 extern crate memstream;
 
 use std::io::MemWriter;
-// use memstream::MemStream;
+use memstream::MemStream;
 use rustache::HashBuilder;
-// use rustache::Render;
+use rustache::Render;
 
 // - name: Interpolation
 //     desc: A lambda's return value should be interpolated.
@@ -294,5 +294,17 @@ fn test_spec_lambdas_inverted_section() {
     assert_eq!("<>".to_string(), String::from_utf8(w.unwrap()).unwrap());
 }
 
+#[test]
+fn test_spec_lambdas_inverted_section_using_render_text() {
+    let data = HashBuilder::new()
+                .insert_string("static", "static")
+                .insert_lambda("lambda", |_| {
+                    "false".to_string()
+                });
 
+    let rv = rustache::render_text("<{{^lambda}}{{static}}{{/lambda}}>", data);
+    match rv { _ => {} }
+
+    assert_eq!("<>".to_string(), String::from_utf8(rv.unwrap()).unwrap());
+}
 
