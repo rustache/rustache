@@ -22,7 +22,7 @@ use std::collections::HashMap;
 use template::TemplateError;
 
 pub use build::{HashBuilder, VecBuilder};
-// pub use rustache::{render_file, render_text, Render};
+pub use rustache::{render_file, render_text, Render};
 pub use rustache::{render_file_from_hb, render_file_from_json_enum,
                    render_file_from_json_string, render_file_from_json_file,
                    render_text_from_hb, render_text_from_json_enum,
@@ -31,6 +31,7 @@ pub use rustache::{render_file_from_hb, render_file_from_json_enum,
 pub type RustacheResult<T> = Result<T, RustacheError>;
 
 /// Enum to handle errors from the Rustache library.
+#[deriving(Show)]
 pub enum RustacheError {
     //ParserErrorType(ParserError),
     //CompilerErrorType(CompilerError),
