@@ -3,6 +3,7 @@ extern crate rustache;
 use std::os;
 use std::io::stdio::stdout;
 
+#[allow(dead_code)]
 fn main() {
   let args = os::args();
   if args.len() < 3 {
