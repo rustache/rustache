@@ -551,7 +551,7 @@ fn test_spec_interpolation_triple_mustache_with_padding() {
     let mut w = MemWriter::new();
     let data = HashBuilder::new().insert_string("string", "---");
 
-    let rv = rustache::render_text_from_hb("|{{{ string }}|", &data, &mut w);
+    let rv = rustache::render_text_from_hb("|{{{ string }}}|", &data, &mut w);
     match rv { _ => { } };
 
     assert_eq!("|---|".to_string(), String::from_utf8(w.unwrap()).unwrap());

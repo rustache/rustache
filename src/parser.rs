@@ -3,7 +3,7 @@
 // Nodes contain only the necessary information to be used
 // to seek out appropriate data for injection.
 
-use compiler::{Token, Text, Variable, OTag, CTag, Raw, Partial};
+use compiler::{Token, Text, Variable, OTag, CTag, Raw, Partial, Comment};
 
 // Node signifies the data structure used by the template to
 // determine how to correctly implement data.  Each Node type
@@ -16,6 +16,12 @@ pub enum Node<'a> {
     Section(&'a str, Vec<Node<'a>>, bool, String, String), // (name, children, inverted, otag, ctag)
     Unescaped(&'a str, String), // (name, tag)
     Part(&'a str, &'a str) // // (name, tag)
+}
+
+#[deriving(PartialEq, Eq)]
+enum ParserStatus {
+    Parse,
+    Skip
 }
 
 // Function that recursively handles tag names that utilize dot notation
@@ -71,13 +77,40 @@ fn handle_dot_notation<'a>(parts: &[&'a str], unescaped: bool, amp: bool) -> Nod
 // the template compiler.
 pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
     let mut nodes: Vec<Node> = vec![];
-    let mut it = list.iter().enumerate();
+    let mut it = list.iter().enumerate().peekable();
+    let mut status = Parse;
 
     loop {
         match it.next() {
             Some((i, &token)) => {
                 match token {
-                    Text(text) => nodes.push(Static(text)),
+                    Comment => {
+                        // Check the next element for whitespace
+                        match it.peek() {
+                            Some(&(_, token)) => {
+                                match token {
+                                    &Text(ref value) => {
+                                        // if whitespace and should skip, advance to next token
+                                        if value.is_whitespace() && status == Skip {
+                                            status = Parse;
+                                            it.next();
+                                        }
+                                    },
+                                    _ => {}
+                                }
+                            },
+                            None => continue
+                        }
+                    },
+                    Text(text) => {
+                        match text.contains_char('\n') {
+                            true => {
+                                status = Skip;
+                            },
+                            false => {}
+                        }
+                        nodes.push(Static(text))
+                    },
                     Variable(name, raw) => {
                         let dot_notation = name.contains_char('.');
                         match dot_notation {
@@ -153,11 +186,12 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
                             it.next();
                             count -= 1;
                         }
-                    },
+                    }
                 }
             },
             None => break
         }
+
     }
 
     // Return the populated list of nodes for use by the template engine

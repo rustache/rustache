@@ -175,11 +175,10 @@ impl Template {
                                                         f: &mut |String| -> String, 
                                                         data: &HashMap<String, Data>, 
                                                         raw: String, 
-                                                        writer: &mut W) -> RustacheResult<()> {
-        println!("in handle_unescaped_lambda_interpolation");
+                                                        writer: &mut W)  -> RustacheResult<()> {
         let val = (*f)(raw);
-        let tokens = compiler::create_tokens(val.as_slice());
-        let nodes = parser::parse_nodes(&tokens);
+        let mut tokens = compiler::create_tokens(val.as_slice());
+        let nodes = parser::parse_nodes(&mut tokens);
 
         return self.render(writer, data, &nodes);
     }
@@ -188,12 +187,11 @@ impl Template {
                                                       f: &mut |String| -> String, 
                                                       data: &HashMap<String, Data>, 
                                                       raw: String, 
-                                                      writer: &mut W) -> RustacheResult<()> {
-        println!("in handle_escaped_lambda_interpolation");
+                                                      writer: &mut W)  -> RustacheResult<()> {
         let val = (*f)(raw);
         let value = self.escape_html(val.as_slice());
-        let tokens = compiler::create_tokens(value.as_slice());
-        let nodes = parser::parse_nodes(&tokens);
+        let mut tokens = compiler::create_tokens(value.as_slice());
+        let nodes = parser::parse_nodes(&mut tokens);
 
         return self.render(writer, data, &nodes);
     }
@@ -530,8 +528,8 @@ impl Template {
             let file = File::open(&path).read_to_string();
             match file {
                 Ok(contents) => {
-                    let tokens = compiler::create_tokens(contents.as_slice());
-                    let nodes = parser::parse_nodes(&tokens);
+                    let mut tokens = compiler::create_tokens(contents.as_slice());
+                    let nodes = parser::parse_nodes(&mut tokens);
 
                     rv = self.render(writer, datastore, &nodes);    
                 },
@@ -983,8 +981,8 @@ mod template_tests {
             );
 
         let file = rustache::read_file(Path::new("test_data/section_with_partial_template.html"));
-        let tokens = compiler::create_tokens(file.as_slice());
-        let nodes = parser::parse_nodes(&tokens);
+        let mut tokens = compiler::create_tokens(file.as_slice());
+        let nodes = parser::parse_nodes(&mut tokens);
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
@@ -1010,8 +1008,8 @@ mod template_tests {
     fn test_spec_lambda_not_cached_on_interpolation() {
         let mut planets = vec!["Jupiter", "Earth", "Saturn"];
         let mut w = MemWriter::new();
-        let tokens = compiler::create_tokens("{{lambda}} == {{&lambda}} == {{lambda}}");
-        let nodes = parser::parse_nodes(&tokens);
+        let mut tokens = compiler::create_tokens("{{lambda}} == {{&lambda}} == {{lambda}}");
+        let nodes = parser::parse_nodes(&mut tokens);
         let data = HashBuilder::new().insert_lambda("lambda", |_| { planets.pop().unwrap().to_string() } )
                                      .insert_string("planet", "world");
 
