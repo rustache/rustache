@@ -1,10 +1,6 @@
 extern crate rustache;
-extern crate memstream;
 
-use std::io::MemWriter;
-// use memstream::MemStream;
 use rustache::HashBuilder;
-// use rustache::Render;
 
 // - name: Interpolation
 //     desc: A lambda's return value should be interpolated.
@@ -20,16 +16,14 @@ use rustache::HashBuilder;
 //     expected: "Hello, world!"
 #[test]
 fn test_spec_lambdas_interpolation() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new()
                 .insert_lambda("lambda", |_| {
                      "world".to_string()               
                  });
 
-    let rv = rustache::render_text_from_hb("Hello, {{lambda}}!", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("Hello, {{lambda}}!", data);
 
-    assert_eq!("Hello, world!".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("Hello, world!".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 //   - name: Interpolation - Expansion
@@ -47,17 +41,15 @@ fn test_spec_lambdas_interpolation() {
 //     expected: "Hello, world!"
 #[test]
 fn test_spec_lambdas_interpolation_expansion() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new()
                     .insert_string("planet", "world")
                     .insert_lambda("lambda", |_| {
                      "{{planet}}".to_string()               
                  });
 
-    let rv = rustache::render_text_from_hb("Hello, {{lambda}}!", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("Hello, {{lambda}}!", data);
 
-    assert_eq!("Hello, world!".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("Hello, world!".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 //   - name: Interpolation - Alternate Delimiters
@@ -75,17 +67,15 @@ fn test_spec_lambdas_interpolation_expansion() {
 //     expected: "Hello, (|planet| => world)!"
 // #[test]
 // fn test_spec_lambdas_interpolation_alternate_delimeters() {
-//     let mut w = MemWriter::new();
 //     let data = HashBuilder::new()
 //                 .insert_string("planet", "world")
 //                 .insert_lambda("lambda", |_| {
 //                     "|planet| => {{planet}}".to_string()               
 //                 });
 
-//     let rv = rustache::render_text_from_hb("{{= | | =}}\nHello, (|&lambda|)!", &data, &mut w);
-//    match rv { _ => {} }
+//     let rv = rustache::render_text_from_hb("{{= | | =}}\nHello, (|&lambda|)!", data);
 
-//     assert_eq!("Hello, (|planet| => world)!".to_string(), String::from_utf8(w.unwrap()).unwrap());
+//     assert_eq!("Hello, (|planet| => world)!".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 // }
 
 //   - name: Interpolation - Multiple Calls
@@ -102,7 +92,6 @@ fn test_spec_lambdas_interpolation_expansion() {
 //     expected: '1 == 2 == 3'
 #[test]
 fn test_spec_lambdas_interpolation_multiple_calls() {
-    let mut w = MemWriter::new();
     let mut calls = 0u;
     let data = HashBuilder::new()
                 .insert_lambda("lambda", |_| {
@@ -110,10 +99,9 @@ fn test_spec_lambdas_interpolation_multiple_calls() {
                     calls.to_string()
                 });
 
-    let rv = rustache::render_text_from_hb("{{lambda}} == {{{lambda}}} == {{lambda}}", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("{{lambda}} == {{{lambda}}} == {{lambda}}", data);
 
-    assert_eq!("1 == 2 == 3".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("1 == 2 == 3".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 //   - name: Escaping
@@ -130,17 +118,14 @@ fn test_spec_lambdas_interpolation_multiple_calls() {
 //     expected: "<&gt;>"
 #[test]
 fn test_spec_lambdas_escaping() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new()
                 .insert_lambda("lambda", |_| {
                     ">".to_string()               
                 });
 
+    let rv = rustache::render_text("<{{lambda}}{{{lambda}}}", data);
 
-    let rv = rustache::render_text_from_hb("<{{lambda}}{{{lambda}}}", &data, &mut w);
-    match rv { _ => {} }
-
-    assert_eq!("<&gt;>".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("<&gt;>".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 //   - name: Section
@@ -158,7 +143,6 @@ fn test_spec_lambdas_escaping() {
 //     expected: "<yes>"
 #[test]
 fn test_spec_lambdas_section() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new()
                 .insert_string("x", "Error!")
                 .insert_lambda("lambda", |txt| {
@@ -169,10 +153,9 @@ fn test_spec_lambdas_section() {
                     }
                 });
 
-    let rv = rustache::render_text_from_hb("<{{#lambda}}{{x}}{{/lambda}}>", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("<{{#lambda}}{{x}}{{/lambda}}>", data);
 
-    assert_eq!("<yes>".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("<yes>".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 //   - name: Section - Expansion
@@ -190,7 +173,6 @@ fn test_spec_lambdas_section() {
 //     expected: "<-Earth->"
 #[test]
 fn test_spec_lambdas_section_expansion() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new()
                 .insert_string("planet", "Earth")
                 .insert_lambda("lambda", |txt| {
@@ -200,10 +182,9 @@ fn test_spec_lambdas_section_expansion() {
                     result
                  });
 
-    let rv = rustache::render_text_from_hb("<{{#lambda}}-{{/lambda}}>", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("<{{#lambda}}-{{/lambda}}>", data);
 
-    assert_eq!("<-Earth->".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("<-Earth->".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 //   - name: Section - Alternate Delimiters
@@ -221,7 +202,6 @@ fn test_spec_lambdas_section_expansion() {
 //     expected: "<-{{planet}} => Earth->"
 // #[test]
 // fn test_spec_lambdas_section_alternate_delimeters() {
-//     let mut w = MemWriter::new();
 //     let data = HashBuilder::new()
 //                 .insert_string("planet", "Earth")
 //                 .insert_lambda("lambda", |txt| {
@@ -231,10 +211,9 @@ fn test_spec_lambdas_section_expansion() {
 //                     result
 //                 });
 
-//     let rv = rustache::render_text_from_hb("{{= | | =}}<|#lambda|-|/lambda|>", &data, &mut w);
-//    match rv { _ => {} }
+//     let rv = rustache::render_text_from_hb("{{= | | =}}<|#lambda|-|/lambda|>", data);
 
-//     assert_eq!("<-{{planet}} => Earth->".to_string(), String::from_utf8(w.unwrap()).unwrap());
+//     assert_eq!("<-{{planet}} => Earth->".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 // }
 
 //   - name: Section - Multiple Calls
@@ -251,7 +230,6 @@ fn test_spec_lambdas_section_expansion() {
 //     expected: '__FILE__ != __LINE__'
 #[test]
 fn test_spec_lambdas_section_multiple_calls() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new()
                 .insert_lambda("lambda", |txt| {
                     let mut result = "__".to_string();
@@ -260,10 +238,9 @@ fn test_spec_lambdas_section_multiple_calls() {
                     result
                 });
 
-    let rv = rustache::render_text_from_hb("{{#lambda}}FILE{{/lambda}} != {{#lambda}}LINE{{/lambda}}", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("{{#lambda}}FILE{{/lambda}} != {{#lambda}}LINE{{/lambda}}", data);
 
-    assert_eq!("__FILE__ != __LINE__".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("__FILE__ != __LINE__".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 //   - name: Inverted Section
@@ -281,18 +258,14 @@ fn test_spec_lambdas_section_multiple_calls() {
 //     expected: "<>"
 #[test]
 fn test_spec_lambdas_inverted_section() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new()
                 .insert_string("static", "static")
                 .insert_lambda("lambda", |_| {
                     "false".to_string()
                 });
 
-    let rv = rustache::render_text_from_hb("<{{^lambda}}{{static}}{{/lambda}}>", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("<{{^lambda}}{{static}}{{/lambda}}>", data);
 
-    assert_eq!("<>".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("<>".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
-
-
 

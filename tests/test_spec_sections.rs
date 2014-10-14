@@ -1,6 +1,5 @@
 extern crate rustache;
 
-use std::io::MemWriter;
 use rustache::HashBuilder;
 
 // - name: Truthy
@@ -10,14 +9,12 @@ use rustache::HashBuilder;
 //   expected: '"This should be rendered."'
 #[test]
 fn test_spec_sections_truthy_should_render_contents() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new()
         .insert_bool("boolean", true);
 
-    let rv = rustache::render_text_from_hb("{{#boolean}}This should be rendered.{{/boolean}}", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("{{#boolean}}This should be rendered.{{/boolean}}", data);
 
-    assert_eq!("This should be rendered.".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("This should be rendered.".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 // - name: Falsy
@@ -27,14 +24,12 @@ fn test_spec_sections_truthy_should_render_contents() {
 //   expected: '""'
 #[test]
 fn test_spec_sections_falsy_should_not_render_contents() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new()
         .insert_bool("boolean", false);
 
-    let rv = rustache::render_text_from_hb("{{#boolean}}This should not be rendered.{{/boolean}}", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("{{#boolean}}This should not be rendered.{{/boolean}}", data);
 
-    assert_eq!("".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 // - name: Context
@@ -44,17 +39,15 @@ fn test_spec_sections_falsy_should_not_render_contents() {
 //   expected: '"Hi Joe."'
 #[test]
 fn test_spec_sections_objects_and_hashes_should_be_pushed_onto_context_stack() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new()
         .insert_hash("context", |builder| {
             builder
                 .insert_string("name", "Joe")
         });
 
-    let rv = rustache::render_text_from_hb("{{#context}}Hi {{name}}.{{/context}}", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("{{#context}}Hi {{name}}.{{/context}}", data);
 
-    assert_eq!("Hi Joe.".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("Hi Joe.".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 // - name: Deeply Nested Contexts
@@ -97,7 +90,6 @@ fn test_spec_sections_objects_and_hashes_should_be_pushed_onto_context_stack() {
 //     1
 // #[test]
 // fn test_spec_sections_all_elements_on_the_context_stack_should_be_accessible() {
-//     let mut w = MemWriter::new();
 //     let data = HashBuilder::new()
 //         .insert_hash("a", |builder| {
 //             builder
@@ -120,7 +112,7 @@ fn test_spec_sections_objects_and_hashes_should_be_pushed_onto_context_stack() {
 //                 .insert_int("five", 5)
 //         });
 
-//     let rv = rustache::render_text_from_hb("{{#a}}
+//     let rv = rustache::render_text("{{#a}}
 //                            {{one}}
 //                            {{#b}}
 //                            {{one}}{{two}}{{one}}
@@ -142,7 +134,6 @@ fn test_spec_sections_objects_and_hashes_should_be_pushed_onto_context_stack() {
 //                            &data,
 //                            &mut w
 //                         );
-//    match rv { _ => {} }
 //     assert_eq!("1
 //                 121
 //                 12321
@@ -152,7 +143,7 @@ fn test_spec_sections_objects_and_hashes_should_be_pushed_onto_context_stack() {
 //                 12321
 //                 121
 //                 1".to_string(),
-//                 String::from_utf8(w.unwrap()).unwrap()
+//                 String::from_utf8(rv.unwrap().unwrap()).unwrap()
 //               );
 // }
 
@@ -163,7 +154,6 @@ fn test_spec_sections_objects_and_hashes_should_be_pushed_onto_context_stack() {
 //   expected: '"123"'
 #[test]
 fn test_spec_sections_list_items_are_iterated() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new()
         .insert_vector("list", |builder| {
             builder
@@ -181,10 +171,9 @@ fn test_spec_sections_list_items_are_iterated() {
                 })
         });
 
-    let rv = rustache::render_text_from_hb("{{#list}}{{item}}{{/list}}", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("{{#list}}{{item}}{{/list}}", data);
 
-    assert_eq!("123".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("123".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 //   - name: Empty List
@@ -194,16 +183,14 @@ fn test_spec_sections_list_items_are_iterated() {
 //     expected: '""'
 #[test]
 fn test_spec_sections_empty_lists_behave_like_falsy_values() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new()
         .insert_vector("list", |builder| {
             builder
         });
 
-    let rv = rustache::render_text_from_hb("{{#list}}Yay lists!{{/list}}", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("{{#list}}Yay lists!{{/list}}", data);
 
-    assert_eq!("".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 //   - name: Doubled
@@ -223,12 +210,11 @@ fn test_spec_sections_empty_lists_behave_like_falsy_values() {
 //       * third
 // #[test]
 // fn test_spec_sections_multiple_per_template_permitted() {
-//     let mut w = MemWriter::new();
 //     let data = HashBuilder::new()
 //         .insert_bool("bool", true)
 //         .insert_string("two", "second");
 
-//     let rv = rustache::render_text_from_hb("{{#bool}}
+//     let rv = rustache::render_text("{{#bool}}
 //                            * first
 //                            {{/bool}}
 //                            * {{two}}
@@ -238,12 +224,11 @@ fn test_spec_sections_empty_lists_behave_like_falsy_values() {
 //                            &data,
 //                            &mut w
 //                          );
-//    match rv { _ => {} }
 
 //     assert_eq!("* first
 //                 * second
 //                 * third".to_string(),
-//                 String::from_utf8(w.unwrap()).unwrap()
+//                 String::from_utf8(rv.unwrap().unwrap()).unwrap()
 //               );
 // }
 
@@ -254,14 +239,12 @@ fn test_spec_sections_empty_lists_behave_like_falsy_values() {
 //     expected: "| A B C D E |"
 #[test]
 fn test_spec_sections_nested_truthy_contents_render() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new()
         .insert_bool("bool", true);
 
-    let rv = rustache::render_text_from_hb("| A {{#bool}}B {{#bool}}C{{/bool}} D{{/bool}} E |", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("| A {{#bool}}B {{#bool}}C{{/bool}} D{{/bool}} E |", data);
 
-    assert_eq!("| A B C D E |".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("| A B C D E |".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 //   - name: Nested (Falsy)
@@ -271,14 +254,12 @@ fn test_spec_sections_nested_truthy_contents_render() {
 //     expected: "| A  E |"
 #[test]
 fn test_spec_sections_nested_falsy_contents_do_not_render() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new()
         .insert_bool("bool", false);
 
-    let rv = rustache::render_text_from_hb("| A {{#bool}}B {{#bool}}C{{/bool}} D{{/bool}} E |", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("| A {{#bool}}B {{#bool}}C{{/bool}} D{{/bool}} E |", data);
 
-    assert_eq!("| A  E |".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("| A  E |".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 //   - name: Context Misses
@@ -288,13 +269,11 @@ fn test_spec_sections_nested_falsy_contents_do_not_render() {
 //     expected: "[]"
 #[test]
 fn test_spec_sections_failed_context_lookups_are_falsy() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new();
 
-    let rv = rustache::render_text_from_hb("[{{#missing}}Found key 'missing'!{{/missing}}]", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("[{{#missing}}Found key 'missing'!{{/missing}}]", data);
 
-    assert_eq!("[]".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("[]".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 //   - name: Implicit Iterator - String
@@ -305,7 +284,6 @@ fn test_spec_sections_failed_context_lookups_are_falsy() {
 //     expected: '"(a)(b)(c)(d)(e)"'
 // #[test]
 // fn test_spec_sections_implicit_iterators_directly_interpolate_strings() {
-//     let mut w = MemWriter::new();
 //     let data = HashBuilder::new()
 //         .insert_vector("list", |builder| {
 //             builder
@@ -316,10 +294,9 @@ fn test_spec_sections_failed_context_lookups_are_falsy() {
 //                 .push_string("e")
 //         });
 
-// let rv = rustache::render_text_from_hb("{{#list}}({{.}}){{/list}}", &data, &mut w);
-//    match rv { _ => {} }
+// let rv = rustache::render_text("{{#list}}({{.}}){{/list}}", data);
 
-//     assert_eq!("(a)(b)(c)(d)(e)".to_string(), String::from_utf8(w.unwrap()).unwrap());
+//     assert_eq!("(a)(b)(c)(d)(e)".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 // }
 
 //   - name: Implicit Iterator - Integer
@@ -330,7 +307,6 @@ fn test_spec_sections_failed_context_lookups_are_falsy() {
 //     expected: '"(1)(2)(3)(4)(5)"'
 // #[test]
 // fn test_spec_sections_implicit_iterators_directly_interpolate_integers() {
-//     let mut w = MemWriter::new();
 //     let data = HashBuilder::new()
 //         .insert_vector("list", |builder| {
 //             builder
@@ -341,10 +317,9 @@ fn test_spec_sections_failed_context_lookups_are_falsy() {
 //                 .push_int(5)
 //         });
 
-//     let rv = rustache::render_text_from_hb("{{#list}}({{.}}){{/list}}", &data, &mut w);
-//    match rv { _ => {} }
+//     let rv = rustache::render_text("{{#list}}({{.}}){{/list}}", data);
 
-//     assert_eq!("(1)(2)(3)(4)(5)".to_string(), String::from_utf8(w.unwrap()).unwrap());
+//     assert_eq!("(1)(2)(3)(4)(5)".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 // }
 
 //   - name: Implicit Iterator - Decimal
@@ -355,7 +330,6 @@ fn test_spec_sections_failed_context_lookups_are_falsy() {
 //     expected: '"(1.1)(2.2)(3.3)(4.4)(5.5)"'
 // #[test]
 // fn test_spec_sections_implicit_iterators_directly_interpolate_floats() {
-//     let mut w = MemWriter::new();
 //     let data = HashBuilder::new()
 //         .insert_vector("list", |builder| {
 //             builder
@@ -366,10 +340,9 @@ fn test_spec_sections_failed_context_lookups_are_falsy() {
 //                 .push_float(5.50)
 //         });
 
-//     let rv = rustache::render_text_from_hb("{{#list}}({{.}}){{/list}}", &data, &mut w);
-//    match rv { _ => {} }
+//     let rv = rustache::render_text("{{#list}}({{.}}){{/list}}", data);
 
-//     assert_eq!("(1.1)(2.2)(3.3)(4.4)(5.5)".to_string(), String::from_utf8(w.unwrap()).unwrap());
+//     assert_eq!("(1.1)(2.2)(3.3)(4.4)(5.5)".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 // }
 
 //   - name: Dotted Names - Truthy
@@ -379,7 +352,6 @@ fn test_spec_sections_failed_context_lookups_are_falsy() {
 //     expected: '"Here" == "Here"'
 // #[test]
 // fn test_spec_sections_truthy_dotted_names_are_valid_section_tags() {
-//     let mut w = MemWriter::new();
 //     let data = HashBuilder::new()
 //         .insert_hash("a", |builder| {
 //             builder
@@ -389,10 +361,9 @@ fn test_spec_sections_failed_context_lookups_are_falsy() {
 //             })
 //         });
 
-//     let rv = rustache::render_text_from_hb("'{{#a.b.c}}Here{{/a.b.c}}' == 'Here'", &data, &mut w);
-//    match rv { _ => {} }
+//     let rv = rustache::render_text("'{{#a.b.c}}Here{{/a.b.c}}' == 'Here'", data);
 
-//     assert_eq!("'Here' == 'Here'".to_string(), String::from_utf8(w.unwrap()).unwrap());
+//     assert_eq!("'Here' == 'Here'".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 // }
 
 //   - name: Dotted Names - Falsy
@@ -402,7 +373,6 @@ fn test_spec_sections_failed_context_lookups_are_falsy() {
 //     expected: '"" == ""'
 #[test]
 fn test_spec_sections_falsy_dotted_names_are_not_valid_section_tags() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new()
         .insert_hash("a", |builder| {
             builder
@@ -412,10 +382,9 @@ fn test_spec_sections_falsy_dotted_names_are_not_valid_section_tags() {
             })
         });
 
-    let rv = rustache::render_text_from_hb("'{{#a.b.c}}Here{{/a.b.c}}' == ''", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("'{{#a.b.c}}Here{{/a.b.c}}' == ''", data);
 
-    assert_eq!("'' == ''".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("'' == ''".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 //   - name: Dotted Names - Broken Chains
@@ -425,16 +394,14 @@ fn test_spec_sections_falsy_dotted_names_are_not_valid_section_tags() {
 //     expected: '"" == ""'
 #[test]
 fn test_spec_sections_unresolved_dotted_names_are_not_valid_section_tags() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new()
         .insert_hash("a", |builder| {
             builder
         });
 
-    let rv = rustache::render_text_from_hb("'{{#a.b.c}}Here{{/a.b.c}}' == ''", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("'{{#a.b.c}}Here{{/a.b.c}}' == ''", data);
 
-    assert_eq!("'' == ''".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("'' == ''".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 //   - name: Surrounding Whitespace
@@ -444,14 +411,12 @@ fn test_spec_sections_unresolved_dotted_names_are_not_valid_section_tags() {
 //     expected: " | \t|\t | \n"
 #[test]
 fn test_spec_sections_do_not_alter_surrounding_whitespace() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new()
         .insert_bool("boolean", true);
 
-    let rv = rustache::render_text_from_hb(" | {{#boolean}}\t|\t{{/boolean}} | \n", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text(" | {{#boolean}}\t|\t{{/boolean}} | \n", data);
 
-    assert_eq!(" | \t|\t | \n".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!(" | \t|\t | \n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 //   - name: Internal Whitespace
@@ -461,14 +426,12 @@ fn test_spec_sections_do_not_alter_surrounding_whitespace() {
 //     expected: " |  \n  | \n"
 #[test]
 fn test_spec_sections_do_not_alter_internal_whitespace() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new()
         .insert_bool("boolean", true);
 
-    let rv = rustache::render_text_from_hb(" | {{#boolean}} {{! Important Whitespace }}\n {{/boolean}} | \n", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text(" | {{#boolean}} {{! Important Whitespace }}\n {{/boolean}} | \n", data);
 
-    assert_eq!(" |  \n  | \n".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!(" |  \n  | \n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 //   - name: Indented Inline Sections
@@ -478,14 +441,12 @@ fn test_spec_sections_do_not_alter_internal_whitespace() {
 //     expected: " YES\n GOOD\n"
 #[test]
 fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new()
         .insert_bool("boolean", true);
 
-    let rv = rustache::render_text_from_hb(" {{#boolean}}YES{{/boolean}}\n {{#boolean}}GOOD{{/boolean}}\n", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text(" {{#boolean}}YES{{/boolean}}\n {{#boolean}}GOOD{{/boolean}}\n", data);
 
-    assert_eq!(" YES\n GOOD\n".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!(" YES\n GOOD\n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }
 
 //   - name: Standalone Lines
@@ -503,11 +464,10 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
 //       | A Line
 // #[test]
 // fn test_spec_sections_standalone_lines_are_removed_from_template() {
-//     let mut w = MemWriter::new();
 //     let data = HashBuilder::new()
 //         .insert_bool("boolean", true);
 
-//     let rv = rustache::render_text_from_hb("|
+//     let rv = rustache::render_text("|
 //                            | This Is
 //                            {{#boolean}}
 //                            |
@@ -516,13 +476,12 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
 //                            &data,
 //                            &mut w
 //                          );
-//    match rv { _ => {} }
 
 //     assert_eq!("|
 //                 | This Is
 //                 |
 //                 | A Line".to_string(),
-//                 String::from_utf8(w.unwrap()).unwrap()
+//                 String::from_utf8(rv.unwrap().unwrap()).unwrap()
 //               );
 // }
 
@@ -541,11 +500,10 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
 //       | A Line
 // #[test]
 // fn test_spec_sections_indented_standalone_lines_are_removed_from_template() {
-//     let mut w = MemWriter::new();
 //     let data = HashBuilder::new()
 //         .insert_bool("boolean", true);
 
-//     let rv = rustache::render_text_from_hb("|
+//     let rv = rustache::render_text("|
 //                            | This Is
 //                              {{#boolean}}
 //                            |
@@ -559,7 +517,7 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
 //                 | This Is
 //                 |
 //                 | A Line".to_string(),
-//                 String::from_utf8(w.unwrap()).unwrap());
+//                 String::from_utf8(rv.unwrap().unwrap()).unwrap());
 // }
 
 //   - name: Standalone Line Endings
@@ -569,14 +527,12 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
 //     expected: "|\r\n|"
 // #[test]
 // fn test_spec_sections_newline_standalone_tags() {
-//     let mut w = MemWriter::new();
 //     let data = HashBuilder::new()
 //         .insert_bool("boolean", true);
 
-//     let rv = rustache::render_text_from_hb("|\r\n{{#boolean}}\r\n{{/boolean}}\r\n|", &data, &mut w);
-//    match rv { _ => {} }
+//     let rv = rustache::render_text("|\r\n{{#boolean}}\r\n{{/boolean}}\r\n|", data);
 
-//     assert_eq!("|\r\n|".to_string(), String::from_utf8(w.unwrap()).unwrap());
+//     assert_eq!("|\r\n|".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 // }
 
 //   - name: Standalone Without Previous Line
@@ -586,14 +542,12 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
 //     expected: "#\n/"
 // #[test]
 // fn test_spec_sections_standalone_tags_do_not_require_preceding_newline() {
-//     let mut w = MemWriter::new();
 //     let data = HashBuilder::new()
 //         .insert_bool("boolean", true);
 
-//     let rv = rustache::render_text_from_hb("  {{#boolean}}\n#{{/boolean}}\n/", &data, &mut w);
-//    match rv { _ => {} }
+//     let rv = rustache::render_text("  {{#boolean}}\n#{{/boolean}}\n/", data);
 
-//     assert_eq!("#\n/".to_string(), String::from_utf8(w.unwrap()).unwrap());
+//     assert_eq!("#\n/".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 // }
 
 //   - name: Standalone Without Newline
@@ -603,14 +557,12 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
 //     expected: "#\n/\n"
 // #[test]
 // fn test_spec_sections_standalone_tags_do_not_require_following_newline() {
-//     let mut w = MemWriter::new();
 //     let data = HashBuilder::new()
 //         .insert_bool("boolean", true);
 
-//     let rv = rustache::render_text_from_hb("#{{#boolean}}\n/\n  {{/boolean}}", &data, &mut w);
-//    match rv { _ => {} }
+//     let rv = rustache::render_text("#{{#boolean}}\n/\n  {{/boolean}}", data);
 
-//     assert_eq!("#\n/\n".to_string(), String::from_utf8(w.unwrap()).unwrap());
+//     assert_eq!("#\n/\n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 // }
 
 //   - name: Padding
@@ -620,12 +572,10 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
 //     expected: '|=|'
 #[test]
 fn test_spec_sections_superfluous_tag_whitespace_is_ignored() {
-    let mut w = MemWriter::new();
     let data = HashBuilder::new()
         .insert_bool("boolean", true);
 
-    let rv = rustache::render_text_from_hb("|{{# boolean }}={{/ boolean }}|", &data, &mut w);
-    match rv { _ => {} }
+    let rv = rustache::render_text("|{{# boolean }}={{/ boolean }}|", data);
 
-    assert_eq!("|=|".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    assert_eq!("|=|".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 }

@@ -23,10 +23,6 @@ use template::TemplateError;
 
 pub use build::{HashBuilder, VecBuilder};
 pub use rustache::{render_file, render_text, Render};
-pub use rustache::{render_file_from_hb, render_file_from_json_enum,
-                   render_file_from_json_string, render_file_from_json_file,
-                   render_text_from_hb, render_text_from_json_enum,
-                   render_text_from_json_string, render_text_from_json_file, read_file};
 
 pub type RustacheResult<T> = Result<T, RustacheError>;
 

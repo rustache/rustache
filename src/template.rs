@@ -27,7 +27,7 @@ impl fmt::Show for TemplateError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             &StreamWriteError(ref val)  => write!(f, "StreamWriteError({})", val),
-            &FileReadError(ref val)         => write!(f, "FileReadError({})", val),
+            &FileReadError(ref val)     => write!(f, "FileReadError({})", val),
             &FileNotFoundError(ref val) => write!(f, "FileNotFoundError({})", val),
         }
     }
@@ -73,7 +73,6 @@ impl Template {
         rv
     }
 
-    //
     // key:       the key we're looking for
     // sections:  an array of the nested sections to look through, e.g. [e, d, c, b, a]
     // datastore: the hash of the data to search for key in
@@ -169,8 +168,6 @@ impl Template {
         return rv;
     }
 
-
-
     fn handle_unescaped_lambda_interpolation<W: Writer>(&mut self, 
                                                         f: &mut |String| -> String, 
                                                         data: &HashMap<String, Data>, 
@@ -196,7 +193,6 @@ impl Template {
         return self.render(writer, data, &nodes);
     }
 
-    //
     // data:      the data value for the tag/node we're handling
     // key:       the name of the tag we're handling, i.e. the key into the data hash
     // datastore: all the data for the template
@@ -271,7 +267,6 @@ impl Template {
         return rv;
     }
 
-    //
     // data:      the data value for the tag/node we're handling
     // key:       the name of the tag we're handling, i.e. the key into the data hash
     // datastore: all the data for the template
@@ -348,7 +343,6 @@ impl Template {
         return rv;       
     }
 
-    //
     // nodes:     children of the inverted section tag
     // datastore: all the data for the template
     // writer:    the io stream to write the rendered template to
@@ -476,7 +470,6 @@ impl Template {
         return rv;
     }
 
-    //
     // children: a vector of nodes representing the template text
     //           found between the section tags
     //
@@ -651,7 +644,6 @@ mod template_tests {
     use build::{HashBuilder};
     use super::super::{Strng};
 
-
     #[test]
     fn test_look_up_section_data() {
     let hb = HashBuilder::new()
@@ -712,7 +704,6 @@ mod template_tests {
         }
     }
 
-
     #[test]
     fn test_escape_html() {
         let s1 = "a < b > c & d \"spam\"\'";
@@ -747,7 +738,6 @@ mod template_tests {
     //     println!("nodes: {}", nodes);
     //     assert!(false);
     // }
-
 
     #[test]
     fn test_not_escape_html() {
