@@ -970,7 +970,7 @@ mod template_tests {
                 )}
             );
 
-        let contents = match rustache::read_file(Path::new("test_data/section_with_partial_template.html")) {
+        let contents = match rustache::read_file(&Path::new("test_data/section_with_partial_template.html")) {
             Err(err) => err,
             Ok(text) => text,
         };

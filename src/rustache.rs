@@ -5,8 +5,11 @@ use memstream::MemStream;
 use serialize::json::{Json, Boolean, Null, I64, U64, F64, String, List, Object};
 use build::{HashBuilder, VecBuilder};
 use template::Template;
+use serialize::{json};
 
 use RustacheResult;
+use JsonError;
+use FileError;
 
 /// Defines a `renderable` trait, so that all of our data is renderable
 pub trait Render<R: Reader> {
@@ -39,16 +42,41 @@ impl Render<MemStream> for Json {
     }
 }
 
+impl Render<MemStream> for Path {
+    fn render(&self, template: &str) -> RustacheResult<MemStream> {
+
+        return match read_file(self) {
+            Ok(text) => {
+
+                let json = match json::from_str(text.as_slice()) {
+                    Ok(json) => json,
+                    Err(err) => return Err(JsonError(format!("Invalid JSON. {}", err)))
+                };
+
+                let hb = parse_json(&json);
+                hb.render(template)
+            },
+            Err(err) => {
+                Err(FileError(err))
+            }
+        }
+    }
+}
+
 /// Render a template from the given file
 ///
-/// ```ignore
+/// ``` ignore
 /// use rustache;
 ///
 /// let data = json::from_str(r#"{"name": "Bob"}"#);
 /// rustache::render_file("path/to/template.html", data);
 /// ```
 pub fn render_file<R: Reader, Re: Render<R>>(path: &str, renderable: Re) -> RustacheResult<R> {
-    renderable.render(File::open(&Path::new(path)).read_to_string().as_slice()[0].as_slice())
+
+    return match read_file(&Path::new(path)) {
+        Ok(text) => renderable.render(text.as_slice()),
+        Err(err) => Err(FileError(err))
+    }
 }
 
 /// Render the given template string
@@ -169,12 +197,12 @@ fn parse_json_vector(json: &Json) -> VecBuilder {
 // Hide from documentation
 #[doc(hidden)]
 #[allow(dead_code)]
-pub fn read_file(path: Path) -> Result<String, String> {
+pub fn read_file(path: &Path) -> Result<String, String> {
     let display = path.display();
     let mut rv: Result<String, String>; //Err(format!("read file failed: {}", display));
     // Open the file path
-    let mut file = match File::open(&path) {
-        Err(why) => { rv = Err(format!("{} {}", display ,why.desc)); return rv; },
+    let mut file = match File::open(path) {
+        Err(why) => { rv = Err(format!("{}: \"{}\"", why.desc, display)); return rv; },
         Ok(file) => { file },
     };
 
