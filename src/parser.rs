@@ -18,6 +18,7 @@ pub enum Node<'a> {
     Part(&'a str, &'a str) // // (name, tag)
 }
 
+#[deriving(PartialEq, Eq)]
 enum ParserStatus {
     Parse,
     Skip
@@ -74,9 +75,9 @@ fn handle_dot_notation<'a>(parts: &[&'a str], unescaped: bool, amp: bool) -> Nod
 
 // Parse_nodes signifies the parser entry point passed the results received from
 // the template compiler.
-pub fn parse_nodes<'a>(list: &mut Vec<Token<'a>>) -> Vec<Node<'a>> {
+pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
     let mut nodes: Vec<Node> = vec![];
-    let mut it = list.iter().enumerate();
+    let mut it = list.iter().enumerate().peekable();
     let mut status = Parse;
 
     loop {
@@ -84,9 +85,32 @@ pub fn parse_nodes<'a>(list: &mut Vec<Token<'a>>) -> Vec<Node<'a>> {
             Some((i, &token)) => {
                 match token {
                     Comment => {
-
+                        // Check the next element for whitespace
+                        match it.peek() {
+                            Some(&(_, token)) => {
+                                match token {
+                                    &Text(ref value) => {
+                                        // if whitespace and should skip, advance to next token
+                                        if value.is_whitespace() && status == Skip {
+                                            status = Parse;
+                                            it.next();
+                                        }
+                                    },
+                                    _ => {}
+                                }
+                            },
+                            None => continue
+                        }
                     },
-                    Text(text) => nodes.push(Static(text)),
+                    Text(text) => {
+                        match text.contains_char('\n') {
+                            true => {
+                                status = Skip;
+                            },
+                            false => {}
+                        }
+                        nodes.push(Static(text))
+                    },
                     Variable(name, raw) => {
                         let dot_notation = name.contains_char('.');
                         match dot_notation {
@@ -139,7 +163,7 @@ pub fn parse_nodes<'a>(list: &mut Vec<Token<'a>>) -> Vec<Node<'a>> {
                                 },
                                 CTag(title, temp) => {
                                     if title == name && otag_count == 1 {
-                                        nodes.push(Section(name, parse_nodes(&mut children).clone(), inverted, raw.to_string(), temp.to_string()));
+                                        nodes.push(Section(name, parse_nodes(&children).clone(), inverted, raw.to_string(), temp.to_string()));
                                         break;
                                     } else if title == name && otag_count > 1 {
                                         otag_count -= 1;
@@ -167,6 +191,7 @@ pub fn parse_nodes<'a>(list: &mut Vec<Token<'a>>) -> Vec<Node<'a>> {
             },
             None => break
         }
+
     }
 
     // Return the populated list of nodes for use by the template engine
@@ -181,32 +206,32 @@ mod parser_tests {
 
     #[test]
     fn parse_dot_notation_simple() {
-        let mut tokens: Vec<Token> = vec![Variable("section.child_tag", "{{ section.child_tag }}")];
-        let nodes = parser::parse_nodes(&mut tokens);
+        let tokens: Vec<Token> = vec![Variable("section.child_tag", "{{ section.child_tag }}")];
+        let nodes = parser::parse_nodes(&tokens);
         let expected: Vec<Node> = vec![Section("section", vec![Value("child_tag", "{{child_tag}}".to_string())], false, "{{#section}}".to_string(), "{{/section}}".to_string())];
         assert_eq!(nodes, expected);
     }
 
     #[test]
     fn parse_dot_notation_triple_mustache() {   
-        let mut tokens: Vec<Token> = vec![Raw("section.child_tag", "{{{ section.child_tag }}}")];
-        let nodes = parser::parse_nodes(&mut tokens);
+        let tokens: Vec<Token> = vec![Raw("section.child_tag", "{{{ section.child_tag }}}")];
+        let nodes = parser::parse_nodes(&tokens);
         let expected: Vec<Node> = vec![Section("section", vec![Unescaped("child_tag", "{{{child_tag}}}".to_string())], false, "{{#section}}".to_string(), "{{/section}}".to_string())];
         assert_eq!(nodes, expected);
     }
 
         #[test]
     fn parse_dot_notation_ampersand() {   
-        let mut tokens: Vec<Token> = vec![Raw("section.child_tag", "{{& section.child_tag }}")];
-        let nodes = parser::parse_nodes(&mut tokens);
+        let tokens: Vec<Token> = vec![Raw("section.child_tag", "{{& section.child_tag }}")];
+        let nodes = parser::parse_nodes(&tokens);
         let expected: Vec<Node> = vec![Section("section", vec![Unescaped("child_tag", "{{&child_tag}}".to_string())], false, "{{#section}}".to_string(), "{{/section}}".to_string())];
         assert_eq!(nodes, expected);
     }
 
     #[test]
     fn parse_nested_dot_notation_basic() {
-        let mut tokens: Vec<Token> = vec![Variable("section.child.tag", "{{ section.child.tag }}")];
-        let nodes = parser::parse_nodes(&mut tokens);
+        let tokens: Vec<Token> = vec![Variable("section.child.tag", "{{ section.child.tag }}")];
+        let nodes = parser::parse_nodes(&tokens);
         let expected: Vec<Node> = vec![
             Section("section", vec![
                 Section("child", vec![
@@ -218,8 +243,8 @@ mod parser_tests {
 
     #[test]
     fn parse_nested_dot_notation_triple_mustache() {
-        let mut tokens: Vec<Token> = vec![Raw("section.child.tag", "{{{ section.child.tag }}}")];
-        let nodes = parser::parse_nodes(&mut tokens);
+        let tokens: Vec<Token> = vec![Raw("section.child.tag", "{{{ section.child.tag }}}")];
+        let nodes = parser::parse_nodes(&tokens);
         let expected: Vec<Node> = vec![
             Section("section", vec![
                 Section("child", vec![
@@ -231,8 +256,8 @@ mod parser_tests {
 
     #[test]
     fn parse_nested_dot_notation_ampersand() {
-        let mut tokens: Vec<Token> = vec![Raw("section.child.tag", "{{& section.child.tag }}")];
-        let nodes = parser::parse_nodes(&mut tokens);
+        let tokens: Vec<Token> = vec![Raw("section.child.tag", "{{& section.child.tag }}")];
+        let nodes = parser::parse_nodes(&tokens);
         let expected: Vec<Node> = vec![
             Section("section", vec![
                 Section("child", vec![
@@ -244,60 +269,60 @@ mod parser_tests {
 
     #[test]
     fn parse_static() {
-        let mut tokens: Vec<Token> = vec![Text("Static String ")];
-        let nodes = parser::parse_nodes(&mut tokens);
+        let tokens: Vec<Token> = vec![Text("Static String ")];
+        let nodes = parser::parse_nodes(&tokens);
         let expected: Vec<Node> = vec![Static("Static String ")];
         assert_eq!(nodes, expected);
     }
 
     #[test]
     fn parse_value() {
-        let mut tokens: Vec<Token> = vec![Variable("token", "{{ token }}")];
-        let nodes = parser::parse_nodes(&mut tokens);
+        let tokens: Vec<Token> = vec![Variable("token", "{{ token }}")];
+        let nodes = parser::parse_nodes(&tokens);
         let expected: Vec<Node> = vec![Value("token", "{{ token }}".to_string())];
         assert_eq!(nodes, expected);
     }
 
     #[test]
     fn parse_section() {
-        let mut tokens: Vec<Token> = vec![OTag("section", false, "{{# section }}"), Variable("child_tag", "{{ child_tag }}"), CTag("section", "{{/ section }}")];
-        let nodes = parser::parse_nodes(&mut tokens);
+        let tokens: Vec<Token> = vec![OTag("section", false, "{{# section }}"), Variable("child_tag", "{{ child_tag }}"), CTag("section", "{{/ section }}")];
+        let nodes = parser::parse_nodes(&tokens);
         let expected: Vec<Node> = vec![Section("section", vec![Value("child_tag", "{{ child_tag }}".to_string())], false, "{{# section }}".to_string(), "{{/ section }}".to_string())];
         assert_eq!(nodes, expected);
     }
 
     #[test]
     fn parse_inverted() {
-        let mut tokens: Vec<Token> = vec![OTag("inverted", true, "{{^ inverted }}"), Variable("child_tag", "{{ child_tag }}"), CTag("inverted", "{{/ inverted }}")];
-        let nodes = parser::parse_nodes(&mut tokens);
+        let tokens: Vec<Token> = vec![OTag("inverted", true, "{{^ inverted }}"), Variable("child_tag", "{{ child_tag }}"), CTag("inverted", "{{/ inverted }}")];
+        let nodes = parser::parse_nodes(&tokens);
         let expected: Vec<Node> = vec![Section("inverted", vec![Value("child_tag", "{{ child_tag }}".to_string())], true, "{{^ inverted }}".to_string(), "{{/ inverted }}".to_string())];
         assert_eq!(nodes, expected);
     }
 
     #[test]
     fn parse_unescaped() {
-        let mut tokens: Vec<Token> = vec![Raw("unescaped", "{{& unescaped }}")];
-        let nodes = parser::parse_nodes(&mut tokens);
+        let tokens: Vec<Token> = vec![Raw("unescaped", "{{& unescaped }}")];
+        let nodes = parser::parse_nodes(&tokens);
         let expected: Vec<Node> = vec![Unescaped("unescaped", "{{& unescaped }}".to_string())];
         assert_eq!(nodes, expected);
     }
 
     #[test]
     fn parse_partial() {
-        let mut tokens: Vec<Token> = vec![Partial("new","{{> new }}")];
-        let nodes = parser::parse_nodes(&mut tokens);
+        let tokens: Vec<Token> = vec![Partial("new","{{> new }}")];
+        let nodes = parser::parse_nodes(&tokens);
         let expected: Vec<Node> = vec![Part("new", "{{> new }}")];
         assert_eq!(nodes, expected);
     }
 
     #[test]
     fn parse_all() {
-        let mut tokens: Vec<Token> = vec![
+        let tokens: Vec<Token> = vec![
             Text("Static String "), Variable("token", "{{ token }}"), OTag("section", false, "{{# section }}"),
             Variable("child_tag", "{{ child_tag }}"), CTag("section", "{{/ section }}"),
             Partial("new","{{> new }}"), Raw("unescaped", "{{& unescaped }}")
         ];
-        let nodes = parser::parse_nodes(&mut tokens);
+        let nodes = parser::parse_nodes(&tokens);
         let static_node = Static("Static String ");
         let value_node = Value("token", "{{ token }}".to_string());
         let section_node = Section("section", vec![Value("child_tag", "{{ child_tag }}".to_string())], false, "{{# section }}".to_string(), "{{/ section }}".to_string());

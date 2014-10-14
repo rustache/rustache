@@ -23,7 +23,6 @@ enum Status {
 // Entry point to the template compiler. It compiles a raw list of
 // all applicable tags within a template to send to the parser.
 pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
-    println!("{}", contents);
     let mut tokens: Vec<Token> = Vec::new();
     let mut char = contents.chars().enumerate();
     let mut close = 0;
@@ -57,7 +56,6 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
             }
         }
     }
-    println!("{}", tokens);
     tokens
 }
 
