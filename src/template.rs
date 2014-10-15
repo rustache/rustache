@@ -970,8 +970,11 @@ mod template_tests {
                 )}
             );
 
-        let file = rustache::read_file(Path::new("test_data/section_with_partial_template.html"));
-        let mut tokens = compiler::create_tokens(file.as_slice());
+        let contents = match rustache::read_file(&Path::new("test_data/section_with_partial_template.html")) {
+            Err(err) => err,
+            Ok(text) => text,
+        };
+        let mut tokens = compiler::create_tokens(contents.as_slice());
         let nodes = parser::parse_nodes(&mut tokens);
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
