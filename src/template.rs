@@ -20,7 +20,7 @@ pub struct Template {
 pub enum TemplateError {
     StreamWriteError(String),
     FileReadError(String),
-    FileNotFoundError(String),
+    UnexpectedDataType(String),
 }
 
 impl fmt::Show for TemplateError {
@@ -28,7 +28,7 @@ impl fmt::Show for TemplateError {
         match self {
             &StreamWriteError(ref val)  => write!(f, "StreamWriteError({})", val),
             &FileReadError(ref val)     => write!(f, "FileReadError({})", val),
-            &FileNotFoundError(ref val) => write!(f, "FileNotFoundError({})", val),
+            &UnexpectedDataType(ref val) => write!(f, "UnexpectedDataType({})", val),
         }
     }
 }
@@ -385,13 +385,32 @@ impl Template {
         let mut rv = Ok(());
         // there's a special case if the section tag data was a lambda
         // if so, the lambda is used to generate the values for the tag inside the section
-        match *data {
-          Lambda(ref f) => {
+        match data {
+          &Lambda(ref f) => {
             let raw = self.get_section_text(nodes);
             return self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, *raw, writer);
           },
+          &Vector(ref v) => {
+            for d in v.iter() {
+                for node in nodes.iter() {
+                    match d {
+                        &Hash(ref h) => {
+                            rv = self.handle_node(node, h, writer);
+                        },
+                        &Strng(ref val) => return Err(TemplateErrorType(UnexpectedDataType(format!("{}", val)))),
+                        &Bool(ref val) => return Err(TemplateErrorType(UnexpectedDataType(format!("{}", val)))),
+                        &Integer(ref val) => return Err(TemplateErrorType(UnexpectedDataType(format!("{}", val)))),
+                        &Float(ref val) => return Err(TemplateErrorType(UnexpectedDataType(format!("{}", val)))),
+                        &Vector(ref val) => return Err(TemplateErrorType(UnexpectedDataType(format!("{}", val)))),
+                        &Lambda(ref val) => return Err(TemplateErrorType(UnexpectedDataType("lambda".to_string()))),
+                    }
+                }
+            }
+            return rv;
+          },
           _ => {}
         }
+
         // in a section tag, there are child tags to fill out,
         // we need to iterate through each one
         for node in nodes.iter() {
@@ -514,7 +533,7 @@ impl Template {
                                            filename: &str, 
                                            datastore: &HashMap<String, Data>, 
                                            writer: &mut W) -> RustacheResult<()> {
-        let mut rv: RustacheResult<()>;
+        let mut rv: RustacheResult<()> = Ok(());;
         let path = Path::new(self.partials_path.clone()).join(filename);
         if path.exists() {
 
@@ -530,13 +549,72 @@ impl Template {
                     let msg = format!("{}: {}", err, filename);
                     rv = Err(TemplateErrorType(FileReadError(msg))); }
             }
-        } else {
-            rv = Err(TemplateErrorType(FileNotFoundError(filename.to_string())));
-        }
+        } // if the file is not found, it's supposed to fail silently
 
         return rv;
     }
 
+    fn handle_node<W: Writer>(&mut self, node: &Node, datastore: &HashMap<String, Data>, writer: &mut W)  -> RustacheResult<()> {
+        let mut rv = Ok(());
+
+        match *node {
+            Unescaped(key, _)  => {
+                let tmp = key.to_string();
+                if datastore.contains_key(&tmp) {
+                    let ref val = datastore[tmp];
+                    rv = self.handle_unescaped_node(val, "".to_string(), datastore, writer);
+                }
+            }
+            // value nodes contain tags who's data gets HTML escaped
+            // when it gets written out
+            Value(key, _) => {
+                let tmp = key.to_string();
+                if datastore.contains_key(&tmp) {
+                    let ref val = datastore[tmp];
+                    rv = self.handle_value_node(val, "".to_string(), datastore, writer);
+                }
+            }
+            // static nodes are the test in the template that doesn't get modified, 
+            // just gets written out character for character
+            Static(key) => {
+                rv = self.write_to_stream(writer, &key.to_string(), "render: static");
+            }
+            // sections come in two kinds, normal and inverted
+            //
+            // inverted are if the tag data is not there, the Static between it 
+            // and it's closing tag gets written out, otherwise the text is thrown out
+            //
+            // normal section tags enclose a bit of html that will get repeated
+            // for each element found in it's data
+            Section(ref key, ref children, ref inverted, _, _) => {
+                let tmp = key.to_string();
+                let truthy = if datastore.contains_key(&tmp) {
+                    self.is_section_data_true(&datastore[tmp])
+                } else {
+                    false
+                };
+                match (truthy, *inverted) {
+                    (true, true) => {},
+                    (false, false) => {},
+                    (true, false) => {
+                        let ref val = datastore[tmp];
+                        let mut sections = vec![tmp.clone()];
+                        rv = self.handle_section_node(children, &tmp, val, datastore, &mut sections, writer);
+                    },
+                    (false, true) => {
+                        rv = self.handle_inverted_node(children, datastore, writer);
+                    }
+                }
+            }
+            // partials include external template files and compile and process them
+            // at runtime, inserting them into the document at the point the tag is found
+            Part(name, _) => {
+                rv = self.handle_partial_file_node(name, datastore, writer);
+            }
+        }
+
+        return rv;
+    }
     // writer: an io::stream to write the rendered template out to
     // data:   the internal HashBuilder data store
     // parser: the parser object that has the parsed nodes, see src/parse.js
@@ -545,70 +623,17 @@ impl Template {
                              data: &HashMap<String, Data>, 
                              nodes: &Vec<Node>) -> RustacheResult<()> {
         let mut rv = Ok(());
-        let mut tmp: String = String::new();
 
         // nodes are what the template file is parsed into
         // we have to iterate through each one and handle it as
         // the kind of node it is
         for node in nodes.iter() {
-            tmp.truncate(0);
-            match *node {
-                // unescaped nodes contain tags who's data gets written
-                // out exactly as provided, no HTML escaping
-                Unescaped(key, _)  => {
-                    let tmp = key.to_string();
-                    if data.contains_key(&tmp) {
-                        let ref val = data[tmp];
-                        rv = self.handle_unescaped_node(val, "".to_string(), data, writer);
-                    }
-                }
-                // value nodes contain tags who's data gets HTML escaped
-                // when it gets written out
-                Value(key, _) => {
-                    let tmp = key.to_string();
-                    if data.contains_key(&tmp) {
-                        let ref val = data[tmp];
-                        rv = self.handle_value_node(val, "".to_string(), data, writer);
-                    }
-                }
-                // static nodes are the test in the template that doesn't get modified, 
-                // just gets written out character for character
-                Static(key) => {
-                    rv = self.write_to_stream(writer, &key.to_string(), "render: static");
-                }
-                // sections come in two kinds, normal and inverted
-                //
-                // inverted are if the tag data is not there, the Static between it 
-                // and it's closing tag gets written out, otherwise the text is thrown out
-                //
-                // normal section tags enclose a bit of html that will get repeated
-                // for each element found in it's data
-                Section(ref key, ref children, ref inverted, _, _) => {
-                    let tmp = key.to_string();
-                    let truthy = if data.contains_key(&tmp) {
-                        self.is_section_data_true(&data[tmp])
-                    } else {
-                        false
-                    };
-                    match (truthy, *inverted) {
-                        (true, true) => {},
-                        (false, false) => {},
-                        (true, false) => {
-                            let ref val = data[tmp];
-                            let mut sections = vec![tmp.clone()];
-                            rv = self.handle_section_node(children, &tmp, val, data, &mut sections, writer);
-                        },
-                        (false, true) => {
-                            rv = self.handle_inverted_node(children, data, writer);
-                        }
-                    }
-                }
-                // partials include external template files and compile and process them
-                // at runtime, inserting them into the document at the point the tag is found
-                Part(name, _) => {
-                    rv = self.handle_partial_file_node(name, data, writer);
-                }
+            rv = self.handle_node(node, data, writer);
+            match rv {
+                Err(_) => { return rv; },
+                _ => { }
             }
+
         }
 
         return rv;
@@ -728,16 +753,23 @@ mod template_tests {
         assert_eq!(a2, str::from_utf8(w.get_ref()).unwrap());
     }
 
+    #[test]
+    fn test_section_tag_iteration() {
+        let mut w = MemWriter::new();
+        let template = "{{#repo}}<b>{{name}}</b>{{/repo}}";
+        let tokens = compiler::create_tokens(template);
+        let nodes = parser::parse_nodes(&tokens);
+        let data = HashBuilder::new().insert_vector("repo", |v| {
+                                        v.push_hash(|h| { h.insert_string("name", "resque") })
+                                        .push_hash(|h| { h.insert_string("name", "hub") })
+                                        .push_hash(|h| { h.insert_string("name", "rip") })
+                                    });
 
-    // #[test]
-    // fn test_spec_sections_test() {
-    //     let contents = "{{#a.b.c}}Here{{/a.b.c}}";
-    //     let tokens = compiler::create_tokens(contents);
-    //     let nodes = parser::parse_nodes(&tokens);
+        let rv = Template::new().render_data(&mut w, &data, &nodes);
+        match rv { _ => {} }
 
-    //     println!("nodes: {}", nodes);
-    //     assert!(false);
-    // }
+        assert_eq!("<b>resque</b><b>hub</b><b>rip</b>".to_string(), String::from_utf8(w.unwrap()).unwrap())
+    }
 
     #[test]
     fn test_not_escape_html() {

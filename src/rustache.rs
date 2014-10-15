@@ -63,6 +63,18 @@ impl Render<MemStream> for Path {
     }
 }
 
+impl Render<MemStream> for String {
+    fn render(&self, template: &str) -> RustacheResult<MemStream> {
+
+        let json = match json::from_str(self.as_slice()) {
+            Ok(json) => json,
+            Err(err) => return Err(JsonError(format!("Invalid JSON. {}", err)))
+        };
+
+        parse_json(&json).render(template)
+    }
+}
+
 /// Render a template from the given file
 ///
 /// ``` ignore
