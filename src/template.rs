@@ -354,6 +354,7 @@ impl Template {
                                       nodes: &Vec<Node>, 
                                       datastore: &HashMap<String, Data>, 
                                       writer: &mut W) -> RustacheResult<()> {
+        println!("handle inverted node: nodes: {}, datastore: {}", nodes, datastore);
         let mut rv = Ok(());
         for node in nodes.iter() {
             match *node {
@@ -364,6 +365,26 @@ impl Template {
                 Part(filename, _) => {
                     rv = self.handle_partial_file_node(filename, datastore, writer);
                 },
+                Section(ref key, ref children, ref inverted, _, _) => {
+                    let tmp = key.to_string();
+                    let truthy = if datastore.contains_key(&tmp) {
+                        self.is_section_data_true(&datastore[tmp])
+                    } else {
+                        false
+                    };
+                    match (truthy, *inverted) {
+                        (true, true) => {},
+                        (false, false) => {},
+                        (true, false) => {
+                            let ref val = datastore[tmp];
+                            let mut sections = vec![tmp.clone()];
+                            rv = self.handle_section_node(children, &tmp, val, datastore, &mut sections, writer);
+                        },
+                        (false, true) => {
+                            rv = self.handle_inverted_node(children, datastore, writer);
+                        }
+                    }
+                }
                 _ => { }
             }
         }
@@ -547,7 +568,8 @@ impl Template {
                 },
                 Err(err) => { 
                     let msg = format!("{}: {}", err, filename);
-                    rv = Err(TemplateErrorType(FileReadError(msg))); }
+                    rv = Err(TemplateErrorType(FileReadError(msg))); 
+                }
             }
         } // if the file is not found, it's supposed to fail silently
 
