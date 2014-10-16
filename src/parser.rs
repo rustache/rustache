@@ -104,11 +104,8 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
                         }
                     },
                     Text(text) => {
-                        match text.contains_char('\n') {
-                            true => {
-                                status = Skip;
-                            },
-                            false => {}
+                        if text.is_whitespace() {
+                            status = Skip;
                         }
                         nodes.push(Static(text))
                     },
@@ -196,6 +193,7 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
     }
 
     // Return the populated list of nodes for use by the template engine
+    println!("{}", nodes);
     nodes
 }
 
