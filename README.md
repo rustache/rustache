@@ -69,10 +69,6 @@ cargo test
 
 - [ ] Rewrite the parser and compiler to handle all mustache cases
 
-- [ ] Rebuild API surface to have only the Render trait, render() and render_file()
-
-	 - [ ] impl Render for HashBuilder, Json, etc.
-
 - [ ] Thread errors through the parser and compiler by having something like:
 
 	 - [ ] type RustacheResult<T> = Result<T, RustacheError>;

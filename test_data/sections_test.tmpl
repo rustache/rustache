@@ -1,0 +1,17 @@
+<h1>{{{ name }}} - {{{ version }}}</h1>
+ 
+<h3>Engine</h3>
+<h3>{{ engine.name }}: {{ engine.version }}</h3>
+ 
+<h3>Dependencies</h3>
+{{#dependencies}}
+<ul>{{{ name }}}: {{{ version }}}</ul>
+{{/dependencies}}
+
+<h3>Dev Dependencies</h3>
+{{#devDependencies}}
+<ul>{{{ name }}}: {{{ version }}}</ul>
+{{/devDependencies}}
+
+<h3>Scripts</h3>
+<ul>{{{ scripts.name}}}</ul>

@@ -109,15 +109,15 @@ fn test_spec_inverted_falsy_on_empty_vec() {
 //   data: { bool: false }
 //   template: "| A {{^bool}}B {{^bool}}C{{/bool}} D{{/bool}} E |"
 //   expected: "| A B C D E |"
-// #[test]
-// fn test_spec_inverted_nested_falsy() {
-//
-//     let data = HashBuilder::new().insert_bool("bool", false);
+#[test]
+fn test_spec_inverted_nested_falsy() {
 
-//     let rv = rustache::render_text("| A {{^bool}}B {{^bool}}C{{/bool}} D{{/bool}} E |", data)
+    let data = HashBuilder::new().insert_bool("bool", false);
 
-//     assert_eq!("| A B C D E |".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
-// }
+    let rv = rustache::render_text("| A {{^bool}}B {{^bool}}C{{/bool}} D{{/bool}} E |", data);
+
+    assert_eq!("| A B C D E |".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+}
 
 // - name: Nested (Truthy)
 //   desc: Nested truthy sections should be omitted.
