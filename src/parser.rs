@@ -74,6 +74,48 @@ fn handle_dot_notation<'a>(parts: &[&'a str], unescaped: bool, amp: bool) -> Nod
     }
 }
 
+fn parse_raw_node<'a>(name: &'a str, raw: &'a str, nodes: &mut Vec<Node<'a>>) {
+    let dot_notation = name.contains(".");
+    let ampersand = raw.contains("&");
+    match dot_notation {
+        false => nodes.push(Unescaped(name, raw.to_string())),
+        true => {
+            let parts: Vec<&str> = name.split_str(".").collect();
+            match ampersand {
+                true => {
+                    let node = handle_dot_notation(parts.as_slice(), true, true);
+                    nodes.push(node);
+                },
+                false => {
+                    let node = handle_dot_notation(parts.as_slice(), true, false);
+                    nodes.push(node);
+                }
+            };
+        }
+    }
+}
+
+fn parse_variable_node<'a>(name: &'a str, raw: &'a str, nodes: &mut Vec<Node<'a>>) {
+    let dot_notation = name.contains(".");
+    match dot_notation {
+        false => nodes.push(Value(name, raw.to_string())),
+        true => {
+            let parts: Vec<&str> = name.split_str(".").collect();
+            let node = handle_dot_notation(parts.as_slice(), false, false);
+            nodes.push(node);
+        }
+    }
+}
+
+fn parse_text_node<'a>(text: &'a str, status: &mut ParserStatus, nodes: &mut Vec<Node<'a>>) {
+    if text.contains("\n") {
+        *status = Skip;
+    } else if text.is_whitespace() {
+        *status = Skip;
+    }
+    nodes.push(Static(text))
+}
+
 // Parse_nodes signifies the parser entry point passed the results received from
 // the template compiler.
 pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
@@ -91,10 +133,27 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
                             Some(&(_, token)) => {
                                 match token {
                                     &Text(ref value) => {
-                                        // if whitespace and should skip, advance to next token
-                                        if value.is_whitespace() && status == Skip {
-                                            status = Parse;
-                                            it.next();
+                                        match status {
+                                            Skip => {
+                                                // if whitespace and should skip, advance to next token
+                                                if value.is_whitespace() {
+                                                    match nodes.last().unwrap() {
+                                                        &Static(text) => {
+                                                            // if the previous node is whitespace, remove it and skip
+                                                            if text.is_whitespace() {
+                                                                nodes.pop();
+                                                            }
+                                                        },
+                                                        _ => {}
+                                                    }
+                                                    status = Parse;
+                                                    it.next();
+                                                } else {
+                                                    status = Parse;
+                                                }
+                                            },
+                                            Parse => {},
+
                                         }
                                     },
                                     _ => {}
@@ -104,41 +163,13 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
                         }
                     },
                     Text(text) => {
-                        if text.is_whitespace() {
-                            status = Skip;
-                        }
-                        nodes.push(Static(text))
+                        parse_text_node(text, &mut status, &mut nodes);
                     },
                     Variable(name, raw) => {
-                        let dot_notation = name.contains_char('.');
-                        match dot_notation {
-                            false => nodes.push(Value(name, raw.to_string())),
-                            true => {
-                                let parts: Vec<&str> = name.split_str(".").collect();
-                                let node = handle_dot_notation(parts.as_slice(), false, false);
-                                nodes.push(node);
-                            }
-                        }
+                        parse_variable_node(name, raw, &mut nodes);
                     },
                     Raw(name, raw) => {
-                        let dot_notation = name.contains_char('.');
-                        let ampersand = raw.contains_char('&');
-                        match dot_notation {
-                            false => nodes.push(Unescaped(name, raw.to_string())),
-                            true => {
-                                let parts: Vec<&str> = name.split_str(".").collect();
-                                match ampersand {
-                                    true => {
-                                        let node = handle_dot_notation(parts.as_slice(), true, true);
-                                        nodes.push(node);
-                                    },
-                                    false => {
-                                        let node = handle_dot_notation(parts.as_slice(), true, false);
-                                        nodes.push(node);
-                                    }
-                                };
-                            }
-                        }
+                        parse_raw_node(name, raw, &mut nodes);
                     }
                     Partial(name, raw) => nodes.push(Part(name, raw)),
                     CTag(_, _) => {
@@ -193,7 +224,6 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
     }
 
     // Return the populated list of nodes for use by the template engine
-    println!("{}", nodes);
     nodes
 }
 

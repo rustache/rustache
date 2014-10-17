@@ -64,13 +64,13 @@ fn test_spec_standalone_comment() {
 //   expected: |
 //     Begin.
 //     End.
-// #[test]
-// fn test_spec_indented_standalone_comment() {
-//     let data = HashBuilder::new();
+#[test]
+fn test_spec_indented_standalone_comment() {
+    let data = HashBuilder::new();
 
-//     let rv =rustache::render_text("Begin.\n\t{{! Indented Comment Block! }}\nEnd.", data);
-//     assert_eq!("Begin\nEnd.".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
-// }
+    let rv =rustache::render_text("Begin.\n\t{{! Indented Comment Block! }}\nEnd.", data);
+    assert_eq!("Begin.\nEnd.".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+}
 
 // - name: Standalone Line Endings
 //   desc: '"\r\n" should be considered a newline for standalone tags.'
@@ -91,13 +91,13 @@ fn test_spec_standalone_line_ending_comment() {
 //   data: { }
 //   template: "  {{! I'm Still Standalone }}\n!"
 //   expected: "!"
-// #[test]
-// fn test_spec_standalone_without_prev_line_comment() {
-//     let data = HashBuilder::new();
+#[test]
+fn test_spec_standalone_without_prev_line_comment() {
+    let data = HashBuilder::new();
 
-//     let rv =rustache::render_text("  {{! I'm Still Standalone }}\n!", data);
-//     assert_eq!("!".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
-// }
+    let rv =rustache::render_text("  {{! I'm Still Standalone }}\n!", data);
+    assert_eq!("!".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+}
 
 // - name: Standalone Without Newline
 //   desc: Standalone tags should not require a newline to follow them.
