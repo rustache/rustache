@@ -74,6 +74,36 @@ fn handle_dot_notation<'a>(parts: &[&'a str], unescaped: bool, amp: bool) -> Nod
     }
 }
 
+fn parse_comment_node<'a>(token: &Token, status: &mut ParserStatus, nodes: &mut Vec<Node<'a>>) -> bool {
+    match *token {
+        Text(ref value) => {
+            match *status {
+                Skip => {
+                    // if whitespace and should skip, advance to next token
+                    if value.is_whitespace() {
+                        match nodes.last().unwrap() {
+                            &Static(text) => {
+                                // if the previous node is whitespace, remove it and skip
+                                if text.is_whitespace() {
+                                    nodes.pop();
+                                }
+                            },
+                            _ => {}
+                        }
+                        *status = Parse;
+                        return true;
+                    } else {
+                        *status = Parse;
+                        return false;
+                    }
+                },
+                Parse => return false,
+            }
+        },
+        _ => return false
+    }
+}
+
 fn parse_raw_node<'a>(name: &'a str, raw: &'a str, nodes: &mut Vec<Node<'a>>) {
     let dot_notation = name.contains(".");
     let ampersand = raw.contains("&");
@@ -108,12 +138,16 @@ fn parse_variable_node<'a>(name: &'a str, raw: &'a str, nodes: &mut Vec<Node<'a>
 }
 
 fn parse_text_node<'a>(text: &'a str, status: &mut ParserStatus, nodes: &mut Vec<Node<'a>>) {
-    if text.contains("\n") {
-        *status = Skip;
-    } else if text.is_whitespace() {
-        *status = Skip;
+    match *status {
+        _ => {
+            if text.contains("\n") {
+                *status = Skip;
+            } else if text.is_whitespace() {
+                *status = Skip;
+            }
+            nodes.push(Static(text));
+        }
     }
-    nodes.push(Static(text))
 }
 
 // Parse_nodes signifies the parser entry point passed the results received from
@@ -127,56 +161,11 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
         match it.next() {
             Some((i, &token)) => {
                 match token {
-                    Comment => {
-                        // Check the next element for whitespace
-                        match it.peek() {
-                            Some(&(_, token)) => {
-                                match token {
-                                    &Text(ref value) => {
-                                        match status {
-                                            Skip => {
-                                                // if whitespace and should skip, advance to next token
-                                                if value.is_whitespace() {
-                                                    match nodes.last().unwrap() {
-                                                        &Static(text) => {
-                                                            // if the previous node is whitespace, remove it and skip
-                                                            if text.is_whitespace() {
-                                                                nodes.pop();
-                                                            }
-                                                        },
-                                                        _ => {}
-                                                    }
-                                                    status = Parse;
-                                                    it.next();
-                                                } else {
-                                                    status = Parse;
-                                                }
-                                            },
-                                            Parse => {},
-
-                                        }
-                                    },
-                                    _ => {}
-                                }
-                            },
-                            None => continue
-                        }
-                    },
-                    Text(text) => {
-                        parse_text_node(text, &mut status, &mut nodes);
-                    },
-                    Variable(name, raw) => {
-                        parse_variable_node(name, raw, &mut nodes);
-                    },
-                    Raw(name, raw) => {
-                        parse_raw_node(name, raw, &mut nodes);
-                    }
+                    Text(text) => parse_text_node(text, &mut status, &mut nodes),
+                    Variable(name, raw) => parse_variable_node(name, raw, &mut nodes),
+                    Raw(name, raw) => parse_raw_node(name, raw, &mut nodes),
                     Partial(name, raw) => nodes.push(Part(name, raw)),
-                    CTag(_, _) => {
-                        // CTags that are processed outside of the context of a 
-                        // corresponding OTag are ignored.
-                        continue;
-                    },
+                    CTag(_, _) => continue, // Unopened closing tags are ignored.
                     OTag(name, inverted, raw) => {
                         let mut children: Vec<Token> = vec![];
                         let mut count = 0u;
@@ -215,7 +204,52 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
                             it.next();
                             count -= 1;
                         }
-                    }
+                    },
+                    Comment => {
+                        // Check the next element for whitespace
+                        match it.peek() {
+                            Some(&(_, token)) => {
+                                match parse_comment_node(token, &mut status, &mut nodes) {
+                                    true => {
+                                        it.next();
+                                    },
+                                    false => {}
+                                }
+                            },
+                            None => continue,
+                        }
+                        // match it.peek() {
+                        //     Some(&(_, token)) => {
+                        //         match token {
+                        //             &Text(ref value) => {
+                        //                 match status {
+                        //                     Skip => {
+                        //                         // if whitespace and should skip, advance to next token
+                        //                         if value.is_whitespace() {
+                        //                             match nodes.last().unwrap() {
+                        //                                 &Static(text) => {
+                        //                                     // if the previous node is whitespace, remove it and skip
+                        //                                     if text.is_whitespace() {
+                        //                                         nodes.pop();
+                        //                                     }
+                        //                                 },
+                        //                                 _ => {}
+                        //                             }
+                        //                             status = Parse;
+                        //                             it.next();
+                        //                         } else {
+                        //                             status = Parse;
+                        //                         }
+                        //                     },
+                        //                     Parse => {},
+                        //                 }
+                        //             },
+                        //             _ => {}
+                        //         }
+                        //     },
+                        //     None => continue
+                        // }
+                    },
                 }
             },
             None => break
