@@ -21,6 +21,7 @@ pub enum TemplateError {
     StreamWriteError(String),
     FileReadError(String),
     UnexpectedDataType(String),
+    UnexpectedNodeType(String),
 }
 
 impl fmt::Show for TemplateError {
@@ -29,6 +30,7 @@ impl fmt::Show for TemplateError {
             &StreamWriteError(ref val)  => write!(f, "StreamWriteError({})", val),
             &FileReadError(ref val)     => write!(f, "FileReadError({})", val),
             &UnexpectedDataType(ref val) => write!(f, "UnexpectedDataType({})", val),
+            &UnexpectedNodeType(ref val) => write!(f, "UnexpectedNodeType({})", val),
         }
     }
 }
@@ -202,9 +204,9 @@ impl Template {
     // can be, well, several different types.  this method matches them all and
     // handles the data appropriately.
     //
-    // TODO: factor handle_unescaped_node and handle_value_node together
     // TODO: really don't need to be handling Bool, Vector or Hash
-    fn handle_unescaped_node<W: Writer>(&mut self, 
+    fn handle_unescaped_or_value_node<W: Writer>(&mut self, 
+                                        node: &Node,
                                         data: &Data, 
                                         key: String, 
                                         datastore: &HashMap<String, Data>, 
@@ -214,7 +216,11 @@ impl Template {
         match *data {
             // simple value-for-tag exchange, write out the string
             Strng(ref val) => {
-                tmp = tmp + *val;
+                match *node {
+                    Unescaped(_,_) => tmp = tmp + *val,
+                    Value(_,_) => tmp = *self.escape_html(&(*val.as_slice())),
+                    _ => return Err(TemplateErrorType(UnexpectedNodeType(format!("{}", node))))
+                }
                 rv = self.write_to_stream(writer, &tmp, "render: unescaped node string fail");
             },
             // TODO: this one doesn't quite make sense.  i don't think we need it.
@@ -238,7 +244,7 @@ impl Template {
             // TODO: this one doesn't quite make sense.  i don't think we need it.
             Vector(ref list) => {
                 for item in list.iter() {
-                    rv = self.handle_unescaped_node(item, key.to_string(), datastore, writer);
+                    rv = self.handle_unescaped_or_value_node(node, item, key.to_string(), datastore, writer);
                     match rv {
                         Ok(_) => { },
                         _ => { return rv; }
@@ -249,7 +255,7 @@ impl Template {
             Hash(ref hash) => {
                 if hash.contains_key(&key) {
                     let ref tmp = hash[key];
-                    rv = self.handle_unescaped_node(tmp, key.to_string(), datastore, writer);
+                    rv = self.handle_unescaped_or_value_node(node, tmp, key.to_string(), datastore, writer);
                     match rv {
                         Ok(_) => { },
                         _ => { return rv; }
@@ -260,87 +266,15 @@ impl Template {
             // lambda is what we substitute for the tag
             Lambda(ref f) => {
                 let raw = "".to_string();
-                rv = self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, raw, writer);
+                match *node {
+                    Unescaped(_,_) => rv = self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, raw, writer),
+                    Value(_,_) => rv = self.handle_escaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, raw, writer),
+                    _ => return Err(TemplateErrorType(UnexpectedNodeType(format!("{}", node))))
+                }
             }
         }
 
         return rv;
-    }
-
-    // data:      the data value for the tag/node we're handling
-    // key:       the name of the tag we're handling, i.e. the key into the data hash
-    // datastore: all the data for the template
-    // writer:    the output stream to write rendered template to
-    //
-    // the Data enum, which is how we hold different types of data in one hash,
-    // can be, well, several different types.  this method matches them all and
-    // handles the data appropriately.
-    //
-    // TODO: factor handle_unescaped_node and handle_value_node together
-    // TODO: really don't need to be handling Bool, Vector or Hash
-    //
-    fn handle_value_node<W: Writer>(&mut self, 
-                                    data: &Data, 
-                                    key: String, 
-                                    datastore: &HashMap<String, Data>, 
-                                    writer: &mut W) -> RustacheResult<()> {
-        let mut rv = Ok(());
-        let mut tmp: String = String::new();
-        match *data {
-            Strng(ref val) => {
-                tmp = *self.escape_html(&(*val.as_slice()));
-                rv = self.write_to_stream(writer, &tmp, "render: value node string");
-            },
-            // TODO: this one doesn't quite make sense.  i don't think we need it.
-            Bool(ref val) => {
-                match val {
-                    &true  => tmp.push_str("true"),
-                    &false => tmp.push_str("false")
-                }
-                rv = self.write_to_stream(writer, &tmp, "render: value node bool");
-            },
-            // if the data is an integer, convert it to a string and write that
-            Integer(ref val) => {
-                let val = val.to_string();
-                tmp = *self.escape_html(&(*val.as_slice()));
-                rv = self.write_to_stream(writer, &tmp, "render: value node int");
-            },
-            // if the data is a float, convert it to a string and write that
-            Float(ref val) => {
-                let val = val.to_string();
-                tmp = *self.escape_html(&(*val.as_slice()));
-                rv = self.write_to_stream(writer, &tmp, "render: value node float");
-            },
-            // TODO: this one doesn't quite make sense.  i don't think we need it.
-            Vector(ref list) => {
-                for item in list.iter() {
-                    rv = self.handle_value_node(item, key.to_string(), datastore, writer);
-                    match rv {
-                        Ok(_) => { },
-                        _ => { return rv; }
-                    }
-                }
-            },
-            // TODO: this one doesn't quite make sense.  i don't think we need it.
-            Hash(ref hash) => {
-                if hash.contains_key(&key) {
-                    let ref tmp = hash[key];
-                    rv = self.handle_value_node(tmp, key.to_string(), datastore, writer);
-                    match rv {
-                        Ok(_) => { },
-                        _ => { return rv; }
-                    }
-                }
-            },
-            // if we have a lambda for the data, the return value of the
-            // lambda is what we substitute for the tag
-            Lambda(ref f) => {
-                let raw = "".to_string();
-                rv = self.handle_escaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, raw, writer);
-            }
-        }
-
-        return rv;       
     }
 
     // nodes:     children of the inverted section tag
@@ -442,7 +376,7 @@ impl Template {
                   let tmpkey = key.to_string();
                   let tmpdata = self.look_up_section_data(&tmpkey, sections, datastore);
                   if tmpdata.is_some() {
-                    rv = self.handle_unescaped_node(tmpdata.unwrap(), key.to_string(), datastore, writer);
+                    rv = self.handle_unescaped_or_value_node(node, tmpdata.unwrap(), key.to_string(), datastore, writer);
                   }
                 }
                 // unescaped is simple, just look up the data in the
@@ -451,7 +385,7 @@ impl Template {
                   let tmpkey = key.to_string();
                   let tmpdata = self.look_up_section_data(&tmpkey, sections, datastore);
                   if tmpdata.is_some() {
-                    rv = self.handle_value_node(tmpdata.unwrap(), key.to_string(), datastore, writer);
+                    rv = self.handle_unescaped_or_value_node(node, tmpdata.unwrap(), key.to_string(), datastore, writer);
                   }
                 }
                 // most simple, just write the static data out, nothing to replace
@@ -584,7 +518,7 @@ impl Template {
                 let tmp = key.to_string();
                 if datastore.contains_key(&tmp) {
                     let ref val = datastore[tmp];
-                    rv = self.handle_unescaped_node(val, "".to_string(), datastore, writer);
+                    rv = self.handle_unescaped_or_value_node(node, val, "".to_string(), datastore, writer);
                 }
             }
             // value nodes contain tags who's data gets HTML escaped
@@ -593,7 +527,7 @@ impl Template {
                 let tmp = key.to_string();
                 if datastore.contains_key(&tmp) {
                     let ref val = datastore[tmp];
-                    rv = self.handle_value_node(val, "".to_string(), datastore, writer);
+                    rv = self.handle_unescaped_or_value_node(node, val, "".to_string(), datastore, writer);
                 }
             }
             // static nodes are the test in the template that doesn't get modified, 
