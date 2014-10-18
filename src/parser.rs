@@ -19,9 +19,10 @@ pub enum Node<'a> {
     Part(&'a str, &'a str) // // (name, tag)
 }
 
-#[deriving(PartialEq, Eq)]
+#[deriving(PartialEq, Eq, Show)]
 enum ParserStatus {
     Parse,
+    Sect,
     Skip
 }
 
@@ -98,46 +99,49 @@ fn parse_comment_node<'a>(token: &Token, status: &mut ParserStatus, nodes: &mut 
                     }
                 },
                 Parse => return false,
+                Sect=> return false,
             }
         },
         _ => return false
     }
 }
 
-fn parse_raw_node<'a>(name: &'a str, raw: &'a str, nodes: &mut Vec<Node<'a>>) {
+fn parse_raw_node<'a>(name: &'a str, raw: &'a str) -> Node<'a> {
     let dot_notation = name.contains(".");
     let ampersand = raw.contains("&");
     match dot_notation {
-        false => nodes.push(Unescaped(name, raw.to_string())),
+        false => {
+            return Unescaped(name, raw.to_string());
+        }
         true => {
             let parts: Vec<&str> = name.split_str(".").collect();
             match ampersand {
                 true => {
                     let node = handle_dot_notation(parts.as_slice(), true, true);
-                    nodes.push(node);
+                    return node;
                 },
                 false => {
                     let node = handle_dot_notation(parts.as_slice(), true, false);
-                    nodes.push(node);
+                    return node;
                 }
             };
         }
     }
 }
 
-fn parse_variable_node<'a>(name: &'a str, raw: &'a str, nodes: &mut Vec<Node<'a>>) {
+fn parse_variable_node<'a>(name: &'a str, raw: &'a str) -> Node<'a> {
     let dot_notation = name.contains(".");
     match dot_notation {
-        false => nodes.push(Value(name, raw.to_string())),
+        false => return Value(name, raw.to_string()),
         true => {
             let parts: Vec<&str> = name.split_str(".").collect();
             let node = handle_dot_notation(parts.as_slice(), false, false);
-            nodes.push(node);
+            return node;
         }
     }
 }
 
-fn parse_text_node<'a>(text: &'a str, status: &mut ParserStatus, nodes: &mut Vec<Node<'a>>) {
+fn parse_text_node<'a>(text: &'a str, status: &mut ParserStatus) -> Node<'a> {
     match *status {
         _ => {
             if text.contains("\n") {
@@ -145,9 +149,81 @@ fn parse_text_node<'a>(text: &'a str, status: &mut ParserStatus, nodes: &mut Vec
             } else if text.is_whitespace() {
                 *status = Skip;
             }
-            nodes.push(Static(text));
+            return Static(text);
         }
     }
+}
+
+fn parse_section_node<'a>(tokens: &Vec<Token<'a>>) -> Vec<Node<'a>> {
+    let mut nodes: Vec<Node> = vec![];
+    let mut it = tokens.iter().enumerate().peekable();
+    let mut status = Sect;
+
+    loop {
+        match it.next() {
+            Some((i, &token)) => {
+                match token {
+                    Text(text) => nodes.push(parse_text_node(text, &mut status)),
+                    Variable(name, raw) => nodes.push(parse_variable_node(name, raw)),
+                    Raw(name, raw) => nodes.push(parse_raw_node(name, raw)),
+                    Partial(name, raw) => nodes.push(Part(name, raw)),
+                    CTag(_, _) => continue, // Unopened closing tags are ignored.
+                    OTag(name, inverted, raw) => {
+                        let mut children: Vec<Token> = vec![];
+                        let mut count = 0u;
+                        let mut otag_count = 1u;
+                        for item in tokens.slice_from(i + 1).iter() {
+                            count += 1;
+                            match *item {
+                                OTag(title, inverted, raw) => {
+                                    if title == name {
+                                        otag_count += 1;
+                                    }
+                                    children.push(*item);
+                                },
+                                CTag(title, temp) => {
+                                    if title == name && otag_count == 1 {
+                                        nodes.push(Section(name, parse_section_node(&children).clone(), inverted, raw.to_string(), temp.to_string()));
+                                        break;
+                                    } else if title == name && otag_count > 1 {
+                                        otag_count -= 1;
+                                        children.push(*item);
+                                    } else {
+                                        children.push(*item);
+                                        continue;
+                                    }
+                                },
+                                _ => {
+                                    children.push(*item);
+                                    continue;
+                                }
+                            }
+                        }
+                        while count > 1 {
+                            it.next();
+                            count -= 1;
+                        }
+                    },
+                    Comment => {
+                        // Check the next element for whitespace
+                        match it.peek() {
+                            Some(&(_, token)) => {
+                                match parse_comment_node(token, &mut status, &mut nodes) {
+                                    true => {
+                                        it.next();
+                                    },
+                                    false => {}
+                                }
+                            },
+                            None => continue,
+                        }
+                    },
+                }
+            },
+            None => break
+        }
+    }
+    nodes
 }
 
 // Parse_nodes signifies the parser entry point passed the results received from
@@ -161,9 +237,9 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
         match it.next() {
             Some((i, &token)) => {
                 match token {
-                    Text(text) => parse_text_node(text, &mut status, &mut nodes),
-                    Variable(name, raw) => parse_variable_node(name, raw, &mut nodes),
-                    Raw(name, raw) => parse_raw_node(name, raw, &mut nodes),
+                    Text(text) => nodes.push(parse_text_node(text, &mut status)),
+                    Variable(name, raw) => nodes.push(parse_variable_node(name, raw)),
+                    Raw(name, raw) => nodes.push(parse_raw_node(name, raw)),
                     Partial(name, raw) => nodes.push(Part(name, raw)),
                     CTag(_, _) => continue, // Unopened closing tags are ignored.
                     OTag(name, inverted, raw) => {
@@ -181,7 +257,7 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
                                 },
                                 CTag(title, temp) => {
                                     if title == name && otag_count == 1 {
-                                        nodes.push(Section(name, parse_nodes(&children).clone(), inverted, raw.to_string(), temp.to_string()));
+                                        nodes.push(Section(name, parse_section_node(&children).clone(), inverted, raw.to_string(), temp.to_string()));
                                         break;
                                     } else if title == name && otag_count > 1 {
                                         otag_count -= 1;
@@ -216,45 +292,22 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
                                     false => {}
                                 }
                             },
-                            None => continue,
+                            None => {
+                                match nodes.last().unwrap() {
+                                    &Static(text) => {
+                                        if text.is_whitespace() {
+                                            nodes.pop();
+                                        }
+                                    }
+                                    _ => continue,
+                                }
+                            },
                         }
-                        // match it.peek() {
-                        //     Some(&(_, token)) => {
-                        //         match token {
-                        //             &Text(ref value) => {
-                        //                 match status {
-                        //                     Skip => {
-                        //                         // if whitespace and should skip, advance to next token
-                        //                         if value.is_whitespace() {
-                        //                             match nodes.last().unwrap() {
-                        //                                 &Static(text) => {
-                        //                                     // if the previous node is whitespace, remove it and skip
-                        //                                     if text.is_whitespace() {
-                        //                                         nodes.pop();
-                        //                                     }
-                        //                                 },
-                        //                                 _ => {}
-                        //                             }
-                        //                             status = Parse;
-                        //                             it.next();
-                        //                         } else {
-                        //                             status = Parse;
-                        //                         }
-                        //                     },
-                        //                     Parse => {},
-                        //                 }
-                        //             },
-                        //             _ => {}
-                        //         }
-                        //     },
-                        //     None => continue
-                        // }
                     },
                 }
             },
             None => break
         }
-
     }
 
     // Return the populated list of nodes for use by the template engine

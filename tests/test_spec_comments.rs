@@ -104,13 +104,13 @@ fn test_spec_standalone_without_prev_line_comment() {
 //   data: { }
 //   template: "!\n  {{! I'm Still Standalone }}"
 //   expected: "!\n"
-// #[test]
-// fn test_spec_standalone_without_newline_comment() {
-//     let data = HashBuilder::new();
+#[test]
+fn test_spec_standalone_without_newline_comment() {
+    let data = HashBuilder::new();
 
-//     let rv =rustache::render_text("!\n  {{! I'm Still Standalone }}", data);
-//     assert_eq!("!\n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
-// }
+    let rv =rustache::render_text("!\n  {{! I'm Still Standalone }}", data);
+    assert_eq!("!\n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+}
 
 // - name: Multiline Standalone
 //   desc: All standalone comment lines should be removed.

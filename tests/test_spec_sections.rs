@@ -131,8 +131,7 @@ fn test_spec_sections_objects_and_hashes_should_be_pushed_onto_context_stack() {
 //                            {{/b}}
 //                            {{one}}
 //                            {{/a}}",
-//                            &data,
-//                            &mut w
+//                            data
 //                         );
 //     assert_eq!("1
 //                 121
