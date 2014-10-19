@@ -73,7 +73,7 @@ fn test_spec_lambdas_interpolation_expansion() {
 //                     "|planet| => {{planet}}".to_string()               
 //                 });
 
-//     let rv = rustache::render_text_from_hb("{{= | | =}}\nHello, (|&lambda|)!", data);
+//     let rv = rustache::render_text("{{= | | =}}\nHello, (|&lambda|)!", data);
 
 //     assert_eq!("Hello, (|planet| => world)!".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
 // }
