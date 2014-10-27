@@ -79,7 +79,7 @@ impl Render<MemStream> for String {
 /// Render a template from the given template file
 ///
 /// ```ignore
-/// rustache::render_file("path/to/template.html", data);
+/// rustache::render_file("path/to/template.html", &data);
 /// ```
 pub fn render_file<R: Reader, Re: Render<R>>(path: &str, renderable: Re) -> RustacheResult<R> {
 
