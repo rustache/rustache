@@ -35,6 +35,7 @@ impl<'a> Render<MemStream> for HashBuilder<'a> {
     } 
 }
 
+
 /// Implement the `renderable` trait on the JSON type
 impl Render<MemStream> for Json {
     fn render(&self, template: &str) -> RustacheResult<MemStream> {
@@ -75,12 +76,9 @@ impl Render<MemStream> for String {
     }
 }
 
-/// Render a template from the given file
+/// Render a template from the given template file
 ///
-/// ``` ignore
-/// use rustache;
-///
-/// let data = json::from_str(r#"{"name": "Bob"}"#);
+/// ```ignore
 /// rustache::render_file("path/to/template.html", data);
 /// ```
 pub fn render_file<R: Reader, Re: Render<R>>(path: &str, renderable: Re) -> RustacheResult<R> {
@@ -94,11 +92,6 @@ pub fn render_file<R: Reader, Re: Render<R>>(path: &str, renderable: Re) -> Rust
 /// Render the given template string
 ///
 /// ```ignore
-/// use rustache;
-/// 
-/// let data = HashBuilder::new()
-///     .insert_string("name", "Bob");
-///
 /// rustache::render_text("{{ name }}", &data);
 /// ```
 pub fn render_text<R: Reader, Re: Render<R>>(input: &str, renderable: Re) -> RustacheResult<R> {
@@ -208,7 +201,6 @@ fn parse_json_vector(json: &Json) -> VecBuilder {
 
 // Hide from documentation
 #[doc(hidden)]
-#[allow(dead_code)]
 pub fn read_file(path: &Path) -> Result<String, String> {
     let display = path.display();
     let mut rv: Result<String, String>; //Err(format!("read file failed: {}", display));
