@@ -65,19 +65,15 @@ cargo test
 
 ## Roadmap
 
-- [ ] 106 of 106 Mustache spec tests passing. Current(74)
+- [ ] Full Mustache spec compliance.
+	- [ ] Comment and Section whitespace handling
+	- [ ] Handle change of delimeters
 
-- [ ] Rewrite the parser and compiler to handle all mustache cases
+- [ ] Thread errors through the parser and compiler:
 
-- [ ] Thread errors through the parser and compiler by having something like:
-
-	 - [ ] type RustacheResult<T> = Result<T, RustacheError>;
-
-	 - [ ] pub enum RustacheError {
-	      ParseErrorType(ParseError)
-	   }
-
-	 - [ ] pub enum ParseError { }
+- [ ] Fill out samples folder.
+  
+- [ ] Handle Build and Parser operations concurrently
 
 ## Contribute
 
