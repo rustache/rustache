@@ -134,7 +134,7 @@ fn parse_json(json: &Json) -> HashBuilder {
                     builder
                 });
             },
-            &Object(ref obj) => {
+            &Object(_) => {
                 data = data.insert_hash(k.as_slice(), |_| {
                     parse_json(v)
                 });
@@ -185,7 +185,7 @@ fn parse_json_vector(json: &Json) -> VecBuilder {
                     builder
                 });
             },
-            &Object(ref obj) => {
+            &Object(_) => {
                 data = data.push_hash(|_| {
                     parse_json(v)
                 });

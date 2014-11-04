@@ -22,12 +22,102 @@ pub enum Node<'a> {
 #[deriving(PartialEq, Eq, Show)]
 enum ParserStatus {
     Parse,
-    Sect,
+    // Sect,
     Skip
 }
 
-// Function that recursively handles tag names that utilize dot notation
-// shorthand.
+// Parse_nodes signifies the parser entry point passed the results received from
+// the template compiler.
+pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
+    let mut nodes: Vec<Node> = vec![];
+    let mut it = list.iter().enumerate().peekable();
+    let mut status = Parse;
+
+    loop {
+        match it.next() {
+            Some((i, &token)) => {
+                match token {
+                    Text(text) => nodes.push(parse_text_node(text, &mut status)),
+                    Variable(name, raw) => nodes.push(parse_variable_node(name, raw)),
+                    Raw(name, raw) => nodes.push(parse_raw_node(name, raw)),
+                    Partial(name, raw) => nodes.push(Part(name, raw)),
+                    // Unopened closing tags are ignored.
+                    // TODO: Return a parser error?
+                    CTag(_, _) => continue,
+                    OTag(name, inverted, raw) => {
+                        let mut children: Vec<Token> = vec![];
+                        let mut count = 0u;
+                        let mut otag_count = 1u;
+                        for item in list.slice_from(i + 1).iter() {
+                            count += 1;
+                            match *item {
+                                OTag(title, _, _) => {
+                                    if title == name {
+                                        otag_count += 1;
+                                    }
+                                    children.push(*item);
+                                },
+                                CTag(title, temp) => {
+                                    if title == name && otag_count == 1 {
+                                        nodes.push(Section(name, parse_nodes(&children).clone(), inverted, raw.to_string(), temp.to_string()));
+                                        break;
+                                    } else if title == name && otag_count > 1 {
+                                        otag_count -= 1;
+                                        children.push(*item);
+                                    } else {
+                                        children.push(*item);
+                                        continue;
+                                    }
+                                },
+                                _ => {
+                                    children.push(*item);
+                                    continue;
+                                }
+                            }
+                        }
+
+                        // Advance the iterator to the position of the CTAG.  If the 
+                        // OTag is never closed, these children will never be processed.
+                        // TODO: Return a parser error?
+                        while count > 1 {
+                            it.next();
+                            count -= 1;
+                        }
+                    },
+                    Comment => {
+                        // Check the next element for whitespace
+                        match it.peek() {
+                            Some(&(_, token)) => {
+                                match parse_comment_node(token, &mut status, &mut nodes) {
+                                    true => {
+                                        it.next();
+                                    },
+                                    false => {}
+                                }
+                            },
+                            None => {
+                                match nodes.last().unwrap() {
+                                    &Static(text) => {
+                                        if text.is_whitespace() {
+                                            nodes.pop();
+                                        }
+                                    }
+                                    _ => continue,
+                                }
+                            },
+                        }
+                    },
+                }
+            },
+            None => break
+        }
+    }
+
+    // Return the populated list of nodes for use by the template engine
+    nodes
+}
+
+// Recursively handle tag names that utilize dot notation.
 fn handle_dot_notation<'a>(parts: &[&'a str], unescaped: bool, amp: bool) -> Node<'a> {
     let variable = parts[0];
     match parts.len() {
@@ -80,7 +170,7 @@ fn parse_comment_node<'a>(token: &Token, status: &mut ParserStatus, nodes: &mut 
         Text(ref value) => {
             match *status {
                 Skip => {
-                    // if whitespace and should skip, advance to next token
+                    // If whitespace and should skip, advance to next token
                     if value.is_whitespace() {
                         match nodes.last().unwrap() {
                             &Static(text) => {
@@ -99,7 +189,7 @@ fn parse_comment_node<'a>(token: &Token, status: &mut ParserStatus, nodes: &mut 
                     }
                 },
                 Parse => return false,
-                Sect=> return false,
+                // Sect=> return false,
             }
         },
         _ => return false
@@ -152,166 +242,6 @@ fn parse_text_node<'a>(text: &'a str, status: &mut ParserStatus) -> Node<'a> {
             return Static(text);
         }
     }
-}
-
-fn parse_section_node<'a>(tokens: &Vec<Token<'a>>) -> Vec<Node<'a>> {
-    let mut nodes: Vec<Node> = vec![];
-    let mut it = tokens.iter().enumerate().peekable();
-    let mut status = Sect;
-
-    loop {
-        match it.next() {
-            Some((i, &token)) => {
-                match token {
-                    Text(text) => nodes.push(parse_text_node(text, &mut status)),
-                    Variable(name, raw) => nodes.push(parse_variable_node(name, raw)),
-                    Raw(name, raw) => nodes.push(parse_raw_node(name, raw)),
-                    Partial(name, raw) => nodes.push(Part(name, raw)),
-                    CTag(_, _) => continue, // Unopened closing tags are ignored.
-                    OTag(name, inverted, raw) => {
-                        let mut children: Vec<Token> = vec![];
-                        let mut count = 0u;
-                        let mut otag_count = 1u;
-                        for item in tokens.slice_from(i + 1).iter() {
-                            count += 1;
-                            match *item {
-                                OTag(title, inverted, raw) => {
-                                    if title == name {
-                                        otag_count += 1;
-                                    }
-                                    children.push(*item);
-                                },
-                                CTag(title, temp) => {
-                                    if title == name && otag_count == 1 {
-                                        nodes.push(Section(name, parse_section_node(&children).clone(), inverted, raw.to_string(), temp.to_string()));
-                                        break;
-                                    } else if title == name && otag_count > 1 {
-                                        otag_count -= 1;
-                                        children.push(*item);
-                                    } else {
-                                        children.push(*item);
-                                        continue;
-                                    }
-                                },
-                                _ => {
-                                    children.push(*item);
-                                    continue;
-                                }
-                            }
-                        }
-                        while count > 1 {
-                            it.next();
-                            count -= 1;
-                        }
-                    },
-                    Comment => {
-                        // Check the next element for whitespace
-                        match it.peek() {
-                            Some(&(_, token)) => {
-                                match parse_comment_node(token, &mut status, &mut nodes) {
-                                    true => {
-                                        it.next();
-                                    },
-                                    false => {}
-                                }
-                            },
-                            None => continue,
-                        }
-                    },
-                }
-            },
-            None => break
-        }
-    }
-    nodes
-}
-
-// Parse_nodes signifies the parser entry point passed the results received from
-// the template compiler.
-pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
-    let mut nodes: Vec<Node> = vec![];
-    let mut it = list.iter().enumerate().peekable();
-    let mut status = Parse;
-
-    loop {
-        match it.next() {
-            Some((i, &token)) => {
-                match token {
-                    Text(text) => nodes.push(parse_text_node(text, &mut status)),
-                    Variable(name, raw) => nodes.push(parse_variable_node(name, raw)),
-                    Raw(name, raw) => nodes.push(parse_raw_node(name, raw)),
-                    Partial(name, raw) => nodes.push(Part(name, raw)),
-                    CTag(_, _) => continue, // Unopened closing tags are ignored.
-                    OTag(name, inverted, raw) => {
-                        let mut children: Vec<Token> = vec![];
-                        let mut count = 0u;
-                        let mut otag_count = 1u;
-                        for item in list.slice_from(i + 1).iter() {
-                            count += 1;
-                            match *item {
-                                OTag(title, inverted, raw) => {
-                                    if title == name {
-                                        otag_count += 1;
-                                    }
-                                    children.push(*item);
-                                },
-                                CTag(title, temp) => {
-                                    if title == name && otag_count == 1 {
-                                        nodes.push(Section(name, parse_section_node(&children).clone(), inverted, raw.to_string(), temp.to_string()));
-                                        break;
-                                    } else if title == name && otag_count > 1 {
-                                        otag_count -= 1;
-                                        children.push(*item);
-                                    } else {
-                                        children.push(*item);
-                                        continue;
-                                    }
-                                },
-                                _ => {
-                                    children.push(*item);
-                                    continue;
-                                }
-                            }
-                        }
-
-                        // Advance the iterator to the position of the CTAG.  If the 
-                        // OTag is never closed, these children will never be processed.
-                        while count > 1 {
-                            it.next();
-                            count -= 1;
-                        }
-                    },
-                    Comment => {
-                        // Check the next element for whitespace
-                        match it.peek() {
-                            Some(&(_, token)) => {
-                                match parse_comment_node(token, &mut status, &mut nodes) {
-                                    true => {
-                                        it.next();
-                                    },
-                                    false => {}
-                                }
-                            },
-                            None => {
-                                match nodes.last().unwrap() {
-                                    &Static(text) => {
-                                        if text.is_whitespace() {
-                                            nodes.pop();
-                                        }
-                                    }
-                                    _ => continue,
-                                }
-                            },
-                        }
-                    },
-                }
-            },
-            None => break
-        }
-    }
-
-    // Return the populated list of nodes for use by the template engine
-    nodes
 }
 
 #[cfg(test)]
