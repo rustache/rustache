@@ -143,7 +143,7 @@ impl Template {
                         Hash(ref h) => {
                             hashes.insert(0, h);
                         }, 
-                        Vector(ref v) => {
+                        Vector(_) => {
                             return Some(data);
                         }
                         _ => { }
@@ -357,7 +357,7 @@ impl Template {
                         &Integer(ref val) => return Err(TemplateErrorType(UnexpectedDataType(format!("{}", val)))),
                         &Float(ref val) => return Err(TemplateErrorType(UnexpectedDataType(format!("{}", val)))),
                         &Vector(ref val) => return Err(TemplateErrorType(UnexpectedDataType(format!("{}", val)))),
-                        &Lambda(ref val) => return Err(TemplateErrorType(UnexpectedDataType("lambda".to_string()))),
+                        &Lambda(_) => return Err(TemplateErrorType(UnexpectedDataType("lambda".to_string()))),
                     }
                 }
             }
@@ -393,13 +393,14 @@ impl Template {
                   rv = self.write_to_stream(writer, &key.to_string(), "render: section node static");
                 }
                 // sections are special and may be inverted
-                Section(ref key, ref children, ref inverted, ref open, ref close) => {
+                Section(ref key, ref children, ref inverted, _, _) => {
                   match inverted {
-                        // a normal, not inverted tag is more complicated and may recurse
+                        // A normal, not inverted tag is more complicated and may recurse
                         // we need to save what sections we have been in, so the data
-                        // lookup can happen correctly.  data lookup is special for sections
+                        // lookup can happen correctly.  Data lookup is special for sections.
                         &false => {
                           let foo = sectionkey;
+                          println!("{}", foo);
                           let tmpkey = key.to_string();
                           sections.push(tmpkey.clone());
                           let tmpdata = self.look_up_section_data(&tmpkey, sections, datastore);

@@ -1,7 +1,7 @@
 #![license = "MIT"]
 
-#![warn(missing_doc)]
-#![warn(warnings)]
+#![deny(missing_docs)]
+#![deny(warnings)]
 
 #![feature(phase)]
 //! The main crate for the Rustache library.
@@ -70,7 +70,7 @@ impl<'a> PartialEq for Data<'a> {
             (&Float(ref val0), &Float(ref val1)) => val0 == val1,
             (&Vector(ref val0), &Vector(ref val1)) => val0 == val1,
             (&Hash(ref val0), &Hash(ref val1)) => val0 == val1,
-            (&Lambda(_), &Lambda(_)) => fail!("Can't compare closures"),
+            (&Lambda(_), &Lambda(_)) => panic!("Can't compare closures"),
             (_, _) => false
         }
     }
