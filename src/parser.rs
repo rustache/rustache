@@ -26,14 +26,15 @@ enum ParserStatus {
     Skip
 }
 
-// Parse_nodes signifies the parser entry point passed the results received from
-// the template compiler.
+// Parse list of tokens into instruction nodes
+// Section nodes will be handled recursively
 pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
     let mut nodes: Vec<Node> = vec![];
     let mut it = list.iter().enumerate().peekable();
     let mut status = Parse;
 
     loop {
+        // Iterate while still nodes in the list
         match it.next() {
             Some((i, &token)) => {
                 match token {
@@ -41,7 +42,7 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
                     Variable(name, raw) => nodes.push(parse_variable_node(name, raw)),
                     Raw(name, raw) => nodes.push(parse_raw_node(name, raw)),
                     Partial(name, raw) => nodes.push(Part(name, raw)),
-                    // Unopened closing tags are ignored.
+                    // Unopened closing tags are ignored
                     // TODO: Return a parser error?
                     CTag(_, _) => continue,
                     OTag(name, inverted, raw) => {
@@ -78,7 +79,7 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
 
                         // Advance the iterator to the position of the CTAG.  If the 
                         // OTag is never closed, these children will never be processed.
-                        // TODO: Return a parser error?
+                        // TODO: Return a parser warning in the case of an unclosed tag?
                         while count > 1 {
                             it.next();
                             count -= 1;
@@ -90,7 +91,7 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
                             Some(&(_, token)) => {
                                 match parse_comment_node(token, &mut status, &mut nodes) {
                                     true => {
-                                        it.next();
+                                        // it.next();
                                     },
                                     false => {}
                                 }
@@ -113,11 +114,96 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
         }
     }
 
-    // Return the populated list of nodes for use by the template engine
+    // Return the populated list of nodes
     nodes
 }
 
-// Recursively handle tag names that utilize dot notation.
+// Helper function for handling the creation of a text node
+fn parse_text_node<'a>(text: &'a str, status: &mut ParserStatus) -> Node<'a> {
+    match *status {
+        _ => {
+            if text.contains("\n") {
+                *status = Skip;
+            } else if text.is_whitespace() {
+                *status = Skip;
+            }
+            return Static(text);
+        }
+    }
+}
+
+// Helper function for handling the creation of a variable node
+fn parse_variable_node<'a>(name: &'a str, raw: &'a str) -> Node<'a> {
+    let dot_notation = name.contains(".");
+    match dot_notation {
+        false => return Value(name, raw.to_string()),
+        true => {
+            let parts: Vec<&str> = name.split_str(".").collect();
+            let node = handle_dot_notation(parts.as_slice(), false, false);
+            return node;
+        }
+    }
+}
+
+// Helper function for handling the creation of an unescaped variable node
+fn parse_raw_node<'a>(name: &'a str, raw: &'a str) -> Node<'a> {
+    let dot_notation = name.contains(".");
+    let ampersand = raw.contains("&");
+    match dot_notation {
+        false => {
+            return Unescaped(name, raw.to_string());
+        }
+        true => {
+            let parts: Vec<&str> = name.split_str(".").collect();
+            match ampersand {
+                true => {
+                    let node = handle_dot_notation(parts.as_slice(), true, true);
+                    return node;
+                },
+                false => {
+                    let node = handle_dot_notation(parts.as_slice(), true, false);
+                    return node;
+                }
+            };
+        }
+    }
+}
+
+// Helper function for handling the creation of comment nodes and
+// properly handle whitespace
+fn parse_comment_node<'a>(token: &Token, status: &mut ParserStatus, nodes: &mut Vec<Node<'a>>) -> bool {
+    match *token {
+        Text(ref value) => {
+            match *status {
+                Skip => {
+                    // If whitespace and should skip, advance to next token
+                    if value.is_whitespace() {
+                        match nodes.last().unwrap() {
+                            &Static(text) => {
+                                // If the previous node is whitespace and has a newline
+                                // then remove it
+                                if text.is_whitespace() && text.contains("\n") {
+                                    nodes.pop();
+                                }
+                            },
+                            _ => {}
+                        }
+                        *status = Parse;
+                        return true;
+                    } else {
+                        *status = Parse;
+                        return false;
+                    }
+                },
+                Parse => return false,
+                // Sect => return false,
+            }
+        },
+        _ => return false
+    }
+}
+
+// Recursively handle tag names that utilize dot notation shorthand
 fn handle_dot_notation<'a>(parts: &[&'a str], unescaped: bool, amp: bool) -> Node<'a> {
     let variable = parts[0];
     match parts.len() {
@@ -161,85 +247,6 @@ fn handle_dot_notation<'a>(parts: &[&'a str], unescaped: bool, amp: bool) -> Nod
 
             // Enter recursion and assign the results as children.
             return Section(variable, vec![handle_dot_notation(parts.slice_from(1), unescaped, amp)], false, otag, ctag);
-        }
-    }
-}
-
-fn parse_comment_node<'a>(token: &Token, status: &mut ParserStatus, nodes: &mut Vec<Node<'a>>) -> bool {
-    match *token {
-        Text(ref value) => {
-            match *status {
-                Skip => {
-                    // If whitespace and should skip, advance to next token
-                    if value.is_whitespace() {
-                        match nodes.last().unwrap() {
-                            &Static(text) => {
-                                // if the previous node is whitespace, remove it and skip
-                                if text.is_whitespace() {
-                                    nodes.pop();
-                                }
-                            },
-                            _ => {}
-                        }
-                        *status = Parse;
-                        return true;
-                    } else {
-                        *status = Parse;
-                        return false;
-                    }
-                },
-                Parse => return false,
-                // Sect=> return false,
-            }
-        },
-        _ => return false
-    }
-}
-
-fn parse_raw_node<'a>(name: &'a str, raw: &'a str) -> Node<'a> {
-    let dot_notation = name.contains(".");
-    let ampersand = raw.contains("&");
-    match dot_notation {
-        false => {
-            return Unescaped(name, raw.to_string());
-        }
-        true => {
-            let parts: Vec<&str> = name.split_str(".").collect();
-            match ampersand {
-                true => {
-                    let node = handle_dot_notation(parts.as_slice(), true, true);
-                    return node;
-                },
-                false => {
-                    let node = handle_dot_notation(parts.as_slice(), true, false);
-                    return node;
-                }
-            };
-        }
-    }
-}
-
-fn parse_variable_node<'a>(name: &'a str, raw: &'a str) -> Node<'a> {
-    let dot_notation = name.contains(".");
-    match dot_notation {
-        false => return Value(name, raw.to_string()),
-        true => {
-            let parts: Vec<&str> = name.split_str(".").collect();
-            let node = handle_dot_notation(parts.as_slice(), false, false);
-            return node;
-        }
-    }
-}
-
-fn parse_text_node<'a>(text: &'a str, status: &mut ParserStatus) -> Node<'a> {
-    match *status {
-        _ => {
-            if text.contains("\n") {
-                *status = Skip;
-            } else if text.is_whitespace() {
-                *status = Skip;
-            }
-            return Static(text);
         }
     }
 }

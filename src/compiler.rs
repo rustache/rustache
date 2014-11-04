@@ -26,10 +26,10 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
     let mut close_pos = 0u;
     let len = contents.len();
 
-    // (text)(whitespace)({{(tag)}})(whitespace)
+    // (text)(whitespace)( (tag) )(whitespace)
     let re = regex!(r"(.*?)([ \t\r\n]*)(\{\{(\{?\S?\s*?[\w\.\s]*.*?\s*?\}?)\}\})([ \t\r\n]*)");
 
-    // Begin capturing groups 
+    // Grab all captures and process
     for cap in re.captures_iter(contents) {
         // Establish groups for tag capture, preventing lookup for each call
         let preceding_text = cap.at(1);
@@ -42,12 +42,12 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
         let (_, c) = cap.pos(0).unwrap();
         
         // Catch preceding text
-        if preceding_text != "" {
+        if !preceding_text.is_empty() {
             tokens.push(Text(preceding_text));
         }
 
         // Catch preceding whitespace
-        if preceding_whitespace != "" {
+        if !preceding_whitespace.is_empty() {
             tokens.push(Text(preceding_whitespace));
         }
 
@@ -56,7 +56,7 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
         add_token(inner, outer, &mut tokens);
 
         // Catch trailing whitespace
-        if trailing_whitespace != "" {
+        if !trailing_whitespace.is_empty() {
             tokens.push(Text(trailing_whitespace));
         } 
     }
