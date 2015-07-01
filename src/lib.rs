@@ -1,5 +1,3 @@
-#![license = "MIT"]
-
 #![deny(missing_docs)]
 #![deny(warnings)]
 
@@ -9,11 +7,7 @@
 //! Rustache is a flexible template engine for Rust.
 
 // StdLib dependencies
-#[phase(plugin)] 
-extern crate regex_macros;
-extern crate regex;
 extern crate serialize;
-extern crate memstream;
 
 use std::fmt;
 use std::cell::RefCell;
@@ -57,8 +51,9 @@ pub enum Data<'a> {
     Float(f64),
     Vector(Vec<Data<'a>>),
     Hash(HashMap<String, Data<'a>>),
-    Lambda(RefCell<|String|: 'a -> String>)
+    Lambda(RefCell<F>)
 }
+// |String|: 'a -> String : F Above
 
 // Implementing custom PartialEq for Data
 impl<'a> PartialEq for Data<'a> {
@@ -86,7 +81,7 @@ impl<'a> fmt::Show for Data<'a> {
             Float(ref val)   => write!(f, "Float({})", val),
             Vector(ref val)  => write!(f, "Vector({})", val),
             Hash(ref val)    => write!(f, "Hash({})", val),
-            Lambda(_)        => write!(f, "Lambda(...)") 
+            Lambda(_)        => write!(f, "Lambda(...)")
         }
     }
 }

@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use {Data, Strng, Bool, Integer, Float, Vector, Hash, Lambda};
 
 /// `HashBuilder` is a helper type that constructs `Data` types in a HashMap
-#[deriving(Show)]
+#[derive(Debug)]
 pub struct HashBuilder<'a> {
     #[doc(hidden)]
     pub data: HashMap<String, Data<'a>>,
@@ -84,17 +84,17 @@ impl<'a> HashBuilder<'a> {
     ///         builder
     ///             .push_string("Mage".to_string())
     ///             .push_string("Druid".to_string())
-    ///     });  
+    ///     });
     /// ```
-    pub fn insert_vector<K: StrAllocating>(self, key: K, f: |VecBuilder<'a>| -> VecBuilder<'a>) -> HashBuilder<'a> {
+    pub fn insert_vector<K: StrAllocating>(self, key: K, f: F) where F: Fn(VecBuilder<'a>) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         let builder = f(VecBuilder::new());
         data.insert(key.into_string(), builder.build());
         HashBuilder { data: data, partials_path: partials_path }
-    }  
+    }
 
     /// Add a `Hash` to the `HashBuilder`
-    /// 
+    ///
     /// ```rust
     /// use rustache::HashBuilder;
     /// let data = HashBuilder::new()
@@ -106,10 +106,10 @@ impl<'a> HashBuilder<'a> {
     ///     .insert_hash("hero2", |builder| {
     ///         builder
     ///             .insert_string("first_name", "Jaina")
-    ///             .insert_string("last_name", "Proudmoore")    
+    ///             .insert_string("last_name", "Proudmoore")
     ///     });
     /// ```
-    pub fn insert_hash<K: StrAllocating>(self, key: K, f: |HashBuilder<'a>| -> HashBuilder<'a>) -> HashBuilder<'a> {
+    pub fn insert_hash<K: StrAllocating>(self, key: K, f: F) where F: Fn(HashBuilder<'a>) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         let builder = f(HashBuilder::new());
         data.insert(key.into_string(), builder.build());
@@ -122,10 +122,10 @@ impl<'a> HashBuilder<'a> {
     /// use rustache::HashBuilder;
     /// let data = HashBuilder::new()
     ///     .insert_lambda("lambda", |_| {
-    ///         "world".to_string()               
+    ///         "world".to_string()
     ///     });
     /// ```
-    pub fn insert_lambda<K: StrAllocating>(self, key: K, f: |String|: 'a -> String) -> HashBuilder<'a> {
+    pub fn insert_lambda<K: StrAllocating>(self, key: K, f: F) where F: Fn(String) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         data.insert(key.into_string(), Lambda(RefCell::new(f)));
         HashBuilder { data: data, partials_path: partials_path }
@@ -222,7 +222,7 @@ impl<'a> VecBuilder<'a> {
     ///             .push_string("Jaina Proudmoore".to_string())
     ///     });
     /// ```
-    pub fn push_vector(self, f: |VecBuilder<'a>| -> VecBuilder<'a>) -> VecBuilder<'a> {
+    pub fn push_vector(self, f: F) where F: Fn(FnVecBuilder<'a>) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         let builder = f(VecBuilder::new());
         data.push(builder.build());
@@ -237,15 +237,15 @@ impl<'a> VecBuilder<'a> {
     ///     .push_hash(|builder| {
     ///         builder
     ///             .insert_string("first_name".to_string(), "Garrosh".to_string())
-    ///             .insert_string("last_name".to_string(), "Hellscream".to_string())       
+    ///             .insert_string("last_name".to_string(), "Hellscream".to_string())
     ///     })
     ///     .push_hash(|builder| {
     ///         builder
     ///             .insert_string("first_name".to_string(), "Malfurion".to_string())
-    ///             .insert_string("last_name".to_string(), "Stormrage".to_string())    
+    ///             .insert_string("last_name".to_string(), "Stormrage".to_string())
     ///     });
     /// ```
-    pub fn push_hash(self, f: |HashBuilder<'a>| -> HashBuilder<'a>) -> VecBuilder<'a> {
+    pub fn push_hash(self, f: F) where F: Fn(HashBuilder<'a>) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         let builder = f(HashBuilder::new());
         data.push(builder.build());
@@ -261,7 +261,7 @@ impl<'a> VecBuilder<'a> {
     ///         "world".to_string()
     ///     });
     /// ```
-    pub fn push_lambda(self, f: |String|: 'a -> String) -> VecBuilder <'a> {
+    pub fn push_lambda(self, f: F) where F: Fn(String) -> VecBuilder <'a> {
         let VecBuilder { mut data } = self;
         data.push(Lambda(RefCell::new(f)));
         VecBuilder { data: data }
@@ -301,7 +301,7 @@ mod tests {
         let mut hash1 = HashMap::new();
         hash1.insert("first_name".to_string(), Strng("Anduin".to_string()));
         hash1.insert("last_name".to_string(), Strng("Wrynn".to_string()));
-        hash1.insert("age".to_string(), Integer(21i));
+        hash1.insert("age".to_string(), Integer(21isize));
         hash1.insert("weight".to_string(), Float(120.16f64));
         hash1.insert("class".to_string(), Strng("Priest".to_string()));
         hash1.insert("died".to_string(), Bool(false));
@@ -312,7 +312,7 @@ mod tests {
         let hash2 = HashBuilder::new().set_partials_path("/hearthstone")
                         .insert_string("first_name", "Anduin")
                         .insert_string("last_name", "Wrynn")
-                        .insert_int("age", 21i)
+                        .insert_int("age", 21isize)
                         .insert_float("weight", 120.16f64)
                         .insert_string("class", "Priest")
                         .insert_bool("died", false)
@@ -364,10 +364,10 @@ mod tests {
         // Since we can't directly compare closures, just make
         // sure we're threading through the builder
 
-        let mut num = 10u;
+        let mut num = 10u32;
         let data = VecBuilder::new()
             .push_lambda(|x| {
-                num *= 2u;
+                num *= 2u32;
                 x + num.to_string()
             })
             .build();

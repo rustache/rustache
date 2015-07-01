@@ -1,3 +1,5 @@
+use regex::Regex;
+
 // The compiler takes in a stringified template file or a string and
 // splits into a list of tokens to be processed by the parser.
 
@@ -5,7 +7,7 @@
 // text provided within the template.  Raw tag values are stored
 // for use in lambdas.
 
-#[deriving(Show, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Token<'a> {
     Text(&'a str), // (text)
     Variable(&'a str, &'a str), // (name, tag)
@@ -23,11 +25,11 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
 
     // Close position and length are used to catch trailing characters afer last
     // tag capture, or if no tags are present in the template.
-    let mut close_pos = 0u;
+    let mut close_pos = 0;
     let len = contents.len();
 
     // (text)(whitespace)( (tag) )(whitespace)
-    let re = regex!(r"(.*?)([ \t\r\n]*)(\{\{(\{?\S?\s*?[\w\.\s]*.*?\s*?\}?)\}\})([ \t\r\n]*)");
+    let re = Regex::new(r"(.*?)([ \t\r\n]*)(\{\{(\{?\S?\s*?[\w\.\s]*.*?\s*?\}?)\}\})([ \t\r\n]*)").unwrap();
 
     // Grab all captures and process
     for cap in re.captures_iter(contents) {
@@ -40,7 +42,7 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
 
         // Grab closing index
         let (_, c) = cap.pos(0).unwrap();
-        
+
         // Catch preceding text
         if !preceding_text.is_empty() {
             tokens.push(Text(preceding_text));
@@ -58,11 +60,11 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
         // Catch trailing whitespace
         if !trailing_whitespace.is_empty() {
             tokens.push(Text(trailing_whitespace));
-        } 
+        }
     }
 
     // Catch trailing text
-    if close_pos < len { 
+    if close_pos < len {
         tokens.push(Text(contents.slice_from(close_pos)));
     }
 
@@ -111,7 +113,7 @@ mod compiler_tests {
     fn basic_compiler_test() {
         let contents = "<div> <h1> {{ token }} {{{ unescaped }}} {{> partial }} </h1> </div>";
         let tokens = compiler::create_tokens(contents);
-        let expected = vec![Text("<div> <h1>"), 
+        let expected = vec![Text("<div> <h1>"),
                             Text(" "),
                             Variable("token", "{{ token }}"),
                             Text(" "),
@@ -130,10 +132,10 @@ mod compiler_tests {
         let contents = "{{!comment}}{{#section}}{{/section}}{{^isection}}{{/isection}}{{>partial}}{{&unescaped}}{{value}}other crap";
         let tokens = compiler::create_tokens(contents);
         let expected = vec![Comment,
-                            OTag("section", false, "{{#section}}"), 
+                            OTag("section", false, "{{#section}}"),
                             CTag("section", "{{/section}}"),
-                            OTag("isection", true, "{{^isection}}"), 
-                            CTag("isection", "{{/isection}}"), 
+                            OTag("isection", true, "{{^isection}}"),
+                            CTag("isection", "{{/isection}}"),
                             Partial("partial", "{{>partial}}"),
                             Raw("unescaped", "{{&unescaped}}"),
                             Variable("value", "{{value}}"),
@@ -199,7 +201,7 @@ mod compiler_tests {
         let contents = "{{>partial";
         let tokens = compiler::create_tokens(contents);
         let expected = vec![Text("{{>partial")];
-        assert_eq!(expected, tokens);    
+        assert_eq!(expected, tokens);
     }
 
     #[test]
@@ -207,7 +209,7 @@ mod compiler_tests {
         let contents = "{{>partial}}";
         let tokens = compiler::create_tokens(contents);
         let expected = vec![Partial("partial", "{{>partial}}")];
-        assert_eq!(expected, tokens);    
+        assert_eq!(expected, tokens);
     }
 
     #[test]
@@ -255,7 +257,7 @@ mod compiler_tests {
         let contents = "{value other crap";
         let tokens = compiler::create_tokens(contents);
         let expected = vec![Text("{value other crap")];
-        assert_eq!(expected, tokens);    
+        assert_eq!(expected, tokens);
     }
 
     #[test]
@@ -263,6 +265,6 @@ mod compiler_tests {
         let contents = "value} other crap";
         let tokens = compiler::create_tokens(contents);
         let expected = vec![Text("value} other crap")];
-        assert_eq!(expected, tokens);    
+        assert_eq!(expected, tokens);
     }
 }
