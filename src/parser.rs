@@ -3,7 +3,10 @@
 // Nodes contain only the necessary information to be used
 // to seek out appropriate data for injection.
 
-use compiler::{Token, Text, Variable, OTag, CTag, Raw, Partial, Comment};
+use compiler::Token;
+use compiler::Token::{Text, Variable, OTag, CTag, Raw, Partial, Comment};
+use self::Node::*;
+use self::ParserStatus::*;
 
 // Node signifies the data structure used by the template to
 // determine how to correctly implement data.  Each Node type
