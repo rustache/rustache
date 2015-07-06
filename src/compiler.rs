@@ -1,4 +1,7 @@
-use regex::Regex;
+extern crate regex;
+
+use self::regex::Regex;
+use self::Token::*;
 
 // The compiler takes in a stringified template file or a string and
 // splits into a list of tokens to be processed by the parser.

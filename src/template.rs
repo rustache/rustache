@@ -1,17 +1,20 @@
 use std::path::Path;
-use std::io::fs::PathExtensions;
-use std::io::File;
+use std::fs::{File, PathExt};
 use std::fmt;
+use std::io::Write;
 
 use compiler;
 use parser;
-use parser::{Node, Value, Static, Unescaped, Section, Part};
-use super::{Data, Strng, Bool, Integer, Float, Vector, Hash, Lambda};
+use parser::Node;
+use parser::Node::{Value, Static, Unescaped, Section, Part};
+use Data;
+use Data::{Strng, Bool, Integer, Float, Vector, Hash, Lambda};
 use build::HashBuilder;
 use std::collections::HashMap;
 
 use RustacheResult;
-use TemplateErrorType;
+use RustacheError::TemplateErrorType;
+use self::TemplateError::*;
 
 pub struct Template {
    partials_path: String
@@ -24,7 +27,7 @@ pub enum TemplateError {
     UnexpectedNodeType(String),
 }
 
-impl fmt::Show for TemplateError {
+impl fmt::Debug for TemplateError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             &StreamWriteError(ref val)  => write!(f, "StreamWriteError({})", val),
@@ -43,7 +46,7 @@ impl Template {
     }
 
     // utility method to write out rendered template with error handling
-    fn write_to_stream<W: Writer>(&self,
+    fn write_to_stream<W: Write>(&self,
                                   writer: &mut W,
                                   data: &String,
                                   errstr: &str) -> RustacheResult<()> {
@@ -170,7 +173,7 @@ impl Template {
         return rv;
     }
 
-    fn handle_unescaped_lambda_interpolation<W: Writer>(&mut self,
+    fn handle_unescaped_lambda_interpolation<F, W: Write>(&mut self,
                                                         f: F,
                                                         data: &HashMap<String, Data>,
                                                         raw: String,
@@ -182,7 +185,7 @@ impl Template {
         return self.render(writer, data, &nodes);
     }
 
-    fn handle_escaped_lambda_interpolation<W: Writer>(&mut self,
+    fn handle_escaped_lambda_interpolation<F, W: Write>(&mut self,
                                                       f: F,
                                                       data: &HashMap<String, Data>,
                                                       raw: String,
@@ -205,7 +208,7 @@ impl Template {
     // handles the data appropriately.
     //
     // TODO: really don't need to be handling Bool, Vector or Hash
-    fn handle_unescaped_or_value_node<W: Writer>(&mut self,
+    fn handle_unescaped_or_value_node<W: Write>(&mut self,
                                         node: &Node,
                                         data: &Data,
                                         key: String,
@@ -284,7 +287,7 @@ impl Template {
     // inverted nodes only contain static text to render and are only rendered
     // if the data in the template data for the tag name is "falsy"
     //
-    fn handle_inverted_node<W:Writer>(&mut self,
+    fn handle_inverted_node<W:Write>(&mut self,
                                       nodes: &Vec<Node>,
                                       datastore: &HashMap<String, Data>,
                                       writer: &mut W) -> RustacheResult<()> {
@@ -330,7 +333,7 @@ impl Template {
     // data:      data from section key from HashBuilder store
     // datastore: HashBuilder data
     // writer:    io stream
-    fn handle_section_node<W: Writer>(&mut self,
+    fn handle_section_node<W: Write>(&mut self,
                                       nodes: &Vec<Node>,
                                       sectionkey: &String,
                                       data: &Data,
@@ -485,7 +488,7 @@ impl Template {
     //
     // TODO: throw error if partials file doesn't exist, if file read fails
     //
-    fn handle_partial_file_node<W: Writer>(&mut self,
+    fn handle_partial_file_node<W: Write>(&mut self,
                                            filename: &str,
                                            datastore: &HashMap<String, Data>,
                                            writer: &mut W) -> RustacheResult<()> {
@@ -511,7 +514,7 @@ impl Template {
         return rv;
     }
 
-    fn handle_node<W: Writer>(&mut self, node: &Node, datastore: &HashMap<String, Data>, writer: &mut W)  -> RustacheResult<()> {
+    fn handle_node<W: Write>(&mut self, node: &Node, datastore: &HashMap<String, Data>, writer: &mut W)  -> RustacheResult<()> {
         let mut rv = Ok(());
 
         match *node {
@@ -575,7 +578,7 @@ impl Template {
     // writer: an io::stream to write the rendered template out to
     // data:   the internal HashBuilder data store
     // parser: the parser object that has the parsed nodes, see src/parse.js
-    pub fn render<W: Writer>(&mut self,
+    pub fn render<W: Write>(&mut self,
                              writer: &mut W,
                              data: &HashMap<String, Data>,
                              nodes: &Vec<Node>) -> RustacheResult<()> {
@@ -597,7 +600,7 @@ impl Template {
     }
 
     // main entry point to Template
-    pub fn render_data<W: Writer>(&mut self,
+    pub fn render_data<W: Write>(&mut self,
                                   writer: &mut W,
                                   datastore: &HashBuilder,
                                   nodes: &Vec<Node>) -> RustacheResult<()> {

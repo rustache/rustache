@@ -1,7 +1,8 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use {Data, Strng, Bool, Integer, Float, Vector, Hash, Lambda};
+use Data;
+use Data::{Strng, Bool, Integer, Float, Vector, Hash, Lambda};
 
 /// `HashBuilder` is a helper type that constructs `Data` types in a HashMap
 #[derive(Debug)]
@@ -28,9 +29,9 @@ impl<'a> HashBuilder<'a> {
     /// let data = HashBuilder::new()
     ///     .insert_string("game", "Hearthstone: Heroes of Warcraft");
     /// ```
-    pub fn insert_string<K: StrAllocating, V: StrAllocating>(self, key: K, value: V) -> HashBuilder<'a> {
+    pub fn insert_string<K: ToString, V: ToString>(self, key: K, value: V) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
-        data.insert(key.into_string(), Strng(value.into_string()));
+        data.insert(key.to_string(), Strng(value.to_string()));
         HashBuilder { data: data, partials_path: partials_path }
     }
 
@@ -41,9 +42,9 @@ impl<'a> HashBuilder<'a> {
     /// let data = HashBuilder::new()
     ///     .insert_bool("playing", true);
     /// ```
-    pub fn insert_bool<K: StrAllocating>(self, key: K, value: bool) -> HashBuilder<'a> {
+    pub fn insert_bool<K: ToString>(self, key: K, value: bool) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
-        data.insert(key.into_string(), Bool(value));
+        data.insert(key.to_string(), Bool(value));
         HashBuilder { data: data, partials_path: partials_path }
     }
 
@@ -55,9 +56,9 @@ impl<'a> HashBuilder<'a> {
     ///     .insert_int("age", 10i)
     ///     .insert_int("drinking age", -21i);
     /// ```
-    pub fn insert_int<K: StrAllocating>(self, key: K, value: int) -> HashBuilder<'a> {
+    pub fn insert_int<K: ToString>(self, key: K, value: i32) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
-        data.insert(key.into_string(), Integer(value));
+        data.insert(key.to_string(), Integer(value));
         HashBuilder { data: data, partials_path: partials_path }
     }
 
@@ -69,9 +70,9 @@ impl<'a> HashBuilder<'a> {
     ///     .insert_float("pi", 3.141596f64)
     ///     .insert_float("phi", 1.61803398875f64);
     /// ```
-    pub fn insert_float<K: StrAllocating>(self, key: K, value: f64) -> HashBuilder<'a> {
+    pub fn insert_float<K: ToString>(self, key: K, value: f64) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
-        data.insert(key.into_string(), Float(value));
+        data.insert(key.to_string(), Float(value));
         HashBuilder { data: data, partials_path: partials_path }
     }
 
@@ -86,10 +87,10 @@ impl<'a> HashBuilder<'a> {
     ///             .push_string("Druid".to_string())
     ///     });
     /// ```
-    pub fn insert_vector<K: StrAllocating>(self, key: K, f: F) where F: Fn(VecBuilder<'a>) -> HashBuilder<'a> {
+    pub fn insert_vector<F, K: ToString>(self, key: K, f: F) where F: Fn(VecBuilder<'a>) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         let builder = f(VecBuilder::new());
-        data.insert(key.into_string(), builder.build());
+        data.insert(key.to_string(), builder.build());
         HashBuilder { data: data, partials_path: partials_path }
     }
 
@@ -109,10 +110,10 @@ impl<'a> HashBuilder<'a> {
     ///             .insert_string("last_name", "Proudmoore")
     ///     });
     /// ```
-    pub fn insert_hash<K: StrAllocating>(self, key: K, f: F) where F: Fn(HashBuilder<'a>) -> HashBuilder<'a> {
+    pub fn insert_hash<F, K: ToString>(self, key: K, f: F) where F: Fn(HashBuilder<'a>) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         let builder = f(HashBuilder::new());
-        data.insert(key.into_string(), builder.build());
+        data.insert(key.to_string(), builder.build());
         HashBuilder { data: data, partials_path: partials_path }
     }
 
@@ -125,9 +126,9 @@ impl<'a> HashBuilder<'a> {
     ///         "world".to_string()
     ///     });
     /// ```
-    pub fn insert_lambda<K: StrAllocating>(self, key: K, f: F) where F: Fn(String) -> HashBuilder<'a> {
+    pub fn insert_lambda<F, K: ToString>(self, key: K, f: F) where F: Fn(String) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
-        data.insert(key.into_string(), Lambda(RefCell::new(f)));
+        data.insert(key.to_string(), Lambda(RefCell::new(f)));
         HashBuilder { data: data, partials_path: partials_path }
     }
 
@@ -163,9 +164,9 @@ impl<'a> VecBuilder<'a> {
     ///     .push_string("Mage")
     ///     .push_string("Druid");
     /// ```
-    pub fn push_string<T: StrAllocating>(self, value: T) -> VecBuilder<'a> {
+    pub fn push_string<T: ToString>(self, value: T) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
-        data.push(Strng(value.into_string()));
+        data.push(Strng(value.to_string()));
         VecBuilder { data: data }
     }
 
@@ -191,7 +192,7 @@ impl<'a> VecBuilder<'a> {
     ///     .push_int(10i)
     ///     .push_int(-21i);
     /// ```
-    pub fn push_int(self, value: int) -> VecBuilder<'a> {
+    pub fn push_int(self, value: i32) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         data.push(Integer(value));
         VecBuilder { data: data }
@@ -222,7 +223,7 @@ impl<'a> VecBuilder<'a> {
     ///             .push_string("Jaina Proudmoore".to_string())
     ///     });
     /// ```
-    pub fn push_vector(self, f: F) where F: Fn(FnVecBuilder<'a>) -> VecBuilder<'a> {
+    pub fn push_vector<F>(self, f: F) where F: Fn(VecBuilder<'a>) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         let builder = f(VecBuilder::new());
         data.push(builder.build());
@@ -245,7 +246,7 @@ impl<'a> VecBuilder<'a> {
     ///             .insert_string("last_name".to_string(), "Stormrage".to_string())
     ///     });
     /// ```
-    pub fn push_hash(self, f: F) where F: Fn(HashBuilder<'a>) -> VecBuilder<'a> {
+    pub fn push_hash<F>(self, f: F) where F: Fn(HashBuilder<'a>) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         let builder = f(HashBuilder::new());
         data.push(builder.build());
@@ -261,7 +262,7 @@ impl<'a> VecBuilder<'a> {
     ///         "world".to_string()
     ///     });
     /// ```
-    pub fn push_lambda(self, f: F) where F: Fn(String) -> VecBuilder <'a> {
+    pub fn push_lambda<F>(self, f: F) where F: Fn(String) -> VecBuilder <'a> {
         let VecBuilder { mut data } = self;
         data.push(Lambda(RefCell::new(f)));
         VecBuilder { data: data }

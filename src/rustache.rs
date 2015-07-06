@@ -1,18 +1,22 @@
-use std::io::File;
+extern crate memstream;
+
+use std::fs::File;
+use std::io::Read;
+use std::path::Path;
 use compiler;
 use parser;
-use memstream::MemStream;
-use serialize::json::{Json, Boolean, Null, I64, U64, F64, String, List, Object};
+use self::memstream::MemStream;
+use serialize::json::Json;
+use serialize::json::Json::{Boolean, Null, I64, U64, F64, String, Array, Object};
 use build::{HashBuilder, VecBuilder};
 use template::Template;
 use serialize::{json};
 
 use RustacheResult;
-use JsonError;
-use FileError;
+use RustacheError::{JsonError, FileError};
 
 /// Defines a `renderable` trait, so that all of our data is renderable
-pub trait Render<R: Reader> {
+pub trait Render<R: Read> {
     /// `render` function on a `renderable` returns a `reader`
     fn render(&self, template: &str) -> RustacheResult<R>;
 }
@@ -81,7 +85,7 @@ impl Render<MemStream> for String {
 /// ```ignore
 /// rustache::render_file("path/to/template.html", &data);
 /// ```
-pub fn render_file<R: Reader, Re: Render<R>>(path: &str, renderable: Re) -> RustacheResult<R> {
+pub fn render_file<R: Read, Re: Render<R>>(path: &str, renderable: Re) -> RustacheResult<R> {
 
     return match read_file(&Path::new(path)) {
         Ok(text) => renderable.render(text.as_slice()),
@@ -94,7 +98,7 @@ pub fn render_file<R: Reader, Re: Render<R>>(path: &str, renderable: Re) -> Rust
 /// ```ignore
 /// rustache::render_text("{{ name }}", &data);
 /// ```
-pub fn render_text<R: Reader, Re: Render<R>>(input: &str, renderable: Re) -> RustacheResult<R> {
+pub fn render_text<R: Read, Re: Render<R>>(input: &str, renderable: Re) -> RustacheResult<R> {
     renderable.render(input)
 }
 
@@ -116,14 +120,14 @@ fn parse_json(json: &Json) -> HashBuilder {
             &Boolean(val) => {
                 data = data.insert_bool(k.as_slice(), val);
             },
-            &List(ref list) => {
+            &Array(ref list) => {
                 data = data.insert_vector(k.as_slice(), |mut builder| {
                     for item in list.iter() {
                         builder = match *item {
                             Object(_) => builder.push_hash(|_| {
                                 parse_json(item)
                             }),
-                            List(_) => builder.push_vector(|_| {
+                            Array(_) => builder.push_vector(|_| {
                                 parse_json_vector(item)
                             }),
                             String(_) => builder.push_string(item.as_string().unwrap()),
@@ -167,14 +171,14 @@ fn parse_json_vector(json: &Json) -> VecBuilder {
             &Boolean(val) => {
                 data = data.push_bool(val);
             },
-            &List(ref list) => {
+            &Array(ref list) => {
                 data = data.push_vector(|mut builder| {
                     for item in list.iter() {
                         builder = match *item {
                             Object(_) => builder.push_hash(|_| {
                                 parse_json(item)
                             }),
-                            List(_) => builder.push_vector(|_| {
+                            Array(_) => builder.push_vector(|_| {
                                 parse_json_vector(item)
                             }),
                             String(_) => builder.push_string(item.as_string().unwrap()),

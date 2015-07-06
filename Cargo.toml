@@ -8,3 +8,10 @@ authors = ["Jarrod Ruhland <jarrod.ruhland@gmail.com>"]
 
 name = "rustache"
 path = "src/lib.rs"
+
+[dependencies]
+regex = "*"
+
+[dependencies.memstream]
+git = "https://github.com/singpolyma/rust-memstream.git"
+branch = "fix-for-rust-stable"

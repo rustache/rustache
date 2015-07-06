@@ -13,7 +13,8 @@ use std::fmt;
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use template::TemplateError;
+use self::RustacheError::*;
+use self::Data::*;
 
 pub use build::{HashBuilder, VecBuilder};
 pub use rustache::{render_file, render_text, Render};
@@ -29,10 +30,10 @@ pub enum RustacheError {
     /// Error opening or reading a file
     FileError(String),
     /// Generic enum value for any errors from the template module.
-    TemplateErrorType(TemplateError)
+    TemplateErrorType(template::TemplateError)
 }
 
-impl fmt::Show for RustacheError {
+impl fmt::Debug for RustacheError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             &JsonError(ref val) => write!(f, "JsonError: {}", val),
@@ -47,11 +48,11 @@ impl fmt::Show for RustacheError {
 pub enum Data<'a> {
     Strng(String),
     Bool(bool),
-    Integer(int),
+    Integer(i32),
     Float(f64),
     Vector(Vec<Data<'a>>),
     Hash(HashMap<String, Data<'a>>),
-    Lambda(RefCell<F>)
+    Lambda(RefCell<&'a Fn(String)>)
 }
 // |String|: 'a -> String : F Above
 
@@ -72,7 +73,7 @@ impl<'a> PartialEq for Data<'a> {
 }
 
 // Implementing custom Show for Data
-impl<'a> fmt::Show for Data<'a> {
+impl<'a> fmt::Debug for Data<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Strng(ref val)   => write!(f, "Strng({})", val),
