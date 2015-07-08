@@ -1,7 +1,6 @@
 #![deny(missing_docs)]
 #![deny(warnings)]
 
-#![feature(phase)]
 //! The main crate for the Rustache library.
 //!
 //! Rustache is a flexible template engine for Rust.
