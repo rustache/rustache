@@ -37,11 +37,11 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
     // Grab all captures and process
     for cap in re.captures_iter(contents) {
         // Establish groups for tag capture, preventing lookup for each call
-        let preceding_text = cap.at(1);
-        let preceding_whitespace = cap.at(2);
-        let outer = cap.at(3);
-        let inner = cap.at(4);
-        let trailing_whitespace = cap.at(5);
+        let preceding_text = cap.at(1).unwrap_or("");
+        let preceding_whitespace = cap.at(2).unwrap_or("");
+        let outer = cap.at(3).unwrap_or("");
+        let inner = cap.at(4).unwrap_or("");
+        let trailing_whitespace = cap.at(5).unwrap_or("");
 
         // Grab closing index
         let (_, c) = cap.pos(0).unwrap();
@@ -62,7 +62,7 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
 
         // Catch trailing whitespace
         if !trailing_whitespace.is_empty() {
-            tokens.push(Text(trailing_whitespace));
+            tokens.push(Text(&trailing_whitespace));
         }
     }
 
