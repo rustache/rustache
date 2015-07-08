@@ -51,7 +51,7 @@ impl Template {
                                   data: &String,
                                   errstr: &str) -> RustacheResult<()> {
         let mut rv: RustacheResult<()> = Ok(());
-        let status = writer.write_str(data.as_slice());
+        let status = writer.write_str(&data[..]);
         match status {
             Err(err) => {
                 let msg = format!("{}: {}", err, errstr);
@@ -179,7 +179,7 @@ impl Template {
                                                         raw: String,
                                                         writer: &mut W) where F: Fn(String) -> RustacheResult<()> {
         let val = (*f)(raw);
-        let mut tokens = compiler::create_tokens(val.as_slice());
+        let mut tokens = compiler::create_tokens(&val[..]);
         let nodes = parser::parse_nodes(&mut tokens);
 
         return self.render(writer, data, &nodes);
@@ -191,8 +191,8 @@ impl Template {
                                                       raw: String,
                                                       writer: &mut W) where F: Fn(String) -> RustacheResult<()> {
         let val = (*f)(raw);
-        let value = self.escape_html(val.as_slice());
-        let mut tokens = compiler::create_tokens(value.as_slice());
+        let value = self.escape_html(&val[..]);
+        let mut tokens = compiler::create_tokens(&value[..]);
         let nodes = parser::parse_nodes(&mut tokens);
 
         return self.render(writer, data, &nodes);
@@ -221,7 +221,7 @@ impl Template {
             Strng(ref val) => {
                 match *node {
                     Unescaped(_,_) => tmp = tmp + *val,
-                    Value(_,_) => tmp = *self.escape_html(&(*val.as_slice())),
+                    Value(_,_) => tmp = *self.escape_html(&(*val[..])),
                     _ => return Err(TemplateErrorType(UnexpectedNodeType(format!("{}", node))))
                 }
                 rv = self.write_to_stream(writer, &tmp, "render: unescaped node string fail");
@@ -462,14 +462,14 @@ impl Template {
         for child in children.iter() {
             match child {
                 &Static(text) => temp.push_str(text),
-                &Value(_, ref text) => temp.push_str(text.as_slice()),
+                &Value(_, ref text) => temp.push_str(&text[..]),
                 &Section(_, ref children, _, ref open, ref close) => {
                     let rv = self.get_section_text(children);
-                    temp.push_str(open.as_slice());
-                    temp.push_str(rv.as_slice());
-                    temp.push_str(close.as_slice());
+                    temp.push_str(&open[..]);
+                    temp.push_str(&rv[..]);
+                    temp.push_str(&close[..]);
                 },
-                &Unescaped(_, ref text) => temp.push_str(text.as_slice()),
+                &Unescaped(_, ref text) => temp.push_str(&text[..]),
                 &Part(_, text) => temp.push_str(text)
             }
         }
@@ -499,7 +499,7 @@ impl Template {
             let file = File::open(&path).read_to_string();
             match file {
                 Ok(contents) => {
-                    let mut tokens = compiler::create_tokens(contents.as_slice());
+                    let mut tokens = compiler::create_tokens(&contents[..]);
                     let nodes = parser::parse_nodes(&mut tokens);
 
                     rv = self.render(writer, datastore, &nodes);
@@ -966,14 +966,14 @@ mod template_tests {
             Err(err) => err,
             Ok(text) => text,
         };
-        let mut tokens = compiler::create_tokens(contents.as_slice());
+        let mut tokens = compiler::create_tokens(&contents[..]);
         let nodes = parser::parse_nodes(&mut tokens);
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
 
         let mut f = File::create(&Path::new("test_data/section_with_partial.html"));
-        let completed = f.write(w.unwrap().as_slice());
+        let completed = f.write(&w.unwrap()[..]);
         assert_eq!(completed, Ok(()));
     }
 
