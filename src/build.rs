@@ -87,9 +87,9 @@ impl<'a> HashBuilder<'a> {
     ///             .push_string("Druid".to_string())
     ///     });
     /// ```
-    pub fn insert_vector<K: ToString>(self, key: K, f: &Fn(VecBuilder<'a>) -> VecBuilder<'a>) -> HashBuilder<'a> {
+    pub fn insert_vector<F: Fn(VecBuilder<'a>) -> VecBuilder<'a>, K: ToString>(self, key: K, f: F) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
-        let builder = (*f)(VecBuilder::new());
+        let builder = f(VecBuilder::new());
         data.insert(key.to_string(), builder.build());
         HashBuilder { data: data, partials_path: partials_path }
     }
@@ -110,9 +110,9 @@ impl<'a> HashBuilder<'a> {
     ///             .insert_string("last_name", "Proudmoore")
     ///     });
     /// ```
-    pub fn insert_hash<K: ToString>(self, key: K, f: &Fn(HashBuilder<'a>) -> HashBuilder<'a>) -> HashBuilder<'a> {
+    pub fn insert_hash<F: Fn(HashBuilder<'a>) -> HashBuilder<'a>, K: ToString>(self, key: K, f: F) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
-        let builder = (*f)(HashBuilder::new());
+        let builder = f(HashBuilder::new());
         data.insert(key.to_string(), builder.build());
         HashBuilder { data: data, partials_path: partials_path }
     }
@@ -223,9 +223,9 @@ impl<'a> VecBuilder<'a> {
     ///             .push_string("Jaina Proudmoore".to_string())
     ///     });
     /// ```
-    pub fn push_vector(self, f: &Fn(VecBuilder<'a>) -> VecBuilder<'a>) -> VecBuilder<'a> {
+    pub fn push_vector<F: Fn(VecBuilder<'a>) -> VecBuilder<'a>>(self, f: F) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
-        let builder = (*f)(VecBuilder::new());
+        let builder = f(VecBuilder::new());
         data.push(builder.build());
         VecBuilder { data: data }
     }
@@ -246,9 +246,9 @@ impl<'a> VecBuilder<'a> {
     ///             .insert_string("last_name".to_string(), "Stormrage".to_string())
     ///     });
     /// ```
-    pub fn push_hash(self, f: &Fn(HashBuilder<'a>) -> HashBuilder<'a>) -> VecBuilder<'a> {
+    pub fn push_hash<F: Fn(HashBuilder<'a>) -> HashBuilder<'a>>(self, f: F) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
-        let builder = (*f)(HashBuilder::new());
+        let builder = f(HashBuilder::new());
         data.push(builder.build());
         VecBuilder { data: data }
     }
