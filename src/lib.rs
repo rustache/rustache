@@ -36,9 +36,9 @@ pub enum RustacheError {
 impl fmt::Debug for RustacheError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            &JsonError(ref val) => write!(f, "JsonError: {}", val),
-            &FileError(ref val) => write!(f, "FileError: {}", val),
-            &TemplateErrorType(ref val) => write!(f, "{}", val),
+            &JsonError(ref val) => write!(f, "JsonError: {:?}", val),
+            &FileError(ref val) => write!(f, "FileError: {:?}", val),
+            &TemplateErrorType(ref val) => write!(f, "{:?}", val),
         }
     }
 }
@@ -76,12 +76,12 @@ impl<'a> PartialEq for Data<'a> {
 impl<'a> fmt::Debug for Data<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Strng(ref val)   => write!(f, "Strng({})", val),
-            Bool(val)        => write!(f, "Boolean({})", val),
-            Integer(ref val) => write!(f, "Integer({})", val),
-            Float(ref val)   => write!(f, "Float({})", val),
-            Vector(ref val)  => write!(f, "Vector({})", val),
-            Hash(ref val)    => write!(f, "Hash({})", val),
+            Strng(ref val)   => write!(f, "Strng({:?})", val),
+            Bool(val)        => write!(f, "Boolean({:?})", val),
+            Integer(ref val) => write!(f, "Integer({:?})", val),
+            Float(ref val)   => write!(f, "Float({:?})", val),
+            Vector(ref val)  => write!(f, "Vector({:?})", val),
+            Hash(ref val)    => write!(f, "Hash({:?})", val),
             Lambda(_)        => write!(f, "Lambda(...)")
         }
     }
