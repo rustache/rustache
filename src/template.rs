@@ -497,7 +497,7 @@ impl Template {
         if path.exists() {
 
             let mut contents = String::new();
-            let file = File::open(&path).and_then( |file| file.read_to_string(&mut contents) );
+            let file = File::open(&path).and_then( |ref mut f| f.read_to_string(&mut contents) );
             match file {
                 Ok(_) => {
                     let mut tokens = compiler::create_tokens(&contents[..]);
