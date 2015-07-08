@@ -158,7 +158,7 @@ fn parse_variable_node<'a>(name: &'a str, raw: &'a str) -> Node<'a> {
         false => return Value(name, raw.to_string()),
         true => {
             let parts: Vec<&str> = name.split(".").collect();
-            let node = handle_dot_notation(parts.as_slice(), false, false);
+            let node = handle_dot_notation(&parts[..], false, false);
             return node;
         }
     }
@@ -176,11 +176,11 @@ fn parse_raw_node<'a>(name: &'a str, raw: &'a str) -> Node<'a> {
             let parts: Vec<&str> = name.split(".").collect();
             match ampersand {
                 true => {
-                    let node = handle_dot_notation(parts.as_slice(), true, true);
+                    let node = handle_dot_notation(&parts[..], true, true);
                     return node;
                 },
                 false => {
-                    let node = handle_dot_notation(parts.as_slice(), true, false);
+                    let node = handle_dot_notation(&parts[..], true, false);
                     return node;
                 }
             };
