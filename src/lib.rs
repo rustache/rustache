@@ -5,8 +5,7 @@
 //!
 //! Rustache is a flexible template engine for Rust.
 
-// StdLib dependencies
-extern crate serialize;
+extern crate rustc_serialize;
 
 use std::fmt;
 use std::cell::RefCell;

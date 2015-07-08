@@ -6,11 +6,10 @@ use std::path::Path;
 use compiler;
 use parser;
 use self::memstream::MemStream;
-use serialize::json::Json;
-use serialize::json::Json::{Boolean, Null, I64, U64, F64, String, Array, Object};
+use rustc_serialize::json::Json;
+use rustc_serialize::json::Json::{Boolean, Null, I64, U64, F64, String, Array, Object};
 use build::{HashBuilder, VecBuilder};
 use template::Template;
-use serialize::{json};
 
 use RustacheResult;
 use RustacheError::{JsonError, FileError};
@@ -53,7 +52,7 @@ impl Render<MemStream> for Path {
         return match read_file(self) {
             Ok(text) => {
 
-                let json = match json::from_str(&text) {
+                let json = match Json::from_str(&text) {
                     Ok(json) => json,
                     Err(err) => return Err(JsonError(format!("Invalid JSON. {}", err)))
                 };
@@ -71,7 +70,7 @@ impl Render<MemStream> for Path {
 impl Render<MemStream> for String {
     fn render(&self, template: &str) -> RustacheResult<MemStream> {
 
-        let json = match json::from_str(&self[..]) {
+        let json = match Json::from_str(&self[..]) {
             Ok(json) => json,
             Err(err) => return Err(JsonError(format!("Invalid JSON. {}", err)))
         };

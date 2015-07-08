@@ -11,6 +11,7 @@ path = "src/lib.rs"
 
 [dependencies]
 regex = "*"
+rustc-serialize = "*"
 
 [dependencies.memstream]
 git = "https://github.com/singpolyma/rust-memstream.git"
