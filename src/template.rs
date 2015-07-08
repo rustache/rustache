@@ -111,7 +111,7 @@ impl Template {
         //                           {"value": "foo", "c": { "cdata": foo }},
         //                           { b: { "value": "foo", c: {"cdata": foo}}]
         for section in sections.iter() {
-            match hash.find(section) {
+            match hash.get(section) {
                 None => { },
                 Some(data) => {
                     match *data {
@@ -139,7 +139,7 @@ impl Template {
         // we end up with the previous vector plus: [{}, { "value", "foo"}, {}]
         //
         for section in sections.iter() {
-            match datastore.find(section) {
+            match datastore.get(section) {
                 None => { },
                 Some(data) => {
                     match *data {
@@ -159,7 +159,7 @@ impl Template {
         // we iterate through it looking for the data
         for hash in hashes.iter() {
 
-            rv = hash.find(key);
+            rv = hash.get(key);
             if rv.is_some() {
                 break;
             }
@@ -167,7 +167,7 @@ impl Template {
 
         // last but not least, check the top level if we didn't find anything
         if rv.is_none() {
-            rv = datastore.find(key);
+            rv = datastore.get(key);
         }
 
         return rv;
