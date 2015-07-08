@@ -272,9 +272,11 @@ fn handle_dot_notation<'a>(parts: &[&'a str], unescaped: bool, amp: bool) -> Nod
 
 #[cfg(test)]
 mod parser_tests {
-    use compiler::{Token, Text, Variable, OTag, CTag, Raw, Partial};
+    use compiler::Token;
+    use compiler::Token::{Text, Variable, OTag, CTag, Raw, Partial};
     use parser;
-    use parser::{Node, Static, Value, Section, Unescaped, Part};
+    use parser::Node;
+    use parser::Node::{Static, Value, Section, Unescaped, Part};
 
     #[test]
     fn parse_dot_notation_simple() {

@@ -175,7 +175,7 @@ impl Template {
     }
 
     fn handle_unescaped_lambda_interpolation<W: Write>(&mut self,
-                                                        f: &Fn(String) -> String,
+                                                        f: &mut FnMut(String) -> String,
                                                         data: &HashMap<String, Data>,
                                                         raw: String,
                                                         writer: &mut W) -> RustacheResult<()> {
@@ -187,7 +187,7 @@ impl Template {
     }
 
     fn handle_escaped_lambda_interpolation<W: Write>(&mut self,
-                                                      f: &Fn(String) -> String,
+                                                      f: &mut FnMut(String) -> String,
                                                       data: &HashMap<String, Data>,
                                                       raw: String,
                                                       writer: &mut W) -> RustacheResult<()> {
@@ -272,7 +272,7 @@ impl Template {
                 let raw = "".to_string();
                 match *node {
                     Unescaped(_,_) => rv = self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, raw, writer),
-                    Value(_,_) => rv = self.handle_escaped_lambda_interpolation(*f.borrow(), datastore, raw, writer),
+                    Value(_,_) => rv = self.handle_escaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, raw, writer),
                     _ => return Err(TemplateErrorType(UnexpectedNodeType(format!("{:?}", node))))
                 }
             }
@@ -347,7 +347,7 @@ impl Template {
         match data {
           &Lambda(ref f) => {
             let raw = self.get_section_text(nodes);
-            return self.handle_unescaped_lambda_interpolation(*f.borrow(), datastore, *raw, writer);
+            return self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, *raw, writer);
           },
           &Vector(ref v) => {
             for d in v.iter() {
@@ -619,17 +619,23 @@ impl Template {
 
 #[cfg(test)]
 mod template_tests {
-    use std::io::File;
-    use std::io::MemWriter;
+    extern crate memstream;
+
+    use std::fs::File;
+    use std::path::Path;
+    use std::io::Write;
     use std::str;
 
+    use self::memstream::MemStream;
+
     use parser;
-    use parser::{Node, Static, Value, Section, Unescaped, Part};
+    use parser::Node;
+    use parser::Node::{Value, Static, Unescaped, Section, Part};
     use rustache;
     use compiler;
     use template::Template;
     use build::{HashBuilder};
-    use super::super::{Strng};
+    use Data::{Strng};
 
     #[test]
     fn test_look_up_section_data() {
@@ -698,26 +704,26 @@ mod template_tests {
         let s2 = "1<2 <b>hello</b>";
         let a2 = "1&lt;2 &lt;b&gt;hello&lt;/b&gt;";
 
-        let mut w = MemWriter::new();
+        let mut w = MemStream::new();
         let nodes: Vec<Node> = vec![Value("value", "{{ value }}".to_string())];
         let data = HashBuilder::new().insert_string("value", s1);
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
 
-        assert_eq!(a1, str::from_utf8(w.get_ref()).unwrap());
+        assert_eq!(a1, str::from_utf8(w.as_slice()).unwrap());
 
-        w = MemWriter::new();
+        w = MemStream::new();
         let newdata = HashBuilder::new().insert_string("value", s2);
         let rv = Template::new().render_data(&mut w, &newdata, &nodes);
         match rv { _ => {} }
 
-        assert_eq!(a2, str::from_utf8(w.get_ref()).unwrap());
+        assert_eq!(a2, str::from_utf8(w.as_slice()).unwrap());
     }
 
     #[test]
     fn test_section_tag_iteration() {
-        let mut w = MemWriter::new();
+        let mut w = MemStream::new();
         let template = "{{#repo}}<b>{{name}}</b>{{/repo}}";
         let tokens = compiler::create_tokens(template);
         let nodes = parser::parse_nodes(&tokens);
@@ -736,19 +742,19 @@ mod template_tests {
     #[test]
     fn test_not_escape_html() {
         let s = "1<2 <b>hello</b>";
-        let mut w = MemWriter::new();
+        let mut w = MemStream::new();
         let nodes: Vec<Node> = vec![Unescaped("value", "{{ value }}".to_string())];
         let data = HashBuilder::new().insert_string("value", s);
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
 
-        assert_eq!(s, str::from_utf8(w.get_ref()).unwrap());
+        assert_eq!(s, str::from_utf8(w.as_slice()).unwrap());
     }
 
     #[test]
     fn test_render_to_io_stream() {
-        let mut w = MemWriter::new();
+        let mut w = MemStream::new();
         let data = HashBuilder::new().insert_string("value1", "The heading");
         let nodes: Vec<Node> = vec![Static("<h1>"), Value("value1", "{{ value1 }}".to_string()), Static("</h1>")];
 
@@ -760,7 +766,7 @@ mod template_tests {
 
     #[test]
     fn test_unescaped_node_correct_bool_false_data() {
-        let mut w = MemWriter::new();
+        let mut w = MemStream::new();
         let nodes: Vec<Node> = vec![Static("<h1>"), Unescaped("value1", "{{& value1 }}".to_string()), Static("</h1>")];
         let data = HashBuilder::new().insert_bool("value1", false);
 
@@ -772,7 +778,7 @@ mod template_tests {
 
     #[test]
     fn test_unescaped_node_correct_bool_true_data() {
-        let mut w = MemWriter::new();
+        let mut w = MemStream::new();
         let nodes: Vec<Node> = vec![Static("<h1>"), Unescaped("value1", "{{& value1 }}".to_string()), Static("</h1>")];
         let data = HashBuilder::new().insert_bool("value1", true);
 
@@ -784,7 +790,7 @@ mod template_tests {
 
     #[test]
     fn test_section_value_string_data() {
-        let mut w = MemWriter::new();
+        let mut w = MemStream::new();
         let nodes: Vec<Node> = vec![Section("value1", vec![Value("value", "{{ value }}".to_string())], false, "{{# value1 }}".to_string(), "{{/ value1 }}".to_string())];
         let data = HashBuilder::new()
             .insert_hash("value1", |builder| {
@@ -799,7 +805,7 @@ mod template_tests {
 
     #[test]
     fn test_section_multiple_value_string_data() {
-        let mut w = MemWriter::new();
+        let mut w = MemStream::new();
         let nodes: Vec<Node> = vec![Section("names", vec![Value("name", "{{ name }}".to_string())], false, "{{# names }}".to_string(), "{{/ names }}".to_string())];
         let data = HashBuilder::new()
             .insert_hash("names", |builder| {
@@ -819,7 +825,7 @@ mod template_tests {
 
     // #[test]
     // fn test_excessively_nested_data() {
-    //     let mut w = MemWriter::new();
+    //     let mut w = MemStream::new();
     //     let nodes: Vec<Node> = vec![Section("hr", vec![Section("people", vec![Value("name", "{{ name }}".to_string())], false, "{{# people }}".to_string(), "{{/ people }}".to_string())], false, "{{# hr }}".to_string(), "{{/ hr }}".to_string())];
     //     let data = HashBuilder::new()
     //         .insert_hash("hr", |builder| {
@@ -840,11 +846,10 @@ mod template_tests {
 
     #[test]
     fn test_unescaped_node_lambda_data() {
-        let mut w = MemWriter::new();
+        let mut w = MemStream::new();
         let nodes: Vec<Node> = vec![Static("<h1>"), Unescaped("func1", "{{& func1 }}".to_string()), Static("</h1>")];
-        let data = HashBuilder::new().insert_lambda("func1", |_| {
-            "heading".to_string()
-        });
+        let mut f = |_| { "heading".to_string() };
+        let data = HashBuilder::new().insert_lambda("func1", &mut f);
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
@@ -854,11 +859,10 @@ mod template_tests {
 
     #[test]
     fn test_value_node_lambda_data() {
-        let mut w = MemWriter::new();
+        let mut w = MemStream::new();
         let nodes: Vec<Node> = vec![Static("<h1>"), Value("func1", "{{ func1 }}".to_string()), Static("</h1>")];
-        let data = HashBuilder::new().insert_lambda("func1", |_| {
-            "heading".to_string()
-        });
+        let mut f = |_| { "heading".to_string() };
+        let data = HashBuilder::new().insert_lambda("func1", &mut f);
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
@@ -868,7 +872,7 @@ mod template_tests {
 
     // #[test]
     // fn test_spec_lambdas_interpolation_using_render_text() {
-    //     let mut s = MemWriter::new();
+    //     let mut s = MemStream::new();
     //     let data = HashBuilder::new()
     //                 .insert_lambda("lambda", |_| {
     //                      "world".to_string()
@@ -893,7 +897,7 @@ mod template_tests {
 
     #[test]
     fn test_value_node_correct_false_bool_data() {
-        let mut w = MemWriter::new();
+        let mut w = MemStream::new();
         let nodes: Vec<Node> = vec![Value("value1", "{{ value1 }}".to_string())];
         let data = HashBuilder::new().insert_bool("value1", false);
 
@@ -905,7 +909,7 @@ mod template_tests {
 
     #[test]
     fn test_value_node_correct_true_bool_data() {
-        let mut w = MemWriter::new();
+        let mut w = MemStream::new();
         let nodes: Vec<Node> = vec![Value("value1", "{{ value1 }}".to_string())];
         let data = HashBuilder::new().insert_bool("value1", true);
 
@@ -917,7 +921,7 @@ mod template_tests {
 
     #[test]
     fn test_partial_node_correct_data() {
-        let mut w = MemWriter::new();
+        let mut w = MemStream::new();
         let nodes: Vec<Node> = vec![Static("A wise woman once said: "), Part("hopper_quote.partial", "{{> hopper_quote.partial }}")];
         let data = HashBuilder::new().insert_string("author", "Grace Hopper")
                                      .set_partials_path("test_data");
@@ -933,7 +937,7 @@ mod template_tests {
 
     #[test]
     fn test_partial_node_correct_data_with_extra() {
-        let mut w = MemWriter::new();
+        let mut w = MemStream::new();
         let nodes: Vec<Node> = vec![Static("A wise woman once said: "), Part("hopper_quote.partial", "{{> hopper_quote.partial }}"), Static(" something else "), Value("extra", "{{ extra }}".to_string())];
         let data = HashBuilder::new().insert_string("author", "Grace Hopper")
                                      .insert_string("extra", "extra data")
@@ -950,7 +954,7 @@ mod template_tests {
 
     #[test]
     fn test_section_node_partial_node_correct_data() {
-        let mut w = MemWriter::new();
+        let mut w = MemStream::new();
         let data = HashBuilder::new()
             .set_partials_path("test_data")
             .insert_hash("people", |builder| {
@@ -974,9 +978,9 @@ mod template_tests {
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
 
-        let mut f = File::create(&Path::new("test_data/section_with_partial.html"));
+        let mut f = File::create(&Path::new("test_data/section_with_partial.html")).unwrap();
         let completed = f.write(&w.unwrap()[..]);
-        assert_eq!(completed, Ok(()));
+        assert_eq!(completed.is_ok(), true);
     }
 
   // - name: Interpolation - Multiple Calls
@@ -994,10 +998,11 @@ mod template_tests {
     #[test]
     fn test_spec_lambda_not_cached_on_interpolation() {
         let mut planets = vec!["Jupiter", "Earth", "Saturn"];
-        let mut w = MemWriter::new();
+        let mut w = MemStream::new();
         let mut tokens = compiler::create_tokens("{{lambda}} == {{&lambda}} == {{lambda}}");
         let nodes = parser::parse_nodes(&mut tokens);
-        let data = HashBuilder::new().insert_lambda("lambda", |_| { planets.pop().unwrap().to_string() } )
+        let mut f = |_| { planets.pop().unwrap().to_string() };
+        let data = HashBuilder::new().insert_lambda("lambda", &mut f)
                                      .insert_string("planet", "world");
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);

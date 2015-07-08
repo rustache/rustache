@@ -53,8 +53,8 @@ impl<'a> HashBuilder<'a> {
     /// ```rust
     /// use rustache::HashBuilder;
     /// let data = HashBuilder::new()
-    ///     .insert_int("age", 10i)
-    ///     .insert_int("drinking age", -21i);
+    ///     .insert_int("age", 10i32)
+    ///     .insert_int("drinking age", -21i32);
     /// ```
     pub fn insert_int<K: ToString>(self, key: K, value: i32) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
@@ -121,12 +121,11 @@ impl<'a> HashBuilder<'a> {
     ///
     /// ```rust
     /// use rustache::HashBuilder;
+    /// let mut f = |_| { "world".to_string() };
     /// let data = HashBuilder::new()
-    ///     .insert_lambda("lambda", |_| {
-    ///         "world".to_string()
-    ///     });
+    ///     .insert_lambda("lambda", &mut f);
     /// ```
-    pub fn insert_lambda<K: ToString>(self, key: K, f: &'a Fn(String) -> String) -> HashBuilder<'a> {
+    pub fn insert_lambda<K: ToString>(self, key: K, f: &'a mut FnMut(String) -> String) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         data.insert(key.to_string(), Lambda(RefCell::new(f)));
         HashBuilder { data: data, partials_path: partials_path }
@@ -189,8 +188,8 @@ impl<'a> VecBuilder<'a> {
     /// ```rust
     /// use rustache::VecBuilder;
     /// let data = VecBuilder::new()
-    ///     .push_int(10i)
-    ///     .push_int(-21i);
+    ///     .push_int(10i32)
+    ///     .push_int(-21i32);
     /// ```
     pub fn push_int(self, value: i32) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
@@ -257,12 +256,11 @@ impl<'a> VecBuilder<'a> {
     ///
     /// ```rust
     /// use rustache::VecBuilder;
+    /// let mut f = |_| { "world".to_string() };
     /// let data = VecBuilder::new()
-    ///     .push_lambda(|lambda| {
-    ///         "world".to_string()
-    ///     });
+    ///     .push_lambda(&mut f);
     /// ```
-    pub fn push_lambda(self, f: &'a Fn(String) -> String) -> VecBuilder <'a> {
+    pub fn push_lambda(self, f: &'a mut FnMut(String) -> String) -> VecBuilder <'a> {
         let VecBuilder { mut data } = self;
         data.push(Lambda(RefCell::new(f)));
         VecBuilder { data: data }
@@ -278,8 +276,8 @@ impl<'a> VecBuilder<'a> {
 mod tests {
     use std::collections::HashMap;
 
-    use super::{HashBuilder, VecBuilder};
-    use super::super::{Strng, Bool, Integer, Float, Vector, Hash, Lambda};
+    use {HashBuilder, VecBuilder};
+    use Data::{Strng, Bool, Integer, Float, Vector, Hash, Lambda};
 
     #[test]
     fn test_new_builders() {
@@ -302,7 +300,7 @@ mod tests {
         let mut hash1 = HashMap::new();
         hash1.insert("first_name".to_string(), Strng("Anduin".to_string()));
         hash1.insert("last_name".to_string(), Strng("Wrynn".to_string()));
-        hash1.insert("age".to_string(), Integer(21isize));
+        hash1.insert("age".to_string(), Integer(21i32));
         hash1.insert("weight".to_string(), Float(120.16f64));
         hash1.insert("class".to_string(), Strng("Priest".to_string()));
         hash1.insert("died".to_string(), Bool(false));
@@ -313,7 +311,7 @@ mod tests {
         let hash2 = HashBuilder::new().set_partials_path("/hearthstone")
                         .insert_string("first_name", "Anduin")
                         .insert_string("last_name", "Wrynn")
-                        .insert_int("age", 21isize)
+                        .insert_int("age", 21i32)
                         .insert_float("weight", 120.16f64)
                         .insert_string("class", "Priest")
                         .insert_bool("died", false)
@@ -366,17 +364,18 @@ mod tests {
         // sure we're threading through the builder
 
         let mut num = 10u32;
+        let mut f = |x: String| -> String {
+            num *= 2u32;
+            x + &num.to_string()[..]
+        };
         let data = VecBuilder::new()
-            .push_lambda(|x| {
-                num *= 2u32;
-                x + num.to_string()
-            })
+            .push_lambda(&mut f)
             .build();
 
         match data {
             Vector(m) => {
-                match m.as_slice() {
-                    [Lambda(ref f)] => {
+                match m[0] {
+                    Lambda(ref f) => {
                         let f = &mut *f.borrow_mut();
                         assert_eq!((*f)("double: ".to_string()), "double: 20".to_string());
                         assert_eq!((*f)("double: ".to_string()), "double: 40".to_string());

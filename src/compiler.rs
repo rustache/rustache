@@ -92,7 +92,7 @@ fn add_token<'a>(inner: &'a str, outer: &'a str, tokens: &mut Vec<Token<'a>>) {
 #[cfg(test)]
 mod compiler_tests {
     use compiler;
-    use compiler::{Text, Variable, OTag, CTag, Raw, Partial, Comment};
+    use compiler::Token::{Text, Variable, OTag, CTag, Raw, Partial, Comment};
 
     #[test]
     fn test_one_char() {
