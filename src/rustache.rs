@@ -157,7 +157,7 @@ fn parse_json(json: &Json) -> HashBuilder {
 // returning a VecBuider
 fn parse_json_vector(json: &Json) -> VecBuilder {
     let mut data = VecBuilder::new();
-    for v in json.as_list().unwrap().iter() {
+    for v in json.as_array().unwrap().iter() {
         match v {
             &I64(num) => {
                 data = data.push_string(num.to_string());
