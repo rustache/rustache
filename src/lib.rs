@@ -52,7 +52,7 @@ pub enum Data<'a> {
     Float(f64),
     Vector(Vec<Data<'a>>),
     Hash(HashMap<String, Data<'a>>),
-    Lambda(RefCell<&'a Fn(String)>)
+    Lambda(RefCell<&'a Fn(String) -> String>)
 }
 // |String|: 'a -> String : F Above
 

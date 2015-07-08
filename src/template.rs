@@ -173,11 +173,11 @@ impl Template {
         return rv;
     }
 
-    fn handle_unescaped_lambda_interpolation<F, W: Write>(&mut self,
-                                                        f: F,
+    fn handle_unescaped_lambda_interpolation<W: Write>(&mut self,
+                                                        f: &Fn(String) -> String,
                                                         data: &HashMap<String, Data>,
                                                         raw: String,
-                                                        writer: &mut W) where F: Fn(String) -> RustacheResult<()> {
+                                                        writer: &mut W) -> RustacheResult<()> {
         let val = (*f)(raw);
         let mut tokens = compiler::create_tokens(&val[..]);
         let nodes = parser::parse_nodes(&mut tokens);
@@ -185,11 +185,11 @@ impl Template {
         return self.render(writer, data, &nodes);
     }
 
-    fn handle_escaped_lambda_interpolation<F, W: Write>(&mut self,
-                                                      f: F,
+    fn handle_escaped_lambda_interpolation<W: Write>(&mut self,
+                                                      f: &Fn(String) -> String,
                                                       data: &HashMap<String, Data>,
                                                       raw: String,
-                                                      writer: &mut W) where F: Fn(String) -> RustacheResult<()> {
+                                                      writer: &mut W) -> RustacheResult<()> {
         let val = (*f)(raw);
         let value = self.escape_html(&val[..]);
         let mut tokens = compiler::create_tokens(&value[..]);
@@ -271,7 +271,7 @@ impl Template {
                 let raw = "".to_string();
                 match *node {
                     Unescaped(_,_) => rv = self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, raw, writer),
-                    Value(_,_) => rv = self.handle_escaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, raw, writer),
+                    Value(_,_) => rv = self.handle_escaped_lambda_interpolation(*f.borrow(), datastore, raw, writer),
                     _ => return Err(TemplateErrorType(UnexpectedNodeType(format!("{:?}", node))))
                 }
             }
@@ -346,7 +346,7 @@ impl Template {
         match data {
           &Lambda(ref f) => {
             let raw = self.get_section_text(nodes);
-            return self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, *raw, writer);
+            return self.handle_unescaped_lambda_interpolation(*f.borrow(), datastore, *raw, writer);
           },
           &Vector(ref v) => {
             for d in v.iter() {
