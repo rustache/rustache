@@ -10,7 +10,7 @@ use self::Token::*;
 // text provided within the template.  Raw tag values are stored
 // for use in lambdas.
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Token<'a> {
     Text(&'a str), // (text)
     Variable(&'a str, &'a str), // (name, tag)

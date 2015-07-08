@@ -55,17 +55,17 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
     loop {
         // Iterate while still nodes in the list
         match it.next() {
-            Some((i, &token)) => {
+            Some((i, token)) => {
                 match token {
-                    Text(text) => nodes.push(parse_text_node(text, &mut status)),
-                    Variable(name, raw) => nodes.push(parse_variable_node(name, raw)),
-                    Raw(name, raw) => nodes.push(parse_raw_node(name, raw)),
-                    Partial(name, raw) => nodes.push(Part(name, raw)),
+                    &Text(text) => nodes.push(parse_text_node(text, &mut status)),
+                    &Variable(name, raw) => nodes.push(parse_variable_node(name, raw)),
+                    &Raw(name, raw) => nodes.push(parse_raw_node(name, raw)),
+                    &Partial(name, raw) => nodes.push(Part(name, raw)),
                     // Unopened closing tags are ignored
                     // TODO: Return a parser error?
-                    CTag(_, _) => continue,
-                    OTag(name, inverted, raw) => {
-                        let mut children: Vec<Token> = vec![];
+                    &CTag(_, _) => continue,
+                    &OTag(name, inverted, raw) => {
+                        let mut children: Vec<Token<'a>> = vec![];
                         let mut count = 0u32;
                         let mut otag_count = 1u32;
                         for item in list[i + 1 ..].iter() {
@@ -75,7 +75,7 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
                                     if title == name {
                                         otag_count += 1;
                                     }
-                                    children.push(*item);
+                                    children.push((*item).clone());
                                 },
                                 CTag(title, temp) => {
                                     if title == name && otag_count == 1 {
@@ -83,14 +83,14 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
                                         break;
                                     } else if title == name && otag_count > 1 {
                                         otag_count -= 1;
-                                        children.push(*item);
+                                        children.push((*item).clone());
                                     } else {
-                                        children.push(*item);
+                                        children.push((*item).clone());
                                         continue;
                                     }
                                 },
                                 _ => {
-                                    children.push(*item);
+                                    children.push((*item).clone());
                                     continue;
                                 }
                             }
@@ -104,7 +104,7 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
                             count -= 1;
                         }
                     },
-                    Comment => {
+                    &Comment => {
                         // Check the next element for whitespace
                         match it.peek() {
                             Some(&(_, token)) => {
