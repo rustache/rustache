@@ -18,6 +18,7 @@ use self::Data::*;
 pub use build::{HashBuilder, VecBuilder};
 pub use rustache::{render_file, render_text, Render};
 
+/// Alias for Result<T, RustacheError>
 pub type RustacheResult<T> = Result<T, RustacheError>;
 
 /// Enum to handle errors from the Rustache library.
