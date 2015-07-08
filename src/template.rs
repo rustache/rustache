@@ -222,7 +222,7 @@ impl Template {
                 match *node {
                     Unescaped(_,_) => tmp = tmp + *val,
                     Value(_,_) => tmp = *self.escape_html(&(*val[..])),
-                    _ => return Err(TemplateErrorType(UnexpectedNodeType(format!("{}", node))))
+                    _ => return Err(TemplateErrorType(UnexpectedNodeType(format!("{:?}", node))))
                 }
                 rv = self.write_to_stream(writer, &tmp, "render: unescaped node string fail");
             },
@@ -272,7 +272,7 @@ impl Template {
                 match *node {
                     Unescaped(_,_) => rv = self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, raw, writer),
                     Value(_,_) => rv = self.handle_escaped_lambda_interpolation(&mut *f.borrow_mut(), datastore, raw, writer),
-                    _ => return Err(TemplateErrorType(UnexpectedNodeType(format!("{}", node))))
+                    _ => return Err(TemplateErrorType(UnexpectedNodeType(format!("{:?}", node))))
                 }
             }
         }
@@ -291,7 +291,7 @@ impl Template {
                                       nodes: &Vec<Node>,
                                       datastore: &HashMap<String, Data>,
                                       writer: &mut W) -> RustacheResult<()> {
-        println!("handle inverted node: nodes: {}, datastore: {}", nodes, datastore);
+        println!("handle inverted node: nodes: {:?}, datastore: {:?}", nodes, datastore);
         let mut rv = Ok(());
         for node in nodes.iter() {
             match *node {
@@ -359,7 +359,7 @@ impl Template {
                         &Bool(ref val) => return Err(TemplateErrorType(UnexpectedDataType(format!("{}", val)))),
                         &Integer(ref val) => return Err(TemplateErrorType(UnexpectedDataType(format!("{}", val)))),
                         &Float(ref val) => return Err(TemplateErrorType(UnexpectedDataType(format!("{}", val)))),
-                        &Vector(ref val) => return Err(TemplateErrorType(UnexpectedDataType(format!("{}", val)))),
+                        &Vector(ref val) => return Err(TemplateErrorType(UnexpectedDataType(format!("{:?}", val)))),
                         &Lambda(_) => return Err(TemplateErrorType(UnexpectedDataType("lambda".to_string()))),
                     }
                 }
