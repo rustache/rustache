@@ -1,7 +1,7 @@
 use std::path::Path;
 use std::fs::{File, PathExt};
 use std::fmt;
-use std::io::Write;
+use std::io::{Read,Write};
 
 use compiler;
 use parser;
@@ -496,9 +496,10 @@ impl Template {
         let path = Path::new(&self.partials_path.clone()).join(filename);
         if path.exists() {
 
-            let file = File::open(&path).read_to_string();
+            let mut contents = String::new();
+            let file = File::open(&path).and_then( |file| file.read_to_string(&mut contents) );
             match file {
-                Ok(contents) => {
+                Ok(_) => {
                     let mut tokens = compiler::create_tokens(&contents[..]);
                     let nodes = parser::parse_nodes(&mut tokens);
 
