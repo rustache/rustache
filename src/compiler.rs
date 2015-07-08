@@ -77,14 +77,14 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
 
 // Simple method for categorizing and adding appropriate token
 fn add_token<'a>(inner: &'a str, outer: &'a str, tokens: &mut Vec<Token<'a>>) {
-    match inner.char_at(0) {
-        '!' => tokens.push(Comment),
-        '#' => tokens.push(OTag(inner[1..].trim(), false, outer)),
-        '/' => tokens.push(CTag(inner[1..].trim(), outer)),
-        '^' => tokens.push(OTag(inner[1..].trim(), true, outer)),
-        '>' => tokens.push(Partial(inner[1..].trim(), outer)),
-        '&' => tokens.push(Raw(inner[1..].trim(), outer)),
-        '{' => tokens.push(Raw(inner[1 .. inner.len() - 1].trim(), outer)),
+    match &inner[0..1] {
+        "!" => tokens.push(Comment),
+        "#" => tokens.push(OTag(inner[1..].trim(), false, outer)),
+        "/" => tokens.push(CTag(inner[1..].trim(), outer)),
+        "^" => tokens.push(OTag(inner[1..].trim(), true, outer)),
+        ">" => tokens.push(Partial(inner[1..].trim(), outer)),
+        "&" => tokens.push(Raw(inner[1..].trim(), outer)),
+        "{" => tokens.push(Raw(inner[1 .. inner.len() - 1].trim(), outer)),
         _   => tokens.push(Variable(inner.trim(), outer))
     }
 }
