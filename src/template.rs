@@ -236,12 +236,12 @@ impl Template {
             },
             // if the data is an integer, convert it to a string and write that
             Integer(ref val) => {
-                tmp = tmp + val.to_string();
+                tmp = tmp + &val.to_string();
                 rv = self.write_to_stream(writer, &tmp, "render: unescaped node int");
             },
             // if the data is a float, convert it to a string and write that
             Float(ref val) => {
-                tmp = tmp + val.to_string();
+                tmp = tmp + &val.to_string();
                 rv = self.write_to_stream(writer, &tmp, "render: unescaped node float");
             },
             // TODO: this one doesn't quite make sense.  i don't think we need it.
@@ -257,7 +257,7 @@ impl Template {
             // TODO: this one doesn't quite make sense.  i don't think we need it.
             Hash(ref hash) => {
                 if hash.contains_key(&key) {
-                    let ref tmp = hash[key];
+                    let ref tmp = hash[&key];
                     rv = self.handle_unescaped_or_value_node(node, tmp, key.to_string(), datastore, writer);
                     match rv {
                         Ok(_) => { },
@@ -305,7 +305,7 @@ impl Template {
                 Section(ref key, ref children, ref inverted, _, _) => {
                     let tmp = key.to_string();
                     let truthy = if datastore.contains_key(&tmp) {
-                        self.is_section_data_true(&datastore[tmp])
+                        self.is_section_data_true(&datastore[&tmp])
                     } else {
                         false
                     };
@@ -313,7 +313,7 @@ impl Template {
                         (true, true) => {},
                         (false, false) => {},
                         (true, false) => {
-                            let ref val = datastore[tmp];
+                            let ref val = datastore[&tmp];
                             let mut sections = vec![tmp.clone()];
                             rv = self.handle_section_node(children, &tmp, val, datastore, &mut sections, writer);
                         },
@@ -493,7 +493,7 @@ impl Template {
                                            datastore: &HashMap<String, Data>,
                                            writer: &mut W) -> RustacheResult<()> {
         let mut rv: RustacheResult<()> = Ok(());;
-        let path = Path::new(self.partials_path.clone()).join(filename);
+        let path = Path::new(&self.partials_path.clone()).join(filename);
         if path.exists() {
 
             let file = File::open(&path).read_to_string();
@@ -521,7 +521,7 @@ impl Template {
             Unescaped(key, _)  => {
                 let tmp = key.to_string();
                 if datastore.contains_key(&tmp) {
-                    let ref val = datastore[tmp];
+                    let ref val = datastore[&tmp];
                     rv = self.handle_unescaped_or_value_node(node, val, "".to_string(), datastore, writer);
                 }
             }
@@ -530,7 +530,7 @@ impl Template {
             Value(key, _) => {
                 let tmp = key.to_string();
                 if datastore.contains_key(&tmp) {
-                    let ref val = datastore[tmp];
+                    let ref val = datastore[&tmp];
                     rv = self.handle_unescaped_or_value_node(node, val, "".to_string(), datastore, writer);
                 }
             }
@@ -549,7 +549,7 @@ impl Template {
             Section(ref key, ref children, ref inverted, _, _) => {
                 let tmp = key.to_string();
                 let truthy = if datastore.contains_key(&tmp) {
-                    self.is_section_data_true(&datastore[tmp])
+                    self.is_section_data_true(&datastore[&tmp])
                 } else {
                     false
                 };
@@ -557,7 +557,7 @@ impl Template {
                     (true, true) => {},
                     (false, false) => {},
                     (true, false) => {
-                        let ref val = datastore[tmp];
+                        let ref val = datastore[&tmp];
                         let mut sections = vec![tmp.clone()];
                         rv = self.handle_section_node(children, &tmp, val, datastore, &mut sections, writer);
                     },
