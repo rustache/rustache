@@ -76,7 +76,8 @@ impl Render<MemStream> for String {
             Err(err) => return Err(JsonError(format!("Invalid JSON. {}", err)))
         };
 
-        parse_json(&json).render(template)
+        let hb = parse_json(&json);
+        hb.render(template)
     }
 }
 
