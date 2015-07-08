@@ -53,7 +53,7 @@ impl Render<MemStream> for Path {
         return match read_file(self) {
             Ok(text) => {
 
-                let json = match json::from_str(text.as_slice()) {
+                let json = match json::from_str(&text) {
                     Ok(json) => json,
                     Err(err) => return Err(JsonError(format!("Invalid JSON. {}", err)))
                 };
@@ -71,7 +71,7 @@ impl Render<MemStream> for Path {
 impl Render<MemStream> for String {
     fn render(&self, template: &str) -> RustacheResult<MemStream> {
 
-        let json = match json::from_str(self.as_slice()) {
+        let json = match json::from_str(&self[..]) {
             Ok(json) => json,
             Err(err) => return Err(JsonError(format!("Invalid JSON. {}", err)))
         };
@@ -88,7 +88,7 @@ impl Render<MemStream> for String {
 pub fn render_file<R: Read, Re: Render<R>>(path: &str, renderable: Re) -> RustacheResult<R> {
 
     return match read_file(&Path::new(path)) {
-        Ok(text) => renderable.render(text.as_slice()),
+        Ok(text) => renderable.render(&text[..]),
         Err(err) => Err(FileError(err))
     }
 }
@@ -109,19 +109,19 @@ fn parse_json(json: &Json) -> HashBuilder {
     for (k, v) in json.as_object().unwrap().iter() {
         match v {
             &I64(num) => {
-                data = data.insert_string(k.as_slice(), num.to_string());
+                data = data.insert_string(&k[..], num.to_string());
             }
             &U64(num) => {
-                data = data.insert_string(k.as_slice(), num.to_string());
+                data = data.insert_string(&k[..], num.to_string());
             },
             &F64(num) => {
-                data = data.insert_string(k.as_slice(), num.to_string());
+                data = data.insert_string(&k[..], num.to_string());
             },
             &Boolean(val) => {
-                data = data.insert_bool(k.as_slice(), val);
+                data = data.insert_bool(&k[..], val);
             },
             &Array(ref list) => {
-                data = data.insert_vector(k.as_slice(), |mut builder| {
+                data = data.insert_vector(&k[..], |mut builder| {
                     for item in list.iter() {
                         builder = match *item {
                             Object(_) => builder.push_hash(|_| {
@@ -139,13 +139,13 @@ fn parse_json(json: &Json) -> HashBuilder {
                 });
             },
             &Object(_) => {
-                data = data.insert_hash(k.as_slice(), |_| {
+                data = data.insert_hash(&k[..], |_| {
                     parse_json(v)
                 });
             },
             &Null => {},
             &String(ref text) => {
-                data = data.insert_string(k.as_slice(), text.as_slice());
+                data = data.insert_string(&k[..], &text[..]);
             },
         }
     }
