@@ -51,7 +51,7 @@ impl Template {
                                   data: &String,
                                   errstr: &str) -> RustacheResult<()> {
         let mut rv: RustacheResult<()> = Ok(());
-        let status = writer.write_str(&data[..]);
+        let status = writer.write_fmt(format_args!("{}", &data[..]));
         match status {
             Err(err) => {
                 let msg = format!("{}: {}", err, errstr);
