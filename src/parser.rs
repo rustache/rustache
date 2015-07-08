@@ -68,7 +68,7 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
                         let mut children: Vec<Token> = vec![];
                         let mut count = 0u32;
                         let mut otag_count = 1u32;
-                        for item in list.slice_from(i + 1).iter() {
+                        for item in list[i + 1 ..].iter() {
                             count += 1;
                             match *item {
                                 OTag(title, _, _) => {

@@ -68,7 +68,7 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
 
     // Catch trailing text
     if close_pos < len {
-        tokens.push(Text(contents.slice_from(close_pos)));
+        tokens.push(Text(&contents[close_pos..]));
     }
 
     // Return
@@ -79,12 +79,12 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
 fn add_token<'a>(inner: &'a str, outer: &'a str, tokens: &mut Vec<Token<'a>>) {
     match inner.char_at(0) {
         '!' => tokens.push(Comment),
-        '#' => tokens.push(OTag(inner.slice_from(1).trim(), false, outer)),
-        '/' => tokens.push(CTag(inner.slice_from(1).trim(), outer)),
-        '^' => tokens.push(OTag(inner.slice_from(1).trim(), true, outer)),
-        '>' => tokens.push(Partial(inner.slice_from(1).trim(), outer)),
-        '&' => tokens.push(Raw(inner.slice_from(1).trim(), outer)),
-        '{' => tokens.push(Raw(inner.slice(1, inner.len() - 1).trim(), outer)),
+        '#' => tokens.push(OTag(inner[1..].trim(), false, outer)),
+        '/' => tokens.push(CTag(inner[1..].trim(), outer)),
+        '^' => tokens.push(OTag(inner[1..].trim(), true, outer)),
+        '>' => tokens.push(Partial(inner[1..].trim(), outer)),
+        '&' => tokens.push(Raw(inner[1..].trim(), outer)),
+        '{' => tokens.push(Raw(inner[1 .. inner.len() - 1].trim(), outer)),
         _   => tokens.push(Variable(inner.trim(), outer))
     }
 }
