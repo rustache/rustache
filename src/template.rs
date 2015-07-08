@@ -220,8 +220,8 @@ impl Template {
             // simple value-for-tag exchange, write out the string
             Strng(ref val) => {
                 match *node {
-                    Unescaped(_,_) => tmp = tmp + *val,
-                    Value(_,_) => tmp = *self.escape_html(&(*val[..])),
+                    Unescaped(_,_) => tmp = tmp + val,
+                    Value(_,_) => tmp = *self.escape_html(&val[..]),
                     _ => return Err(TemplateErrorType(UnexpectedNodeType(format!("{:?}", node))))
                 }
                 rv = self.write_to_stream(writer, &tmp, "render: unescaped node string fail");
