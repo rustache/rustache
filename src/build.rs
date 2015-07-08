@@ -87,9 +87,9 @@ impl<'a> HashBuilder<'a> {
     ///             .push_string("Druid".to_string())
     ///     });
     /// ```
-    pub fn insert_vector<F, K: ToString>(self, key: K, f: F) where F: Fn(VecBuilder<'a>) -> HashBuilder<'a> {
+    pub fn insert_vector<K: ToString>(self, key: K, f: &Fn(VecBuilder<'a>) -> VecBuilder<'a>) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
-        let builder = f(VecBuilder::new());
+        let builder = (*f)(VecBuilder::new());
         data.insert(key.to_string(), builder.build());
         HashBuilder { data: data, partials_path: partials_path }
     }
@@ -110,9 +110,9 @@ impl<'a> HashBuilder<'a> {
     ///             .insert_string("last_name", "Proudmoore")
     ///     });
     /// ```
-    pub fn insert_hash<F, K: ToString>(self, key: K, f: F) where F: Fn(HashBuilder<'a>) -> HashBuilder<'a> {
+    pub fn insert_hash<K: ToString>(self, key: K, f: &Fn(HashBuilder<'a>) -> HashBuilder<'a>) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
-        let builder = f(HashBuilder::new());
+        let builder = (*f)(HashBuilder::new());
         data.insert(key.to_string(), builder.build());
         HashBuilder { data: data, partials_path: partials_path }
     }
@@ -126,7 +126,7 @@ impl<'a> HashBuilder<'a> {
     ///         "world".to_string()
     ///     });
     /// ```
-    pub fn insert_lambda<F, K: ToString>(self, key: K, f: F) where F: Fn(String) -> HashBuilder<'a> {
+    pub fn insert_lambda<K: ToString>(self, key: K, f: &'a Fn(String) -> String) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         data.insert(key.to_string(), Lambda(RefCell::new(f)));
         HashBuilder { data: data, partials_path: partials_path }
@@ -223,9 +223,9 @@ impl<'a> VecBuilder<'a> {
     ///             .push_string("Jaina Proudmoore".to_string())
     ///     });
     /// ```
-    pub fn push_vector<F>(self, f: F) where F: Fn(VecBuilder<'a>) -> VecBuilder<'a> {
+    pub fn push_vector(self, f: &Fn(VecBuilder<'a>) -> VecBuilder<'a>) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
-        let builder = f(VecBuilder::new());
+        let builder = (*f)(VecBuilder::new());
         data.push(builder.build());
         VecBuilder { data: data }
     }
@@ -246,9 +246,9 @@ impl<'a> VecBuilder<'a> {
     ///             .insert_string("last_name".to_string(), "Stormrage".to_string())
     ///     });
     /// ```
-    pub fn push_hash<F>(self, f: F) where F: Fn(HashBuilder<'a>) -> VecBuilder<'a> {
+    pub fn push_hash(self, f: &Fn(HashBuilder<'a>) -> HashBuilder<'a>) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
-        let builder = f(HashBuilder::new());
+        let builder = (*f)(HashBuilder::new());
         data.push(builder.build());
         VecBuilder { data: data }
     }
@@ -262,7 +262,7 @@ impl<'a> VecBuilder<'a> {
     ///         "world".to_string()
     ///     });
     /// ```
-    pub fn push_lambda<F>(self, f: F) where F: Fn(String) -> VecBuilder <'a> {
+    pub fn push_lambda(self, f: &'a Fn(String) -> String) -> VecBuilder <'a> {
         let VecBuilder { mut data } = self;
         data.push(Lambda(RefCell::new(f)));
         VecBuilder { data: data }
