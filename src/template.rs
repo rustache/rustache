@@ -1,5 +1,6 @@
 use std::path::Path;
-use std::fs::{File, PathExt};
+use std::fs;
+use std::fs::File;
 use std::fmt;
 use std::io::{Read,Write};
 
@@ -494,7 +495,7 @@ impl Template {
                                            writer: &mut W) -> RustacheResult<()> {
         let mut rv: RustacheResult<()> = Ok(());;
         let path = Path::new(&self.partials_path.clone()).join(filename);
-        if path.exists() {
+        if fs::metadata(&path).is_ok() {
 
             let mut contents = String::new();
             let file = File::open(&path).and_then( |ref mut f| f.read_to_string(&mut contents) );
