@@ -29,6 +29,22 @@ enum ParserStatus {
     Skip
 }
 
+trait LocalStringExt {
+    fn is_whitespace(&self) -> bool;
+}
+
+impl LocalStringExt for String {
+    fn is_whitespace(&self) -> bool {
+        self.chars().all(|c| c.is_whitespace())
+    }
+}
+
+impl LocalStringExt for str {
+    fn is_whitespace(&self) -> bool {
+        self.chars().all(|c| c.is_whitespace())
+    }
+}
+
 // Parse list of tokens into instruction nodes
 // Section nodes will be handled recursively
 pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
@@ -39,27 +55,27 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
     loop {
         // Iterate while still nodes in the list
         match it.next() {
-            Some((i, &token)) => {
+            Some((i, token)) => {
                 match token {
-                    Text(text) => nodes.push(parse_text_node(text, &mut status)),
-                    Variable(name, raw) => nodes.push(parse_variable_node(name, raw)),
-                    Raw(name, raw) => nodes.push(parse_raw_node(name, raw)),
-                    Partial(name, raw) => nodes.push(Part(name, raw)),
+                    &Text(text) => nodes.push(parse_text_node(text, &mut status)),
+                    &Variable(name, raw) => nodes.push(parse_variable_node(name, raw)),
+                    &Raw(name, raw) => nodes.push(parse_raw_node(name, raw)),
+                    &Partial(name, raw) => nodes.push(Part(name, raw)),
                     // Unopened closing tags are ignored
                     // TODO: Return a parser error?
-                    CTag(_, _) => continue,
-                    OTag(name, inverted, raw) => {
-                        let mut children: Vec<Token> = vec![];
+                    &CTag(_, _) => continue,
+                    &OTag(name, inverted, raw) => {
+                        let mut children: Vec<Token<'a>> = vec![];
                         let mut count = 0u32;
                         let mut otag_count = 1u32;
-                        for item in list.slice_from(i + 1).iter() {
+                        for item in list[i + 1 ..].iter() {
                             count += 1;
                             match *item {
                                 OTag(title, _, _) => {
                                     if title == name {
                                         otag_count += 1;
                                     }
-                                    children.push(*item);
+                                    children.push((*item).clone());
                                 },
                                 CTag(title, temp) => {
                                     if title == name && otag_count == 1 {
@@ -67,14 +83,14 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
                                         break;
                                     } else if title == name && otag_count > 1 {
                                         otag_count -= 1;
-                                        children.push(*item);
+                                        children.push((*item).clone());
                                     } else {
-                                        children.push(*item);
+                                        children.push((*item).clone());
                                         continue;
                                     }
                                 },
                                 _ => {
-                                    children.push(*item);
+                                    children.push((*item).clone());
                                     continue;
                                 }
                             }
@@ -88,7 +104,7 @@ pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
                             count -= 1;
                         }
                     },
-                    Comment => {
+                    &Comment => {
                         // Check the next element for whitespace
                         match it.peek() {
                             Some(&(_, token)) => {
@@ -141,8 +157,8 @@ fn parse_variable_node<'a>(name: &'a str, raw: &'a str) -> Node<'a> {
     match dot_notation {
         false => return Value(name, raw.to_string()),
         true => {
-            let parts: Vec<&str> = name.split_str(".").collect();
-            let node = handle_dot_notation(parts.as_slice(), false, false);
+            let parts: Vec<&str> = name.split(".").collect();
+            let node = handle_dot_notation(&parts[..], false, false);
             return node;
         }
     }
@@ -157,14 +173,14 @@ fn parse_raw_node<'a>(name: &'a str, raw: &'a str) -> Node<'a> {
             return Unescaped(name, raw.to_string());
         }
         true => {
-            let parts: Vec<&str> = name.split_str(".").collect();
+            let parts: Vec<&str> = name.split(".").collect();
             match ampersand {
                 true => {
-                    let node = handle_dot_notation(parts.as_slice(), true, true);
+                    let node = handle_dot_notation(&parts[..], true, true);
                     return node;
                 },
                 false => {
-                    let node = handle_dot_notation(parts.as_slice(), true, false);
+                    let node = handle_dot_notation(&parts[..], true, false);
                     return node;
                 }
             };
@@ -249,16 +265,18 @@ fn handle_dot_notation<'a>(parts: &[&'a str], unescaped: bool, amp: bool) -> Nod
             ctag.push_str("}}");
 
             // Enter recursion and assign the results as children.
-            return Section(variable, vec![handle_dot_notation(parts.slice_from(1), unescaped, amp)], false, otag, ctag);
+            return Section(variable, vec![handle_dot_notation(&parts[1..], unescaped, amp)], false, otag, ctag);
         }
     }
 }
 
 #[cfg(test)]
 mod parser_tests {
-    use compiler::{Token, Text, Variable, OTag, CTag, Raw, Partial};
+    use compiler::Token;
+    use compiler::Token::{Text, Variable, OTag, CTag, Raw, Partial};
     use parser;
-    use parser::{Node, Static, Value, Section, Unescaped, Part};
+    use parser::Node;
+    use parser::Node::{Static, Value, Section, Unescaped, Part};
 
     #[test]
     fn parse_dot_notation_simple() {

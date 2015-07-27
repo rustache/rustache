@@ -16,10 +16,9 @@ use rustache::HashBuilder;
 //     expected: "Hello, world!"
 #[test]
 fn test_spec_lambdas_interpolation() {
+    let mut f = |_| { "world".to_string() };
     let data = HashBuilder::new()
-                .insert_lambda("lambda", |_| {
-                     "world".to_string()               
-                 });
+                .insert_lambda("lambda", &mut f);
 
     let rv = rustache::render_text("Hello, {{lambda}}!", data);
 
@@ -41,11 +40,10 @@ fn test_spec_lambdas_interpolation() {
 //     expected: "Hello, world!"
 #[test]
 fn test_spec_lambdas_interpolation_expansion() {
+    let mut f = |_| { "{{planet}}".to_string() };
     let data = HashBuilder::new()
                     .insert_string("planet", "world")
-                    .insert_lambda("lambda", |_| {
-                     "{{planet}}".to_string()               
-                 });
+                    .insert_lambda("lambda", &mut f);
 
     let rv = rustache::render_text("Hello, {{lambda}}!", data);
 
@@ -92,12 +90,13 @@ fn test_spec_lambdas_interpolation_expansion() {
 //     expected: '1 == 2 == 3'
 #[test]
 fn test_spec_lambdas_interpolation_multiple_calls() {
-    let mut calls = 0u;
+    let mut calls = 0;
+    let mut f = |_| {
+        calls += 1;
+        calls.to_string()
+    };
     let data = HashBuilder::new()
-                .insert_lambda("lambda", |_| {
-                    calls += 1;
-                    calls.to_string()
-                });
+                .insert_lambda("lambda", &mut f);
 
     let rv = rustache::render_text("{{lambda}} == {{{lambda}}} == {{lambda}}", data);
 
@@ -118,10 +117,9 @@ fn test_spec_lambdas_interpolation_multiple_calls() {
 //     expected: "<&gt;>"
 #[test]
 fn test_spec_lambdas_escaping() {
+    let mut f = |_| { ">".to_string() };
     let data = HashBuilder::new()
-                .insert_lambda("lambda", |_| {
-                    ">".to_string()               
-                });
+                .insert_lambda("lambda", &mut f);
 
     let rv = rustache::render_text("<{{lambda}}{{{lambda}}}", data);
 
@@ -143,15 +141,16 @@ fn test_spec_lambdas_escaping() {
 //     expected: "<yes>"
 #[test]
 fn test_spec_lambdas_section() {
-    let data = HashBuilder::new()
-                .insert_string("x", "Error!")
-                .insert_lambda("lambda", |txt| {
-                    if txt.as_slice() == "{{x}}" {
+    let mut f = |txt: String| {
+                    if &txt[..] == "{{x}}" {
                         "yes".to_string()
                     } else {
                         "no".to_string()
                     }
-                });
+                };
+    let data = HashBuilder::new()
+                .insert_string("x", "Error!")
+                .insert_lambda("lambda", &mut f);
 
     let rv = rustache::render_text("<{{#lambda}}{{x}}{{/lambda}}>", data);
 
@@ -173,14 +172,15 @@ fn test_spec_lambdas_section() {
 //     expected: "<-Earth->"
 #[test]
 fn test_spec_lambdas_section_expansion() {
+    let mut f = |txt: String| {
+                   let mut result = txt.clone();
+                   result.push_str("{{planet}}");
+                   result.push_str(&txt[..]);
+                   result
+                };
     let data = HashBuilder::new()
                 .insert_string("planet", "Earth")
-                .insert_lambda("lambda", |txt| {
-                    let mut result = txt.clone();
-                    result.push_str("{{planet}}");
-                    result.push_str(txt.as_slice());
-                    result
-                 });
+                .insert_lambda("lambda", &mut f);
 
     let rv = rustache::render_text("<{{#lambda}}-{{/lambda}}>", data);
 
@@ -230,13 +230,14 @@ fn test_spec_lambdas_section_expansion() {
 //     expected: '__FILE__ != __LINE__'
 #[test]
 fn test_spec_lambdas_section_multiple_calls() {
-    let data = HashBuilder::new()
-                .insert_lambda("lambda", |txt| {
+    let mut f = |txt: String| {
                     let mut result = "__".to_string();
-                    result.push_str(txt.as_slice());
+                    result.push_str(&txt[..]);
                     result.push_str("__");
                     result
-                });
+                };
+    let data = HashBuilder::new()
+                .insert_lambda("lambda", &mut f);
 
     let rv = rustache::render_text("{{#lambda}}FILE{{/lambda}} != {{#lambda}}LINE{{/lambda}}", data);
 
@@ -258,11 +259,10 @@ fn test_spec_lambdas_section_multiple_calls() {
 //     expected: "<>"
 #[test]
 fn test_spec_lambdas_inverted_section() {
+    let mut f = |_| { "false".to_string() };
     let data = HashBuilder::new()
                 .insert_string("static", "static")
-                .insert_lambda("lambda", |_| {
-                    "false".to_string()
-                });
+                .insert_lambda("lambda", &mut f);
 
     let rv = rustache::render_text("<{{^lambda}}{{static}}{{/lambda}}>", data);
 

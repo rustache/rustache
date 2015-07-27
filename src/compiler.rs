@@ -10,7 +10,7 @@ use self::Token::*;
 // text provided within the template.  Raw tag values are stored
 // for use in lambdas.
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Token<'a> {
     Text(&'a str), // (text)
     Variable(&'a str, &'a str), // (name, tag)
@@ -37,11 +37,11 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
     // Grab all captures and process
     for cap in re.captures_iter(contents) {
         // Establish groups for tag capture, preventing lookup for each call
-        let preceding_text = cap.at(1);
-        let preceding_whitespace = cap.at(2);
-        let outer = cap.at(3);
-        let inner = cap.at(4);
-        let trailing_whitespace = cap.at(5);
+        let preceding_text = cap.at(1).unwrap_or("");
+        let preceding_whitespace = cap.at(2).unwrap_or("");
+        let outer = cap.at(3).unwrap_or("");
+        let inner = cap.at(4).unwrap_or("");
+        let trailing_whitespace = cap.at(5).unwrap_or("");
 
         // Grab closing index
         let (_, c) = cap.pos(0).unwrap();
@@ -62,13 +62,13 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
 
         // Catch trailing whitespace
         if !trailing_whitespace.is_empty() {
-            tokens.push(Text(trailing_whitespace));
+            tokens.push(Text(&trailing_whitespace));
         }
     }
 
     // Catch trailing text
     if close_pos < len {
-        tokens.push(Text(contents.slice_from(close_pos)));
+        tokens.push(Text(&contents[close_pos..]));
     }
 
     // Return
@@ -77,14 +77,14 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
 
 // Simple method for categorizing and adding appropriate token
 fn add_token<'a>(inner: &'a str, outer: &'a str, tokens: &mut Vec<Token<'a>>) {
-    match inner.char_at(0) {
-        '!' => tokens.push(Comment),
-        '#' => tokens.push(OTag(inner.slice_from(1).trim(), false, outer)),
-        '/' => tokens.push(CTag(inner.slice_from(1).trim(), outer)),
-        '^' => tokens.push(OTag(inner.slice_from(1).trim(), true, outer)),
-        '>' => tokens.push(Partial(inner.slice_from(1).trim(), outer)),
-        '&' => tokens.push(Raw(inner.slice_from(1).trim(), outer)),
-        '{' => tokens.push(Raw(inner.slice(1, inner.len() - 1).trim(), outer)),
+    match &inner[0..1] {
+        "!" => tokens.push(Comment),
+        "#" => tokens.push(OTag(inner[1..].trim(), false, outer)),
+        "/" => tokens.push(CTag(inner[1..].trim(), outer)),
+        "^" => tokens.push(OTag(inner[1..].trim(), true, outer)),
+        ">" => tokens.push(Partial(inner[1..].trim(), outer)),
+        "&" => tokens.push(Raw(inner[1..].trim(), outer)),
+        "{" => tokens.push(Raw(inner[1 .. inner.len() - 1].trim(), outer)),
         _   => tokens.push(Variable(inner.trim(), outer))
     }
 }
@@ -92,7 +92,7 @@ fn add_token<'a>(inner: &'a str, outer: &'a str, tokens: &mut Vec<Token<'a>>) {
 #[cfg(test)]
 mod compiler_tests {
     use compiler;
-    use compiler::{Text, Variable, OTag, CTag, Raw, Partial, Comment};
+    use compiler::Token::{Text, Variable, OTag, CTag, Raw, Partial, Comment};
 
     #[test]
     fn test_one_char() {

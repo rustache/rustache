@@ -1,13 +1,11 @@
 #![deny(missing_docs)]
 #![deny(warnings)]
 
-#![feature(phase)]
 //! The main crate for the Rustache library.
 //!
 //! Rustache is a flexible template engine for Rust.
 
-// StdLib dependencies
-extern crate serialize;
+extern crate rustc_serialize;
 
 use std::fmt;
 use std::cell::RefCell;
@@ -19,6 +17,7 @@ use self::Data::*;
 pub use build::{HashBuilder, VecBuilder};
 pub use rustache::{render_file, render_text, Render};
 
+/// Alias for Result<T, RustacheError>
 pub type RustacheResult<T> = Result<T, RustacheError>;
 
 /// Enum to handle errors from the Rustache library.
@@ -36,9 +35,9 @@ pub enum RustacheError {
 impl fmt::Debug for RustacheError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            &JsonError(ref val) => write!(f, "JsonError: {}", val),
-            &FileError(ref val) => write!(f, "FileError: {}", val),
-            &TemplateErrorType(ref val) => write!(f, "{}", val),
+            &JsonError(ref val) => write!(f, "JsonError: {:?}", val),
+            &FileError(ref val) => write!(f, "FileError: {:?}", val),
+            &TemplateErrorType(ref val) => write!(f, "{:?}", val),
         }
     }
 }
@@ -52,7 +51,7 @@ pub enum Data<'a> {
     Float(f64),
     Vector(Vec<Data<'a>>),
     Hash(HashMap<String, Data<'a>>),
-    Lambda(RefCell<&'a Fn(String)>)
+    Lambda(RefCell<&'a mut FnMut(String) -> String>)
 }
 // |String|: 'a -> String : F Above
 
@@ -76,12 +75,12 @@ impl<'a> PartialEq for Data<'a> {
 impl<'a> fmt::Debug for Data<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Strng(ref val)   => write!(f, "Strng({})", val),
-            Bool(val)        => write!(f, "Boolean({})", val),
-            Integer(ref val) => write!(f, "Integer({})", val),
-            Float(ref val)   => write!(f, "Float({})", val),
-            Vector(ref val)  => write!(f, "Vector({})", val),
-            Hash(ref val)    => write!(f, "Hash({})", val),
+            Strng(ref val)   => write!(f, "Strng({:?})", val),
+            Bool(val)        => write!(f, "Boolean({:?})", val),
+            Integer(ref val) => write!(f, "Integer({:?})", val),
+            Float(ref val)   => write!(f, "Float({:?})", val),
+            Vector(ref val)  => write!(f, "Vector({:?})", val),
+            Hash(ref val)    => write!(f, "Hash({:?})", val),
             Lambda(_)        => write!(f, "Lambda(...)")
         }
     }

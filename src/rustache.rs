@@ -6,11 +6,10 @@ use std::path::Path;
 use compiler;
 use parser;
 use self::memstream::MemStream;
-use serialize::json::Json;
-use serialize::json::Json::{Boolean, Null, I64, U64, F64, String, Array, Object};
+use rustc_serialize::json::Json;
+use rustc_serialize::json::Json::{Boolean, Null, I64, U64, F64, String, Array, Object};
 use build::{HashBuilder, VecBuilder};
 use template::Template;
-use serialize::{json};
 
 use RustacheResult;
 use RustacheError::{JsonError, FileError};
@@ -53,7 +52,7 @@ impl Render<MemStream> for Path {
         return match read_file(self) {
             Ok(text) => {
 
-                let json = match json::from_str(text.as_slice()) {
+                let json = match Json::from_str(&text) {
                     Ok(json) => json,
                     Err(err) => return Err(JsonError(format!("Invalid JSON. {}", err)))
                 };
@@ -71,12 +70,13 @@ impl Render<MemStream> for Path {
 impl Render<MemStream> for String {
     fn render(&self, template: &str) -> RustacheResult<MemStream> {
 
-        let json = match json::from_str(self.as_slice()) {
+        let json = match Json::from_str(&self[..]) {
             Ok(json) => json,
             Err(err) => return Err(JsonError(format!("Invalid JSON. {}", err)))
         };
 
-        parse_json(&json).render(template)
+        let hb = parse_json(&json);
+        hb.render(template)
     }
 }
 
@@ -88,7 +88,7 @@ impl Render<MemStream> for String {
 pub fn render_file<R: Read, Re: Render<R>>(path: &str, renderable: Re) -> RustacheResult<R> {
 
     return match read_file(&Path::new(path)) {
-        Ok(text) => renderable.render(text.as_slice()),
+        Ok(text) => renderable.render(&text[..]),
         Err(err) => Err(FileError(err))
     }
 }
@@ -109,19 +109,19 @@ fn parse_json(json: &Json) -> HashBuilder {
     for (k, v) in json.as_object().unwrap().iter() {
         match v {
             &I64(num) => {
-                data = data.insert_string(k.as_slice(), num.to_string());
+                data = data.insert_string(&k[..], num.to_string());
             }
             &U64(num) => {
-                data = data.insert_string(k.as_slice(), num.to_string());
+                data = data.insert_string(&k[..], num.to_string());
             },
             &F64(num) => {
-                data = data.insert_string(k.as_slice(), num.to_string());
+                data = data.insert_string(&k[..], num.to_string());
             },
             &Boolean(val) => {
-                data = data.insert_bool(k.as_slice(), val);
+                data = data.insert_bool(&k[..], val);
             },
             &Array(ref list) => {
-                data = data.insert_vector(k.as_slice(), |mut builder| {
+                data = data.insert_vector(&k[..], |mut builder| {
                     for item in list.iter() {
                         builder = match *item {
                             Object(_) => builder.push_hash(|_| {
@@ -139,13 +139,13 @@ fn parse_json(json: &Json) -> HashBuilder {
                 });
             },
             &Object(_) => {
-                data = data.insert_hash(k.as_slice(), |_| {
+                data = data.insert_hash(&k[..], |_| {
                     parse_json(v)
                 });
             },
             &Null => {},
             &String(ref text) => {
-                data = data.insert_string(k.as_slice(), text.as_slice());
+                data = data.insert_string(&k[..], &text[..]);
             },
         }
     }
@@ -157,7 +157,7 @@ fn parse_json(json: &Json) -> HashBuilder {
 // returning a VecBuider
 fn parse_json_vector(json: &Json) -> VecBuilder {
     let mut data = VecBuilder::new();
-    for v in json.as_list().unwrap().iter() {
+    for v in json.as_array().unwrap().iter() {
         match v {
             &I64(num) => {
                 data = data.push_string(num.to_string());
@@ -196,7 +196,7 @@ fn parse_json_vector(json: &Json) -> VecBuilder {
             },
             &Null => {},
             &String(ref text) => {
-                data = data.push_string(text.as_slice());
+                data = data.push_string(&text[..]);
             },
         }
     }
@@ -210,14 +210,15 @@ pub fn read_file(path: &Path) -> Result<String, String> {
     let mut rv: Result<String, String>; //Err(format!("read file failed: {}", display));
     // Open the file path
     let mut file = match File::open(path) {
-        Err(why) => { rv = Err(format!("{}: \"{}\"", why.desc, display)); return rv; },
+        Err(why) => { rv = Err(format!("{}: \"{}\"", why, display)); return rv; },
         Ok(file) => { file },
     };
 
     // Read the file contents into a heap allocated string
-    match file.read_to_string() {
-        Err(why) => return { rv = Err(format!("{}", why.desc)); return rv; },
-        Ok(text) => { rv = Ok(text); },
+    let mut text = String::new();
+    match file.read_to_string(&mut text) {
+        Err(why) => return { rv = Err(format!("{}", why)); return rv; },
+        Ok(_) => { rv = Ok(text); },
     };
 
     rv
