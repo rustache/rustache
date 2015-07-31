@@ -14,8 +14,7 @@ The project's docs page is located [here](https://rustache.github.io/doc/rustach
 Install it through [Cargo](https://crates.io/):
 
 ```toml
-[dependencies.rustache]
-git = "https://github.com/rustache/rustache"
+rustache = "0.0.1"
 ```
 
 Then link it within your crate like so:
@@ -72,7 +71,7 @@ cargo test
 - [ ] Thread errors through the parser and compiler:
 
 - [ ] Fill out samples folder.
-  
+
 - [ ] Handle Build and Parser operations concurrently
 
 ## Contribute

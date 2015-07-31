@@ -2,7 +2,11 @@
 
 name = "rustache"
 version = "0.0.1"
-authors = ["Jarrod Ruhland <jarrod.ruhland@gmail.com>"]
+authors = ["Jarrod Ruhland <jarrod.ruhland@gmail.com>",
+           "Stephen Paul Weber <github@singpolyma.net>"]
+
+description = "Mustache templating engine for rust"
+license = "MIT"
 
 [lib]
 
@@ -12,7 +16,4 @@ path = "src/lib.rs"
 [dependencies]
 regex = "*"
 rustc-serialize = "*"
-
-[dependencies.memstream]
-git = "https://github.com/singpolyma/rust-memstream.git"
-branch = "fix-for-rust-stable"
+memstream = "0.0.1"
