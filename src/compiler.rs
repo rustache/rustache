@@ -32,7 +32,7 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
     let len = contents.len();
 
     // (text)(whitespace)( (tag) )(whitespace)
-    let re = Regex::new(r"(.*?)([ \t\r\n]*)(\{\{(\{?\S?\s*?[\w\.\s]*.*?\s*?\}?)\}\})([ \t\r\n]*)").unwrap();
+    let re = Regex::new(r"(?s)(.*?)([ \t\r\n]*)(\{\{(\S?\s*?[\w\.\s]*.*?\s*?)\}\})([ \t\r\n]*)").unwrap();
 
     // Grab all captures and process
     for cap in re.captures_iter(contents) {
