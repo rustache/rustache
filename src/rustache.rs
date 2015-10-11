@@ -207,7 +207,7 @@ fn parse_json_vector(json: &Json) -> VecBuilder {
 #[doc(hidden)]
 pub fn read_file(path: &Path) -> Result<String, String> {
     let display = path.display();
-    let mut rv: Result<String, String>; //Err(format!("read file failed: {}", display));
+    let rv: Result<String, String>; //Err(format!("read file failed: {}", display));
     // Open the file path
     let mut file = match File::open(path) {
         Err(why) => { rv = Err(format!("{}: \"{}\"", why, display)); return rv; },
