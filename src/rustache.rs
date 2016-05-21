@@ -7,7 +7,8 @@ use compiler;
 use parser;
 use self::memstream::MemStream;
 use rustc_serialize::json::Json;
-use rustc_serialize::json::Json::{Boolean, Null, I64, U64, F64, String, Array, Object};
+use rustc_serialize::json::Json::{Boolean, Null, I64, U64, F64, Array, Object};
+use rustc_serialize::json::Json::String as JString;
 use build::{HashBuilder, VecBuilder};
 use template::Template;
 
@@ -130,7 +131,7 @@ fn parse_json(json: &Json) -> HashBuilder {
                             Array(_) => builder.push_vector(|_| {
                                 parse_json_vector(item)
                             }),
-                            String(_) => builder.push_string(item.as_string().unwrap()),
+                            JString(_) => builder.push_string(item.as_string().unwrap()),
                             Boolean(_) => builder.push_bool(item.as_boolean().unwrap()),
                             _ => builder
                         }
@@ -144,7 +145,7 @@ fn parse_json(json: &Json) -> HashBuilder {
                 });
             },
             &Null => {},
-            &String(ref text) => {
+            &JString(ref text) => {
                 data = data.insert_string(&k[..], &text[..]);
             },
         }
@@ -181,7 +182,7 @@ fn parse_json_vector(json: &Json) -> VecBuilder {
                             Array(_) => builder.push_vector(|_| {
                                 parse_json_vector(item)
                             }),
-                            String(_) => builder.push_string(item.as_string().unwrap()),
+                            JString(_) => builder.push_string(item.as_string().unwrap()),
                             Boolean(_) => builder.push_bool(item.as_boolean().unwrap()),
                             _ => builder
                         }
@@ -195,7 +196,7 @@ fn parse_json_vector(json: &Json) -> VecBuilder {
                 });
             },
             &Null => {},
-            &String(ref text) => {
+            &JString(ref text) => {
                 data = data.push_string(&text[..]);
             },
         }
@@ -207,7 +208,7 @@ fn parse_json_vector(json: &Json) -> VecBuilder {
 #[doc(hidden)]
 pub fn read_file(path: &Path) -> Result<String, String> {
     let display = path.display();
-    let mut rv: Result<String, String>; //Err(format!("read file failed: {}", display));
+    let rv: Result<String, String>; //Err(format!("read file failed: {}", display));
     // Open the file path
     let mut file = match File::open(path) {
         Err(why) => { rv = Err(format!("{}: \"{}\"", why, display)); return rv; },
