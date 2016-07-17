@@ -7,6 +7,8 @@ authors = ["Jarrod Ruhland <jarrod.ruhland@gmail.com>",
 
 description = "Mustache templating engine for rust"
 license = "MIT"
+documentation = "https://rustache.github.io/rustache/"
+repository = "https://github.com/rustache/rustache.git"
 
 [lib]
 
