@@ -1,7 +1,7 @@
 Rustache [![Build Status](https://travis-ci.org/rustache/rustache.svg?branch=master)](https://travis-ci.org/rustache/rustache)
 ====
 
-[Rustache](https://rustache.github.io) is a [Rust](https://www.rust-lang.org/) implementation of the [Mustache](https://mustache.github.io/) spec.
+[Rustache](https://rustache.github.io/rustache) is a [Rust](https://www.rust-lang.org/) implementation of the [Mustache](https://mustache.github.io/) spec.
 
 ## Documentation
 
