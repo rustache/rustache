@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["HashBuilder","`HashBuilder` is a helper type that constructs `Data` types in a HashMap"],["VecBuilder","`VecBuilder` is a helper type that constructs `Data` types in a Vector"]]});

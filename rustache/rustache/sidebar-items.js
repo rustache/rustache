@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["render_file","Render a template from the given template file"],["render_text","Render the given template string"]],"trait":[["Render","Defines a `renderable` trait, so that all of our data is renderable"]]});
