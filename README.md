@@ -14,7 +14,7 @@ The project's docs page is located [here](https://rustache.github.io/rustache/).
 Install it through [Cargo](https://crates.io/):
 
 ```toml
-rustache = "0.0.1"
+rustache = "^0.0"
 ```
 
 Then link it within your crate like so:
