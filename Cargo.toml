@@ -16,6 +16,6 @@ name = "rustache"
 path = "src/lib.rs"
 
 [dependencies]
-regex = "*"
-rustc-serialize = "*"
+regex = "0.1.73"
+rustc-serialize = "0.3.19"
 memstream = "0.0.1"
