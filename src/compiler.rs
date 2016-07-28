@@ -32,7 +32,7 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
     let len = contents.len();
 
     // (text)(whitespace)( (tag) )(whitespace)
-    let re = Regex::new(r"(.*?)([ \t\r\n]*)(\{\{(\{?\S?\s*?[\w\.\s]*.*?\s*?\}?)\}\})([ \t\r\n]*)").unwrap();
+    let re = Regex::new(r"(?s)(.*?)([ \t\r\n]*)(\{\{(\{?\S?\s*?[\w\.\s]*.*?\s*?\}?)\}\})([ \t\r\n]*)").unwrap();
 
     // Grab all captures and process
     for cap in re.captures_iter(contents) {
@@ -268,6 +268,19 @@ mod compiler_tests {
         let contents = "value} other crap";
         let tokens = compiler::create_tokens(contents);
         let expected = vec![Text("value} other crap")];
+        assert_eq!(expected, tokens);
+    }
+
+    #[test]
+    fn test_extending_text_across_newlines() {
+        let contents = "bar = \"{{ foo }}\"\nbaz = \"{{ quux }}\"";
+        let tokens = compiler::create_tokens(contents);
+        let expected = vec![Text("bar = \""),
+                            Variable("foo", "{{ foo }}"),
+                            Text("\"\nbaz = \""),
+                            Variable("quux", "{{ quux }}"),
+                            Text("\"")];
+
         assert_eq!(expected, tokens);
     }
 }
