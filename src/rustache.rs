@@ -80,8 +80,12 @@ impl Render<Cursor<Vec<u8>>> for String {
 
 /// Render a template from the given template file
 ///
-/// ```ignore
-/// rustache::render_file("path/to/template.html", &data);
+/// ```
+/// use rustache::HashBuilder;
+///
+/// let data = HashBuilder::new().insert_string("planet", "Earth");
+/// let rv = rustache::render_file("test_data/cmdline_test.tmpl", data);
+/// println!("{}", String::from_utf8(rv.unwrap().into_inner()).unwrap());
 /// ```
 pub fn render_file<R: Read, Re: Render<R>>(path: &str, renderable: Re) -> RustacheResult<R> {
 
@@ -93,8 +97,12 @@ pub fn render_file<R: Read, Re: Render<R>>(path: &str, renderable: Re) -> Rustac
 
 /// Render the given template string
 ///
-/// ```ignore
-/// rustache::render_text("{{ name }}", &data);
+/// ```
+/// use rustache::HashBuilder;
+///
+/// let data = HashBuilder::new().insert_string("name", "your name");
+/// let rv = rustache::render_text("{{ name }}", data);
+/// println!("{}", String::from_utf8(rv.unwrap().into_inner()).unwrap());
 /// ```
 pub fn render_text<R: Read, Re: Render<R>>(input: &str, renderable: Re) -> RustacheResult<R> {
     renderable.render(input)

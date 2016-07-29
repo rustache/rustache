@@ -29,10 +29,14 @@ The main forward interface that users will interact with when using Rustache are
 
 ```rust
 // Renders the given template file
-rustache::render_file("path/to/template.html", data)
+let data = rustache::HashBuilder::new().insert_string("name", "your name");
+let rv = rustache::render_text("{{ name }}", data);
+println!("{}", String::from_utf8(rv.unwrap().into_inner).unwrap());
 
 // Renders the given template string
-rustache::render_text("{{ name }}", data)
+let data = rustache::HashBuilder::new().insert_string("name", "your name");
+let rv = rustache::render_file("test_data/cmdline_test.tmpl", data);
+println!("{}", String::from_utf8(rv.unwrap().into_inner).unwrap());
 ```
 
 ## Examples
