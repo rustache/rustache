@@ -1,11 +1,8 @@
-extern crate memstream;
-
 use std::fs::File;
-use std::io::Read;
+use std::io::{Cursor, Read};
 use std::path::Path;
 use compiler;
 use parser;
-use self::memstream::MemStream;
 use rustc_serialize::json::Json;
 use rustc_serialize::json::Json::{Boolean, Null, I64, U64, F64, Array, Object};
 use rustc_serialize::json::Json::String as JString;
@@ -22,10 +19,10 @@ pub trait Render<R: Read> {
 }
 
 /// Implement the `renderable` trait on the HashBuilder type
-impl<'a> Render<MemStream> for HashBuilder<'a> {
-    fn render(&self, template: &str) -> RustacheResult<MemStream> {
+impl<'a> Render<Cursor<Vec<u8>>> for HashBuilder<'a> {
+    fn render(&self, template: &str) -> RustacheResult<Cursor<Vec<u8>>> {
         // Create the stream we are going to write to.
-        let mut stream = MemStream::new();
+        let mut stream = Cursor::new(Vec::new());
 
         // Create our nodes
         let tokens = compiler::create_tokens(template);
@@ -41,14 +38,14 @@ impl<'a> Render<MemStream> for HashBuilder<'a> {
 
 
 /// Implement the `renderable` trait on the JSON type
-impl Render<MemStream> for Json {
-    fn render(&self, template: &str) -> RustacheResult<MemStream> {
+impl Render<Cursor<Vec<u8>>> for Json {
+    fn render(&self, template: &str) -> RustacheResult<Cursor<Vec<u8>>> {
        parse_json(self).render(template)
     }
 }
 
-impl Render<MemStream> for Path {
-    fn render(&self, template: &str) -> RustacheResult<MemStream> {
+impl Render<Cursor<Vec<u8>>> for Path {
+    fn render(&self, template: &str) -> RustacheResult<Cursor<Vec<u8>>> {
 
         return match read_file(self) {
             Ok(text) => {
@@ -68,8 +65,8 @@ impl Render<MemStream> for Path {
     }
 }
 
-impl Render<MemStream> for String {
-    fn render(&self, template: &str) -> RustacheResult<MemStream> {
+impl Render<Cursor<Vec<u8>>> for String {
+    fn render(&self, template: &str) -> RustacheResult<Cursor<Vec<u8>>> {
 
         let json = match Json::from_str(&self[..]) {
             Ok(json) => json,

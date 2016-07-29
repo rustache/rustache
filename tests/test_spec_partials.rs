@@ -14,7 +14,7 @@ fn test_spec_partials_basic_behavior() {
 
     let rv = rustache::render_text("\"{{>test_data/test_spec_partials_basic}}\"", data);
 
-    assert_eq!("\"from partial\"".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("\"from partial\"".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Failed Lookup
@@ -29,7 +29,7 @@ fn test_spec_partials_failed_lookup() {
 
     let rv = rustache::render_text("\"{{>text}}\"", data);
 
-    assert_eq!("\"\"".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("\"\"".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Context
@@ -44,7 +44,7 @@ fn test_spec_partials_context() {
 
     let rv = rustache::render_text("\"{{>test_data/test_spec_partials_context}}\"", data);
 
-    assert_eq!("\"*content*\"".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("\"*content*\"".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Recursion
@@ -68,7 +68,7 @@ fn test_spec_partials_context() {
 
 //     let rv = rustache::render_text("{{>test_data/test_spec_partials_recursion}}", data);
 
-//     assert_eq!("X<Y<>>".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!("X<Y<>>".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 //   - name: Surrounding Whitespace
@@ -83,7 +83,7 @@ fn test_spec_partials_surrounding_whitespace() {
 
     let rv = rustache::render_text("| {{>test_data/test_spec_partials_whitespace}} |", data);
 
-    assert_eq!("| \t|\t |".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("| \t|\t |".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Inline Indentation
@@ -98,7 +98,7 @@ fn test_spec_partials_inline_indentation() {
 
     let rv = rustache::render_text("  {{data}}  {{> test_data/test_spec_partials_inline_indentation}}\n", data);
 
-    assert_eq!("  |  >\n>\n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("  |  >\n>\n".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Standalone Line Endings
@@ -113,7 +113,7 @@ fn test_spec_partials_inline_indentation() {
 
 //     let rv = rustache::render_text("|\r\n{{>partial}}\r\n|", data);
 
-//     assert_eq!("|\r\n>|".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!("|\r\n>|".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 //   - name: Standalone Without Previous Line
@@ -128,7 +128,7 @@ fn test_spec_partials_standalone_without_previous_line() {
 
     let rv = rustache::render_text("  {{>test_data/test_spec_partials_standalone_without_previous_line}}\n>", data);
 
-    assert_eq!("  >\n>\n>".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("  >\n>\n>".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Standalone Without Newline
@@ -143,7 +143,7 @@ fn test_spec_partials_standalone_without_newline() {
 
     let rv = rustache::render_text(">\n  {{>test_data/test_spec_partials_standalone_without_newline}}", data);
 
-    assert_eq!(">\n  >\n>".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!(">\n  >\n>".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Standalone Indentation
@@ -171,7 +171,7 @@ fn test_spec_partials_standalone_without_newline() {
 
 //     let rv = rustache::render_text("|\n\\\n {{>test_data/test_spec_partials_standalone_indentation}}\n/\n", data);
 
-//     assert_eq!("|\n\\\n |\n <\n ->\n |\n/\n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!("|\n\\\n |\n <\n ->\n |\n/\n".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 //   - name: Padding Whitespace
@@ -187,5 +187,5 @@ fn test_spec_partials_padding_whitespace() {
 
     let rv = rustache::render_text("|{{> test_data/test_spec_partials_padding_whitespace }}|", data);
 
-    assert_eq!("|[]|".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("|[]|".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
