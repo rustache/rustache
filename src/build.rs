@@ -87,7 +87,7 @@ impl<'a> HashBuilder<'a> {
     ///             .push_string("Druid".to_string())
     ///     });
     /// ```
-    pub fn insert_vector<F: Fn(VecBuilder<'a>) -> VecBuilder<'a>, K: ToString>(self, key: K, f: F) -> HashBuilder<'a> {
+    pub fn insert_vector<F: FnOnce(VecBuilder<'a>) -> VecBuilder<'a>, K: ToString>(self, key: K, f: F) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         let builder = f(VecBuilder::new());
         data.insert(key.to_string(), builder.build());
@@ -110,7 +110,7 @@ impl<'a> HashBuilder<'a> {
     ///             .insert_string("last_name", "Proudmoore")
     ///     });
     /// ```
-    pub fn insert_hash<F: Fn(HashBuilder<'a>) -> HashBuilder<'a>, K: ToString>(self, key: K, f: F) -> HashBuilder<'a> {
+    pub fn insert_hash<F: FnOnce(HashBuilder<'a>) -> HashBuilder<'a>, K: ToString>(self, key: K, f: F) -> HashBuilder<'a> {
         let HashBuilder { mut data, partials_path } = self;
         let builder = f(HashBuilder::new());
         data.insert(key.to_string(), builder.build());
@@ -222,7 +222,7 @@ impl<'a> VecBuilder<'a> {
     ///             .push_string("Jaina Proudmoore".to_string())
     ///     });
     /// ```
-    pub fn push_vector<F: Fn(VecBuilder<'a>) -> VecBuilder<'a>>(self, f: F) -> VecBuilder<'a> {
+    pub fn push_vector<F: FnOnce(VecBuilder<'a>) -> VecBuilder<'a>>(self, f: F) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         let builder = f(VecBuilder::new());
         data.push(builder.build());
@@ -245,7 +245,7 @@ impl<'a> VecBuilder<'a> {
     ///             .insert_string("last_name".to_string(), "Stormrage".to_string())
     ///     });
     /// ```
-    pub fn push_hash<F: Fn(HashBuilder<'a>) -> HashBuilder<'a>>(self, f: F) -> VecBuilder<'a> {
+    pub fn push_hash<F: FnOnce(HashBuilder<'a>) -> HashBuilder<'a>>(self, f: F) -> VecBuilder<'a> {
         let VecBuilder { mut data } = self;
         let builder = f(HashBuilder::new());
         data.push(builder.build());
@@ -293,6 +293,8 @@ mod tests {
 
     #[test]
     fn test_builders() {
+        let test_string = String::from("Conan the Sorcerian");
+
         let mut hearthstone = HashMap::new();
         hearthstone.insert("name".to_string(), Strng("Hearthstone: Heroes of Warcraft".to_string()));
         hearthstone.insert("release_date".to_string(), Strng("December, 2014".to_string()));
@@ -305,6 +307,7 @@ mod tests {
         hash1.insert("class".to_string(), Strng("Priest".to_string()));
         hash1.insert("died".to_string(), Bool(false));
         hash1.insert("class_cards".to_string(), Vector(vec!(
+            Strng(test_string.clone()),
             Strng("Prophet Velen".to_string()),
             Hash(hearthstone))));
 
@@ -317,6 +320,7 @@ mod tests {
                         .insert_bool("died", false)
                         .insert_vector("class_cards", |builder| {
                             builder
+                                .push_string(test_string)
                                 .push_string("Prophet Velen")
                                 .push_hash(|builder| {
                                     builder
