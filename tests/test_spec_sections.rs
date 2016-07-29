@@ -14,7 +14,7 @@ fn test_spec_sections_truthy_should_render_contents() {
 
     let rv = rustache::render_text("{{#boolean}}This should be rendered.{{/boolean}}", data);
 
-    assert_eq!("This should be rendered.".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("This should be rendered.".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: Falsy
@@ -29,7 +29,7 @@ fn test_spec_sections_falsy_should_not_render_contents() {
 
     let rv = rustache::render_text("{{#boolean}}This should not be rendered.{{/boolean}}", data);
 
-    assert_eq!("".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: Context
@@ -47,7 +47,7 @@ fn test_spec_sections_objects_and_hashes_should_be_pushed_onto_context_stack() {
 
     let rv = rustache::render_text("{{#context}}Hi {{name}}.{{/context}}", data);
 
-    assert_eq!("Hi Joe.".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("Hi Joe.".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: Deeply Nested Contexts
@@ -142,7 +142,7 @@ fn test_spec_sections_objects_and_hashes_should_be_pushed_onto_context_stack() {
 //                 12321
 //                 121
 //                 1".to_string(),
-//                 String::from_utf8(rv.unwrap().unwrap()).unwrap()
+//                 String::from_utf8(rv.unwrap().into_inner()).unwrap()
 //               );
 // }
 
@@ -172,7 +172,7 @@ fn test_spec_sections_list_items_are_iterated() {
 
     let rv = rustache::render_text("{{#list}}{{item}}{{/list}}", data);
 
-    assert_eq!("123".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("123".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Empty List
@@ -189,7 +189,7 @@ fn test_spec_sections_empty_lists_behave_like_falsy_values() {
 
     let rv = rustache::render_text("{{#list}}Yay lists!{{/list}}", data);
 
-    assert_eq!("".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Doubled
@@ -227,7 +227,7 @@ fn test_spec_sections_empty_lists_behave_like_falsy_values() {
 //     assert_eq!("* first
 //                 * second
 //                 * third".to_string(),
-//                 String::from_utf8(rv.unwrap().unwrap()).unwrap()
+//                 String::from_utf8(rv.unwrap().into_inner()).unwrap()
 //               );
 // }
 
@@ -243,7 +243,7 @@ fn test_spec_sections_nested_truthy_contents_render() {
 
     let rv = rustache::render_text("| A {{#bool}}B {{#bool}}C{{/bool}} D{{/bool}} E |", data);
 
-    assert_eq!("| A B C D E |".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("| A B C D E |".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Nested (Falsy)
@@ -258,7 +258,7 @@ fn test_spec_sections_nested_falsy_contents_do_not_render() {
 
     let rv = rustache::render_text("| A {{#bool}}B {{#bool}}C{{/bool}} D{{/bool}} E |", data);
 
-    assert_eq!("| A  E |".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("| A  E |".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Context Misses
@@ -272,7 +272,7 @@ fn test_spec_sections_failed_context_lookups_are_falsy() {
 
     let rv = rustache::render_text("[{{#missing}}Found key 'missing'!{{/missing}}]", data);
 
-    assert_eq!("[]".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("[]".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Implicit Iterator - String
@@ -295,7 +295,7 @@ fn test_spec_sections_failed_context_lookups_are_falsy() {
 
 // let rv = rustache::render_text("{{#list}}({{.}}){{/list}}", data);
 
-//     assert_eq!("(a)(b)(c)(d)(e)".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!("(a)(b)(c)(d)(e)".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 //   - name: Implicit Iterator - Integer
@@ -318,7 +318,7 @@ fn test_spec_sections_failed_context_lookups_are_falsy() {
 
 //     let rv = rustache::render_text("{{#list}}({{.}}){{/list}}", data);
 
-//     assert_eq!("(1)(2)(3)(4)(5)".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!("(1)(2)(3)(4)(5)".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 //   - name: Implicit Iterator - Decimal
@@ -341,7 +341,7 @@ fn test_spec_sections_failed_context_lookups_are_falsy() {
 
 //     let rv = rustache::render_text("{{#list}}({{.}}){{/list}}", data);
 
-//     assert_eq!("(1.1)(2.2)(3.3)(4.4)(5.5)".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!("(1.1)(2.2)(3.3)(4.4)(5.5)".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 //   - name: Dotted Names - Truthy
@@ -362,7 +362,7 @@ fn test_spec_sections_failed_context_lookups_are_falsy() {
 
 //     let rv = rustache::render_text("'{{#a.b.c}}Here{{/a.b.c}}' == 'Here'", data);
 
-//     assert_eq!("'Here' == 'Here'".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!("'Here' == 'Here'".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 //   - name: Dotted Names - Falsy
@@ -383,7 +383,7 @@ fn test_spec_sections_falsy_dotted_names_are_not_valid_section_tags() {
 
     let rv = rustache::render_text("'{{#a.b.c}}Here{{/a.b.c}}' == ''", data);
 
-    assert_eq!("'' == ''".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("'' == ''".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Dotted Names - Broken Chains
@@ -400,7 +400,7 @@ fn test_spec_sections_unresolved_dotted_names_are_not_valid_section_tags() {
 
     let rv = rustache::render_text("'{{#a.b.c}}Here{{/a.b.c}}' == ''", data);
 
-    assert_eq!("'' == ''".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("'' == ''".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Surrounding Whitespace
@@ -415,7 +415,7 @@ fn test_spec_sections_do_not_alter_surrounding_whitespace() {
 
     let rv = rustache::render_text(" | {{#boolean}}\t|\t{{/boolean}} | \n", data);
 
-    assert_eq!(" | \t|\t | \n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!(" | \t|\t | \n".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Internal Whitespace
@@ -430,7 +430,7 @@ fn test_spec_sections_do_not_alter_surrounding_whitespace() {
 
 //     let rv = rustache::render_text(" | {{#boolean}} {{! Important Whitespace }}\n {{/boolean}} | \n", data);
 
-//     assert_eq!(" |  \n  | \n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!(" |  \n  | \n".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 //   - name: Indented Inline Sections
@@ -445,7 +445,7 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
 
     let rv = rustache::render_text(" {{#boolean}}YES{{/boolean}}\n {{#boolean}}GOOD{{/boolean}}\n", data);
 
-    assert_eq!(" YES\n GOOD\n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!(" YES\n GOOD\n".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Standalone Lines
@@ -480,7 +480,7 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
 //                 | This Is
 //                 |
 //                 | A Line".to_string(),
-//                 String::from_utf8(rv.unwrap().unwrap()).unwrap()
+//                 String::from_utf8(rv.unwrap().into_inner()).unwrap()
 //               );
 // }
 
@@ -516,7 +516,7 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
 //                 | This Is
 //                 |
 //                 | A Line".to_string(),
-//                 String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//                 String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 //   - name: Standalone Line Endings
@@ -531,7 +531,7 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
 
 //     let rv = rustache::render_text("|\r\n{{#boolean}}\r\n{{/boolean}}\r\n|", data);
 
-//     assert_eq!("|\r\n|".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!("|\r\n|".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 //   - name: Standalone Without Previous Line
@@ -546,7 +546,7 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
 
 //     let rv = rustache::render_text("  {{#boolean}}\n#{{/boolean}}\n/", data);
 
-//     assert_eq!("#\n/".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!("#\n/".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 //   - name: Standalone Without Newline
@@ -561,7 +561,7 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
 
 //     let rv = rustache::render_text("#{{#boolean}}\n/\n  {{/boolean}}", data);
 
-//     assert_eq!("#\n/\n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!("#\n/\n".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 //   - name: Padding
@@ -576,5 +576,5 @@ fn test_spec_sections_superfluous_tag_whitespace_is_ignored() {
 
     let rv = rustache::render_text("|{{# boolean }}={{/ boolean }}|", data);
 
-    assert_eq!("|=|".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("|=|".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }

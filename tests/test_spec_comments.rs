@@ -12,7 +12,7 @@ fn test_spec_inline_comment() {
     let data = HashBuilder::new();
     let rv = rustache::render_text("12345{{! Comment Block! }}67890", data);
 
-    assert_eq!("1234567890".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("1234567890".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: Multiline
@@ -30,7 +30,7 @@ fn test_spec_multiline_comment() {
     let data = HashBuilder::new();
     let rv = rustache::render_text("12345{{!\nThis is a\nmulti-line comment...\n}}67890", data);
 
-    assert_eq!("1234567890".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("1234567890".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: Standalone
@@ -48,7 +48,7 @@ fn test_spec_standalone_comment() {
     let data = HashBuilder::new();
     let rv = rustache::render_text("Begin.\n{{! Comment Block! }}\nEnd.", data);
 
-    assert_eq!("Begin.\nEnd.".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("Begin.\nEnd.".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: Indented Standalone
@@ -66,7 +66,7 @@ fn test_spec_indented_standalone_comment() {
     let data = HashBuilder::new();
     let rv = rustache::render_text("Begin.\n\t{{! Indented Comment Block! }}\nEnd.", data);
 
-    assert_eq!("Begin.\nEnd.".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("Begin.\nEnd.".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: Standalone Line Endings
@@ -79,7 +79,7 @@ fn test_spec_standalone_line_ending_comment() {
     let data = HashBuilder::new();
     let rv = rustache::render_text("|\r\n{{! Standalone Comment }}\r\n|", data);
 
-    assert_eq!("|\r\n|".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("|\r\n|".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: Standalone Without Previous Line
@@ -92,7 +92,7 @@ fn test_spec_standalone_line_ending_comment() {
 //     let data = HashBuilder::new();
 //     let rv = rustache::render_text("  {{! I'm Still Standalone }}\n!", data);
 
-//     assert_eq!("!".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!("!".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 // - name: Standalone Without Newline
@@ -105,7 +105,7 @@ fn test_spec_standalone_line_ending_comment() {
 //     let data = HashBuilder::new();
 //     let rv = rustache::render_text("!\n  {{! I'm Still Standalone }}", data);
 
-//     assert_eq!("!\n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!("!\n".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 // - name: Multiline Standalone
@@ -125,7 +125,7 @@ fn test_spec_multiline_standalone_comment() {
     let data = HashBuilder::new();
     let rv = rustache::render_text("Begin.\n{{!\nSomething's going on here...\n}}\nEnd.", data);
 
-    assert_eq!("Begin.\nEnd.".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("Begin.\nEnd.".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: Indented Multiline Standalone
@@ -145,7 +145,7 @@ fn test_spec_indented_multiline_standalone_comment() {
     let data = HashBuilder::new();
     let rv = rustache::render_text("Begin.\n{{!\n\tSomething's going on here...\n}}\nEnd.", data);
 
-    assert_eq!("Begin.\nEnd.".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("Begin.\nEnd.".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: Indented Inline
@@ -158,7 +158,7 @@ fn test_spec_indented_inline_comment() {
     let data = HashBuilder::new();
     let rv = rustache::render_text("  12 {{! 34 }}\n", data);
 
-    assert_eq!("  12 \n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("  12 \n".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: Surrounding Whitespace
@@ -171,5 +171,5 @@ fn test_spec_surrounding_whitespace_comment() {
     let data = HashBuilder::new();
     let rv = rustache::render_text("12345 {{! Comment Block! }} 67890", data);
 
-    assert_eq!("12345  67890".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("12345  67890".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }

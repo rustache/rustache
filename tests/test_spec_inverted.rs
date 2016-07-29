@@ -12,7 +12,7 @@ fn test_spec_inverted_falsy_bool() {
     let data = HashBuilder::new().insert_bool("boolean", false);
     let rv = rustache::render_text("{{^boolean}}This should be rendered.{{/boolean}}", data);
 
-    assert_eq!("This should be rendered.".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("This should be rendered.".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: Truthy
@@ -25,7 +25,7 @@ fn test_spec_inverted_truthy_bool() {
     let data = HashBuilder::new().insert_bool("boolean", true);
     let rv = rustache::render_text("{{^boolean}}This should not be rendered.{{/boolean}}", data);
 
-    assert_eq!("".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: Context
@@ -38,7 +38,7 @@ fn test_spec_inverted_truthy_hash() {
     let data = HashBuilder::new().insert_hash("context", |builder| { builder.insert_string("name", "joe") });
     let rv = rustache::render_text("{{^context}}Hi {{name}}.{{/context}}", data);
 
-    assert_eq!("".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: List
@@ -57,7 +57,7 @@ fn test_spec_inverted_truthy_vec() {
     });
     let rv = rustache::render_text("{{^list}}{{n}}{{/list}}", data);
 
-    assert_eq!("".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: Empty List
@@ -72,7 +72,7 @@ fn test_spec_inverted_falsy_on_empty_vec() {
     });
     let rv = rustache::render_text("{{^list}}Yay lists!{{/list}}", data);
 
-    assert_eq!("Yay lists!".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("Yay lists!".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: Doubled
@@ -95,7 +95,7 @@ fn test_spec_inverted_falsy_on_empty_vec() {
 //     let data = HashBuilder::new().insert_bool("bool", false).insert_string("two", "second");
 //     let rv = rustache::render_text("{{^bool}}\n* first\n{{/bool}}\n* {{two}}\n{{^bool}}\n* third\n{{/bool}}", data);
 
-//     assert_eq!("* first\n* second\n* third".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!("* first\n* second\n* third".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 // - name: Nested (Falsey)
@@ -109,7 +109,7 @@ fn test_spec_inverted_nested_falsy() {
     let data = HashBuilder::new().insert_bool("bool", false);
     let rv = rustache::render_text("| A {{^bool}}B {{^bool}}C{{/bool}} D{{/bool}} E |", data);
 
-    assert_eq!("| A B C D E |".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("| A B C D E |".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: Nested (Truthy)
@@ -122,7 +122,7 @@ fn test_spec_inverted_nested_truthy() {
     let data = HashBuilder::new().insert_bool("bool", true);
     let rv = rustache::render_text("| A {{^bool}}B {{^bool}}C{{/bool}} D{{/bool}} E |", data);
 
-    assert_eq!("| A  E |".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("| A  E |".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: Context Misses
@@ -135,7 +135,7 @@ fn test_spec_inverted_missing_falsey() {
     let data = HashBuilder::new();
     let rv = rustache::render_text("[{{^missing}}Cannot find key 'missing'!{{/missing}}]", data);
 
-    assert_eq!("[Cannot find key 'missing'!]".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("[Cannot find key 'missing'!]".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: Dotted Names - Truthy
@@ -155,7 +155,7 @@ fn test_spec_inverted_missing_falsey() {
 //         });
 //  let rv = rustache::render_text("'{{^a.b.c}}Not Here{{/a.b.c}}' == ''", data)
 
-//     assert_eq!("'' == ''".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!("'' == ''".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 // - name: Dotted Names - Falsey
@@ -175,7 +175,7 @@ fn test_spec_falsey_dotted_names_valid_inverted_section_tags() {
         });
     let rv = rustache::render_text("'{{^a.b.c}}Not Here{{/a.b.c}}' == 'Not Here'", data);
 
-    assert_eq!("'Not Here' == 'Not Here'".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("'Not Here' == 'Not Here'".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: Dotted Names - Broken Chains
@@ -194,7 +194,7 @@ fn test_spec_inverted_surrounding_whitespace() {
     let data = HashBuilder::new().insert_bool("boolean", false);
     let rv = rustache::render_text(" | {{^boolean}}\t|\t{{/boolean}} | \n", data);
 
-    assert_eq!(" | \t|\t | \n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!(" | \t|\t | \n".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: Internal Whitespace
@@ -208,7 +208,7 @@ fn test_spec_inverted_surrounding_whitespace() {
 
 //     let rv = rustache::render_text(" | {{^boolean}} {{! Important Whitespace }}\n {{/boolean}} | \n", data);
 
-//     assert_eq!(" |  \n  | \n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!(" |  \n  | \n".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 // - name: Indented Inline Sections
@@ -221,7 +221,7 @@ fn test_spec_inverted_indented_inline_sections() {
     let data = HashBuilder::new().insert_bool("boolean", false);
     let rv = rustache::render_text(" {{^boolean}}NO{{/boolean}}\n {{^boolean}}WAY{{/boolean}}\n", data);
 
-    assert_eq!(" NO\n WAY\n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!(" NO\n WAY\n".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 // - name: Standalone Lines
@@ -243,7 +243,7 @@ fn test_spec_inverted_indented_inline_sections() {
 
 //     let rv = rustache::render_text("| This Is\n{{^boolean}}\n|\n{{/boolean}}\n| A Line", data)
 
-//     assert_eq!("| This Is\n|\n| A Line".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!("| This Is\n|\n| A Line".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 // - name: Standalone Indented Lines
@@ -265,7 +265,7 @@ fn test_spec_inverted_indented_inline_sections() {
 
 //     let rv = rustache::render_text("| This Is\n  {{^boolean}}\n|\n  {{/boolean}}\n| A Line", data)
 
-//     assert_eq!("| This Is\n|\n| A Line".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!("| This Is\n|\n| A Line".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 // - name: Standalone Line Endings
@@ -279,7 +279,7 @@ fn test_spec_inverted_indented_inline_sections() {
 
 //     let rv = rustache::render_text("|\r\n{{^boolean}}\r\n{{/boolean}}\r\n|", data)
 
-//     assert_eq!("|\r\n|".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!("|\r\n|".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 // - name: Standalone Without Previous Line
@@ -293,7 +293,7 @@ fn test_spec_inverted_indented_inline_sections() {
 
 //     let rv = rustache::render_text("  {{^boolean}}\n^{{/boolean}}\n/", data);
 
-//     assert_eq!("^\n/".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!("^\n/".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 // - name: Standalone Without Newline
@@ -307,7 +307,7 @@ fn test_spec_inverted_indented_inline_sections() {
 
 //     let rv = rustache::render_text("^{{^boolean}}\n/\n  {{/boolean}}", data);
 
-//     assert_eq!("^\n/\n".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!("^\n/\n".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 // - name: Padding
@@ -320,7 +320,7 @@ fn test_spec_inverted_whitespace_insensitivity() {
     let data = HashBuilder::new().insert_bool("boolean", false);
     let rv = rustache::render_text("|{{^ boolean }}={{/ boolean }}|", data);
 
-    assert_eq!("|=|".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("|=|".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 

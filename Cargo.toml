@@ -18,4 +18,3 @@ path = "src/lib.rs"
 [dependencies]
 regex = "^0.1"
 rustc-serialize = "^0.3"
-memstream = "0.0.1"

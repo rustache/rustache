@@ -22,7 +22,7 @@ fn test_spec_lambdas_interpolation() {
 
     let rv = rustache::render_text("Hello, {{lambda}}!", data);
 
-    assert_eq!("Hello, world!".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("Hello, world!".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Interpolation - Expansion
@@ -47,7 +47,7 @@ fn test_spec_lambdas_interpolation_expansion() {
 
     let rv = rustache::render_text("Hello, {{lambda}}!", data);
 
-    assert_eq!("Hello, world!".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("Hello, world!".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Interpolation - Alternate Delimiters
@@ -73,7 +73,7 @@ fn test_spec_lambdas_interpolation_expansion() {
 
 //     let rv = rustache::render_text("{{= | | =}}\nHello, (|&lambda|)!", data);
 
-//     assert_eq!("Hello, (|planet| => world)!".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!("Hello, (|planet| => world)!".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 //   - name: Interpolation - Multiple Calls
@@ -100,7 +100,7 @@ fn test_spec_lambdas_interpolation_multiple_calls() {
 
     let rv = rustache::render_text("{{lambda}} == {{{lambda}}} == {{lambda}}", data);
 
-    assert_eq!("1 == 2 == 3".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("1 == 2 == 3".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Escaping
@@ -123,7 +123,7 @@ fn test_spec_lambdas_escaping() {
 
     let rv = rustache::render_text("<{{lambda}}{{{lambda}}}", data);
 
-    assert_eq!("<&gt;>".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("<&gt;>".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Section
@@ -154,7 +154,7 @@ fn test_spec_lambdas_section() {
 
     let rv = rustache::render_text("<{{#lambda}}{{x}}{{/lambda}}>", data);
 
-    assert_eq!("<yes>".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("<yes>".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Section - Expansion
@@ -184,7 +184,7 @@ fn test_spec_lambdas_section_expansion() {
 
     let rv = rustache::render_text("<{{#lambda}}-{{/lambda}}>", data);
 
-    assert_eq!("<-Earth->".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("<-Earth->".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Section - Alternate Delimiters
@@ -213,7 +213,7 @@ fn test_spec_lambdas_section_expansion() {
 
 //     let rv = rustache::render_text_from_hb("{{= | | =}}<|#lambda|-|/lambda|>", data);
 
-//     assert_eq!("<-{{planet}} => Earth->".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+//     assert_eq!("<-{{planet}} => Earth->".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 // }
 
 //   - name: Section - Multiple Calls
@@ -241,7 +241,7 @@ fn test_spec_lambdas_section_multiple_calls() {
 
     let rv = rustache::render_text("{{#lambda}}FILE{{/lambda}} != {{#lambda}}LINE{{/lambda}}", data);
 
-    assert_eq!("__FILE__ != __LINE__".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("__FILE__ != __LINE__".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 
 //   - name: Inverted Section
@@ -266,6 +266,6 @@ fn test_spec_lambdas_inverted_section() {
 
     let rv = rustache::render_text("<{{^lambda}}{{static}}{{/lambda}}>", data);
 
-    assert_eq!("<>".to_string(), String::from_utf8(rv.unwrap().unwrap()).unwrap());
+    assert_eq!("<>".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 

@@ -2,7 +2,7 @@ use std::path::Path;
 use std::fs;
 use std::fs::File;
 use std::fmt;
-use std::io::{Read,Write};
+use std::io::{Read, Write};
 
 use compiler;
 use parser;
@@ -619,14 +619,10 @@ impl Template {
 
 #[cfg(test)]
 mod template_tests {
-    extern crate memstream;
-
     use std::fs::File;
     use std::path::Path;
-    use std::io::Write;
+    use std::io::{self, Cursor, Seek, SeekFrom};
     use std::str;
-
-    use self::memstream::MemStream;
 
     use parser;
     use parser::Node;
@@ -704,26 +700,26 @@ mod template_tests {
         let s2 = "1<2 <b>hello</b>";
         let a2 = "1&lt;2 &lt;b&gt;hello&lt;/b&gt;";
 
-        let mut w = MemStream::new();
+        let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Value("value", "{{ value }}".to_string())];
         let data = HashBuilder::new().insert_string("value", s1);
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
 
-        assert_eq!(a1, str::from_utf8(w.as_slice()).unwrap());
+        assert_eq!(a1, str::from_utf8(w.get_ref()).unwrap());
 
-        w = MemStream::new();
+        w = Cursor::new(Vec::new());
         let newdata = HashBuilder::new().insert_string("value", s2);
         let rv = Template::new().render_data(&mut w, &newdata, &nodes);
         match rv { _ => {} }
 
-        assert_eq!(a2, str::from_utf8(w.as_slice()).unwrap());
+        assert_eq!(a2, str::from_utf8(w.get_ref()).unwrap());
     }
 
     #[test]
     fn test_section_tag_iteration() {
-        let mut w = MemStream::new();
+        let mut w = Cursor::new(Vec::new());
         let template = "{{#repo}}<b>{{name}}</b>{{/repo}}";
         let tokens = compiler::create_tokens(template);
         let nodes = parser::parse_nodes(&tokens);
@@ -736,61 +732,61 @@ mod template_tests {
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
 
-        assert_eq!("<b>resque</b><b>hub</b><b>rip</b>".to_string(), String::from_utf8(w.unwrap()).unwrap())
+        assert_eq!("<b>resque</b><b>hub</b><b>rip</b>".to_string(), String::from_utf8(w.into_inner()).unwrap());
     }
 
     #[test]
     fn test_not_escape_html() {
         let s = "1<2 <b>hello</b>";
-        let mut w = MemStream::new();
+        let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Unescaped("value", "{{ value }}".to_string())];
         let data = HashBuilder::new().insert_string("value", s);
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
 
-        assert_eq!(s, str::from_utf8(w.as_slice()).unwrap());
+        assert_eq!(s, String::from_utf8(w.into_inner()).unwrap());
     }
 
     #[test]
     fn test_render_to_io_stream() {
-        let mut w = MemStream::new();
+        let mut w = Cursor::new(Vec::new());
         let data = HashBuilder::new().insert_string("value1", "The heading");
         let nodes: Vec<Node> = vec![Static("<h1>"), Value("value1", "{{ value1 }}".to_string()), Static("</h1>")];
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
 
-        assert_eq!("<h1>The heading</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
+        assert_eq!("<h1>The heading</h1>".to_string(), String::from_utf8(w.into_inner()).unwrap());
     }
 
     #[test]
     fn test_unescaped_node_correct_bool_false_data() {
-        let mut w = MemStream::new();
+        let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Static("<h1>"), Unescaped("value1", "{{& value1 }}".to_string()), Static("</h1>")];
         let data = HashBuilder::new().insert_bool("value1", false);
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
 
-        assert_eq!("<h1>false</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
+        assert_eq!("<h1>false</h1>".to_string(), String::from_utf8(w.into_inner()).unwrap());
     }
 
     #[test]
     fn test_unescaped_node_correct_bool_true_data() {
-        let mut w = MemStream::new();
+        let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Static("<h1>"), Unescaped("value1", "{{& value1 }}".to_string()), Static("</h1>")];
         let data = HashBuilder::new().insert_bool("value1", true);
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
 
-        assert_eq!("<h1>true</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
+        assert_eq!("<h1>true</h1>".to_string(), String::from_utf8(w.into_inner()).unwrap());
     }
 
     #[test]
     fn test_section_value_string_data() {
-        let mut w = MemStream::new();
+        let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Section("value1", vec![Value("value", "{{ value }}".to_string())], false, "{{# value1 }}".to_string(), "{{/ value1 }}".to_string())];
         let data = HashBuilder::new()
             .insert_hash("value1", |builder| {
@@ -800,12 +796,12 @@ mod template_tests {
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
 
-        assert_eq!("&lt;Section Value&gt;".to_string(), String::from_utf8(w.unwrap()).unwrap());
+        assert_eq!("&lt;Section Value&gt;".to_string(), String::from_utf8(w.into_inner()).unwrap());
     }
 
     #[test]
     fn test_section_multiple_value_string_data() {
-        let mut w = MemStream::new();
+        let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Section("names", vec![Value("name", "{{ name }}".to_string())], false, "{{# names }}".to_string(), "{{/ names }}".to_string())];
         let data = HashBuilder::new()
             .insert_hash("names", |builder| {
@@ -820,12 +816,12 @@ mod template_tests {
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
 
-        assert_eq!("tomrobertjoe".to_string(), String::from_utf8(w.unwrap()).unwrap());
+        assert_eq!("tomrobertjoe".to_string(), String::from_utf8(w.into_inner()).unwrap());
     }
 
     // #[test]
     // fn test_excessively_nested_data() {
-    //     let mut w = MemStream::new();
+    //     let mut w = Cursor::new(Vec::new());
     //     let nodes: Vec<Node> = vec![Section("hr", vec![Section("people", vec![Value("name", "{{ name }}".to_string())], false, "{{# people }}".to_string(), "{{/ people }}".to_string())], false, "{{# hr }}".to_string(), "{{/ hr }}".to_string())];
     //     let data = HashBuilder::new()
     //         .insert_hash("hr", |builder| {
@@ -841,12 +837,12 @@ mod template_tests {
     //         });
 
     //     let rv = Template::new().render_data(&mut w, &data, &nodes);
-    //     assert_eq!("tomrobertjoe".to_string(), String::from_utf8(w.unwrap()).unwrap());
+    //     assert_eq!("tomrobertjoe".to_string(), String::from_utf8(w.into_inner()).unwrap());
     // }
 
     #[test]
     fn test_unescaped_node_lambda_data() {
-        let mut w = MemStream::new();
+        let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Static("<h1>"), Unescaped("func1", "{{& func1 }}".to_string()), Static("</h1>")];
         let mut f = |_| { "heading".to_string() };
         let data = HashBuilder::new().insert_lambda("func1", &mut f);
@@ -854,12 +850,12 @@ mod template_tests {
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
 
-        assert_eq!("<h1>heading</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
+        assert_eq!("<h1>heading</h1>".to_string(), String::from_utf8(w.into_inner()).unwrap());
     }
 
     #[test]
     fn test_value_node_lambda_data() {
-        let mut w = MemStream::new();
+        let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Static("<h1>"), Value("func1", "{{ func1 }}".to_string()), Static("</h1>")];
         let mut f = |_| { "heading".to_string() };
         let data = HashBuilder::new().insert_lambda("func1", &mut f);
@@ -867,19 +863,18 @@ mod template_tests {
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
 
-        assert_eq!("<h1>heading</h1>".to_string(), String::from_utf8(w.unwrap()).unwrap());
+        assert_eq!("<h1>heading</h1>".to_string(), String::from_utf8(w.into_inner()).unwrap());
     }
 
     // #[test]
     // fn test_spec_lambdas_interpolation_using_render_text() {
-    //     let mut s = MemStream::new();
+    //     let mut s = Cursor::new(Vec::new());
     //     let data = HashBuilder::new()
     //                 .insert_lambda("lambda", |_| {
     //                      "world".to_string()
     //                  });
     //     let s = rustache::render_text("Hello, {{lambda}}!", data);
-
-    //     assert_eq!("Hello, world!".to_string(), String::from_utf8(s.unwrap()).unwrap());
+    //     assert_eq!("Hello, world!".to_string(), String::from_utf8(w.into_inner()).unwrap());
     // }
 
     // #[test]
@@ -892,36 +887,36 @@ mod template_tests {
 
     //     let s = rustache::render_text("<{{^lambda}}{{static}}{{/lambda}}>", data);
 
-    //     assert_eq!("<>".to_string(), String::from_utf8(s.unwrap()).unwrap());
+    //     assert_eq!("<>".to_string(), String::from_utf8(w.into_inner()).unwrap());
     // }
 
     #[test]
     fn test_value_node_correct_false_bool_data() {
-        let mut w = MemStream::new();
+        let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Value("value1", "{{ value1 }}".to_string())];
         let data = HashBuilder::new().insert_bool("value1", false);
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
 
-        assert_eq!("false".to_string(), String::from_utf8(w.unwrap()).unwrap());
+        assert_eq!("false".to_string(), String::from_utf8(w.into_inner()).unwrap());
     }
 
     #[test]
     fn test_value_node_correct_true_bool_data() {
-        let mut w = MemStream::new();
+        let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Value("value1", "{{ value1 }}".to_string())];
         let data = HashBuilder::new().insert_bool("value1", true);
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
 
-        assert_eq!("true".to_string(), String::from_utf8(w.unwrap()).unwrap());
+        assert_eq!("true".to_string(), String::from_utf8(w.into_inner()).unwrap());
     }
 
     #[test]
     fn test_partial_node_correct_data() {
-        let mut w = MemStream::new();
+        let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Static("A wise woman once said: "), Part("hopper_quote.partial", "{{> hopper_quote.partial }}")];
         let data = HashBuilder::new().insert_string("author", "Grace Hopper")
                                      .set_partials_path("test_data");
@@ -932,12 +927,12 @@ mod template_tests {
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
 
-        assert_eq!(s, String::from_utf8(w.unwrap()).unwrap());
+        assert_eq!(s, String::from_utf8(w.into_inner()).unwrap());
     }
 
     #[test]
     fn test_partial_node_correct_data_with_extra() {
-        let mut w = MemStream::new();
+        let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Static("A wise woman once said: "), Part("hopper_quote.partial", "{{> hopper_quote.partial }}"), Static(" something else "), Value("extra", "{{ extra }}".to_string())];
         let data = HashBuilder::new().insert_string("author", "Grace Hopper")
                                      .insert_string("extra", "extra data")
@@ -949,12 +944,12 @@ mod template_tests {
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
 
-        assert_eq!(s, String::from_utf8(w.unwrap()).unwrap());
+        assert_eq!(s, String::from_utf8(w.into_inner()).unwrap());
     }
 
     #[test]
     fn test_section_node_partial_node_correct_data() {
-        let mut w = MemStream::new();
+        let mut w = Cursor::new(Vec::new());
         let data = HashBuilder::new()
             .set_partials_path("test_data")
             .insert_hash("people", |builder| {
@@ -979,7 +974,8 @@ mod template_tests {
         match rv { _ => {} }
 
         let mut f = File::create(&Path::new("test_data/section_with_partial.html")).unwrap();
-        let completed = f.write(&w.unwrap()[..]);
+        w.seek(SeekFrom::Start(0)).unwrap();
+        let completed = io::copy(&mut w, &mut f);
         assert_eq!(completed.is_ok(), true);
     }
 
@@ -998,7 +994,7 @@ mod template_tests {
     #[test]
     fn test_spec_lambda_not_cached_on_interpolation() {
         let mut planets = vec!["Jupiter", "Earth", "Saturn"];
-        let mut w = MemStream::new();
+        let mut w = Cursor::new(Vec::new());
         let mut tokens = compiler::create_tokens("{{lambda}} == {{&lambda}} == {{lambda}}");
         let nodes = parser::parse_nodes(&mut tokens);
         let mut f = |_| { planets.pop().unwrap().to_string() };
@@ -1007,7 +1003,7 @@ mod template_tests {
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
-        assert_eq!("Saturn == Earth == Jupiter".to_string(), String::from_utf8(w.unwrap()).unwrap());
+        assert_eq!("Saturn == Earth == Jupiter".to_string(), String::from_utf8(w.into_inner()).unwrap());
     }
 
 }
