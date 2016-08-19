@@ -28,12 +28,12 @@ extern crate rustache;
 The main forward interface that users will interact with when using Rustache are the `rustache::render_file` method and the `rustache::render_text` methods like so:
 
 ```rust
-// Renders the given template file
+// Renders the given template string
 let data = rustache::HashBuilder::new().insert_string("name", "your name");
 let rv = rustache::render_text("{{ name }}", data);
 println!("{}", String::from_utf8(rv.unwrap().into_inner).unwrap());
 
-// Renders the given template string
+// Renders the given template file
 let data = rustache::HashBuilder::new().insert_string("name", "your name");
 let rv = rustache::render_file("test_data/cmdline_test.tmpl", data);
 println!("{}", String::from_utf8(rv.unwrap().into_inner).unwrap());
