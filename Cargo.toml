@@ -11,6 +11,7 @@ documentation = "https://rustache.github.io/rustache/"
 repository = "https://github.com/rustache/rustache.git"
 homepage = "https://rustache.github.io"
 readme = "README.md"
+keywords = ["template"]
 
 [lib]
 
