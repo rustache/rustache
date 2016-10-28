@@ -10,6 +10,7 @@ extern crate rustc_serialize;
 use std::fmt;
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::convert::From;
 
 use self::RustacheError::*;
 use self::Data::*;
@@ -53,6 +54,55 @@ pub enum Data<'a> {
     Hash(HashMap<String, Data<'a>>),
     Lambda(RefCell<&'a mut FnMut(String) -> String>)
 }
+
+impl<'a, 'b> From<&'b str> for Data<'a> {
+    fn from(v: &'b str) -> Data<'a> {
+        Strng(v.to_owned())
+    }
+}
+
+impl<'a> From<String> for Data<'a> {
+    fn from(v: String) -> Data<'a> {
+        Strng(v)
+    }
+}
+
+impl<'a> From<bool> for Data<'a> {
+    fn from(v: bool) -> Data<'a> {
+        Bool(v)
+    }
+}
+
+impl<'a> From<i32> for Data<'a> {
+    fn from(v: i32) -> Data<'a> {
+        Integer(v)
+    }
+}
+
+impl<'a> From<f64> for Data<'a> {
+    fn from(v: f64) -> Data<'a> {
+        Float(v)
+    }
+}
+
+impl<'a> From<Vec<Data<'a>>> for Data<'a> {
+    fn from(v: Vec<Data<'a>>) -> Data<'a> {
+        Vector(v)
+    }
+}
+
+impl<'a> From<HashMap<String, Data<'a>>> for Data<'a> {
+    fn from(v: HashMap<String, Data<'a>>) -> Data<'a> {
+        Hash(v)
+    }
+}
+
+impl<'a> From<&'a mut FnMut(String) -> String> for Data<'a> {
+    fn from(v: &'a mut FnMut(String) -> String) -> Data<'a> {
+        Lambda(RefCell::new(v))
+    }
+}
+
 // |String|: 'a -> String : F Above
 
 // Implementing custom PartialEq for Data
