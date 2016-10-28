@@ -97,7 +97,7 @@ impl<'a> HashBuilder<'a> {
     /// ```
     pub fn insert_vector<F: FnOnce(VecBuilder<'a>) -> VecBuilder<'a>, K: ToString>(self, key: K, f: F) -> HashBuilder<'a> {
         let builder = f(VecBuilder::new());
-        self.insert(key, builder.build())
+        self.insert(key, builder)
     }
 
     /// Add a `Hash` to the `HashBuilder`
@@ -118,7 +118,7 @@ impl<'a> HashBuilder<'a> {
     /// ```
     pub fn insert_hash<F: FnOnce(HashBuilder<'a>) -> HashBuilder<'a>, K: ToString>(self, key: K, f: F) -> HashBuilder<'a> {
         let builder = f(HashBuilder::new());
-        self.insert(key, builder.build())
+        self.insert(key, builder)
     }
 
     /// Add a `Lambda` that accepts a String and returns a String to the `HashBuilder`
@@ -141,6 +141,12 @@ impl<'a> HashBuilder<'a> {
     /// Return the built `Data`
     fn build(self) -> Data<'a> {
         Hash(self.data)
+    }
+}
+
+impl<'a> From<HashBuilder<'a>> for Data<'a> {
+    fn from(v: HashBuilder<'a>) -> Data<'a> {
+        v.build()
     }
 }
 
@@ -234,7 +240,7 @@ impl<'a> VecBuilder<'a> {
     /// ```
     pub fn push_vector<F: FnOnce(VecBuilder<'a>) -> VecBuilder<'a>>(self, f: F) -> VecBuilder<'a> {
         let builder = f(VecBuilder::new());
-        self.push(builder.build())
+        self.push(builder)
     }
 
     /// Add a `Hash` to the `VecBuilder`
@@ -255,7 +261,7 @@ impl<'a> VecBuilder<'a> {
     /// ```
     pub fn push_hash<F: FnOnce(HashBuilder<'a>) -> HashBuilder<'a>>(self, f: F) -> VecBuilder<'a> {
         let builder = f(HashBuilder::new());
-        self.push(builder.build())
+        self.push(builder)
     }
 
     /// Add a `Lambda` to the `VecBuilder`
@@ -273,6 +279,12 @@ impl<'a> VecBuilder<'a> {
     /// Return the built `Data`
     fn build(self) -> Data<'a> {
         Vector(self.data)
+    }
+}
+
+impl<'a> From<VecBuilder<'a>> for Data<'a> {
+    fn from(v: VecBuilder<'a>) -> Data<'a> {
+        v.build()
     }
 }
 
