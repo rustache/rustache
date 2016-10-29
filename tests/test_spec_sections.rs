@@ -1,6 +1,6 @@
 extern crate rustache;
 
-use rustache::HashBuilder;
+use rustache::{HashBuilder, VecBuilder};
 
 // - name: Truthy
 //   desc: Truthy sections should have their contents rendered.
@@ -10,7 +10,7 @@ use rustache::HashBuilder;
 #[test]
 fn test_spec_sections_truthy_should_render_contents() {
     let data = HashBuilder::new()
-        .insert_bool("boolean", true);
+        .insert("boolean", true);
 
     let rv = rustache::render_text("{{#boolean}}This should be rendered.{{/boolean}}", data);
 
@@ -25,7 +25,7 @@ fn test_spec_sections_truthy_should_render_contents() {
 #[test]
 fn test_spec_sections_falsy_should_not_render_contents() {
     let data = HashBuilder::new()
-        .insert_bool("boolean", false);
+        .insert("boolean", false);
 
     let rv = rustache::render_text("{{#boolean}}This should not be rendered.{{/boolean}}", data);
 
@@ -40,10 +40,9 @@ fn test_spec_sections_falsy_should_not_render_contents() {
 #[test]
 fn test_spec_sections_objects_and_hashes_should_be_pushed_onto_context_stack() {
     let data = HashBuilder::new()
-        .insert_hash("context", |builder| {
-            builder
-                .insert_string("name", "Joe")
-        });
+        .insert("context", HashBuilder::new()
+                .insert("name", "Joe")
+        );
 
     let rv = rustache::render_text("{{#context}}Hi {{name}}.{{/context}}", data);
 
@@ -154,21 +153,17 @@ fn test_spec_sections_objects_and_hashes_should_be_pushed_onto_context_stack() {
 #[test]
 fn test_spec_sections_list_items_are_iterated() {
     let data = HashBuilder::new()
-        .insert_vector("list", |builder| {
-            builder
-                .push_hash(|builder| {
-                    builder
-                        .insert_string("item".to_string(), "1".to_string())
-                })
-                .push_hash(|builder| {
-                    builder
-                        .insert_string("item".to_string(), "2".to_string())
-                })
-                .push_hash(|builder| {
-                    builder
-                        .insert_string("item".to_string(), "3".to_string())
-                })
-        });
+        .insert("list", VecBuilder::new()
+                .push(HashBuilder::new()
+                        .insert("item".to_string(), "1".to_string())
+                )
+                .push(HashBuilder::new()
+                        .insert("item".to_string(), "2".to_string())
+                )
+                .push(HashBuilder::new()
+                        .insert("item".to_string(), "3".to_string())
+                )
+        );
 
     let rv = rustache::render_text("{{#list}}{{item}}{{/list}}", data);
 
@@ -183,9 +178,7 @@ fn test_spec_sections_list_items_are_iterated() {
 #[test]
 fn test_spec_sections_empty_lists_behave_like_falsy_values() {
     let data = HashBuilder::new()
-        .insert_vector("list", |builder| {
-            builder
-        });
+        .insert("list", VecBuilder::new());
 
     let rv = rustache::render_text("{{#list}}Yay lists!{{/list}}", data);
 
@@ -211,7 +204,7 @@ fn test_spec_sections_empty_lists_behave_like_falsy_values() {
 // fn test_spec_sections_multiple_per_template_permitted() {
 //     let data = HashBuilder::new()
 //         .insert_bool("bool", true)
-//         .insert_string("two", "second");
+//         .insert("two", "second");
 
 //     let rv = rustache::render_text("{{#bool}}
 //                            * first
@@ -239,7 +232,7 @@ fn test_spec_sections_empty_lists_behave_like_falsy_values() {
 #[test]
 fn test_spec_sections_nested_truthy_contents_render() {
     let data = HashBuilder::new()
-        .insert_bool("bool", true);
+        .insert("bool", true);
 
     let rv = rustache::render_text("| A {{#bool}}B {{#bool}}C{{/bool}} D{{/bool}} E |", data);
 
@@ -254,7 +247,7 @@ fn test_spec_sections_nested_truthy_contents_render() {
 #[test]
 fn test_spec_sections_nested_falsy_contents_do_not_render() {
     let data = HashBuilder::new()
-        .insert_bool("bool", false);
+        .insert("bool", false);
 
     let rv = rustache::render_text("| A {{#bool}}B {{#bool}}C{{/bool}} D{{/bool}} E |", data);
 
@@ -373,13 +366,11 @@ fn test_spec_sections_failed_context_lookups_are_falsy() {
 #[test]
 fn test_spec_sections_falsy_dotted_names_are_not_valid_section_tags() {
     let data = HashBuilder::new()
-        .insert_hash("a", |builder| {
-            builder
-                .insert_hash("b", |builder| {
-                    builder
-                        .insert_bool("c", false)
-            })
-        });
+        .insert("a", HashBuilder::new()
+                .insert("b", HashBuilder::new()
+                        .insert("c", false)
+            )
+        );
 
     let rv = rustache::render_text("'{{#a.b.c}}Here{{/a.b.c}}' == ''", data);
 
@@ -394,9 +385,7 @@ fn test_spec_sections_falsy_dotted_names_are_not_valid_section_tags() {
 #[test]
 fn test_spec_sections_unresolved_dotted_names_are_not_valid_section_tags() {
     let data = HashBuilder::new()
-        .insert_hash("a", |builder| {
-            builder
-        });
+        .insert("a", HashBuilder::new());
 
     let rv = rustache::render_text("'{{#a.b.c}}Here{{/a.b.c}}' == ''", data);
 
@@ -411,7 +400,7 @@ fn test_spec_sections_unresolved_dotted_names_are_not_valid_section_tags() {
 #[test]
 fn test_spec_sections_do_not_alter_surrounding_whitespace() {
     let data = HashBuilder::new()
-        .insert_bool("boolean", true);
+        .insert("boolean", true);
 
     let rv = rustache::render_text(" | {{#boolean}}\t|\t{{/boolean}} | \n", data);
 
@@ -441,7 +430,7 @@ fn test_spec_sections_do_not_alter_surrounding_whitespace() {
 #[test]
 fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace() {
     let data = HashBuilder::new()
-        .insert_bool("boolean", true);
+        .insert("boolean", true);
 
     let rv = rustache::render_text(" {{#boolean}}YES{{/boolean}}\n {{#boolean}}GOOD{{/boolean}}\n", data);
 
@@ -464,7 +453,7 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
 // #[test]
 // fn test_spec_sections_standalone_lines_are_removed_from_template() {
 //     let data = HashBuilder::new()
-//         .insert_bool("boolean", true);
+//         .insert("boolean", true);
 
 //     let rv = rustache::render_text("|
 //                            | This Is
@@ -572,7 +561,7 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
 #[test]
 fn test_spec_sections_superfluous_tag_whitespace_is_ignored() {
     let data = HashBuilder::new()
-        .insert_bool("boolean", true);
+        .insert("boolean", true);
 
     let rv = rustache::render_text("|{{# boolean }}={{/ boolean }}|", data);
 

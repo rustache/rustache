@@ -30,95 +30,35 @@ impl<'a> HashBuilder<'a> {
     /// let data = HashBuilder::new()
     ///     .insert("game", "Hearthstone: Heroes of Warcraft");
     /// ```
+    /// ```rust
+    /// use rustache::{HashBuilder, VecBuilder};
+    /// let data = HashBuilder::new()
+    ///     .insert("classes",
+    ///         VecBuilder::new()
+    ///             .push("Mage".to_string())
+    ///             .push("Druid".to_string())
+    ///     );
+    /// ```
+    /// ```rust
+    /// use rustache::HashBuilder;
+    /// let data = HashBuilder::new()
+    ///     .insert("hero1",
+    ///         HashBuilder::new()
+    ///             .insert("first_name", "Anduin")
+    ///             .insert("last_name", "Wrynn")
+    ///     )
+    ///     .insert("hero2",
+    ///         HashBuilder::new()
+    ///             .insert("first_name", "Jaina")
+    ///             .insert("last_name", "Proudmoore")
+    ///     );
+    /// ```
     pub fn insert<K, V>(mut self, key: K, value: V) -> HashBuilder<'a>
         where K: ToString,
               V: Into<Data<'a>>,
     {
         self.data.insert(key.to_string(), value.into());
         self
-    }
-
-    /// Add a `String` to the `HashBuilder`
-    ///
-    /// ```rust
-    /// use rustache::HashBuilder;
-    /// let data = HashBuilder::new()
-    ///     .insert_string("game", "Hearthstone: Heroes of Warcraft");
-    /// ```
-    pub fn insert_string<K: ToString, V: ToString>(self, key: K, value: V) -> HashBuilder<'a> {
-        self.insert(key, value.to_string())
-    }
-
-    /// Add a `Boolean` to the `HashBuilder`
-    ///
-    /// ```rust
-    /// use rustache::HashBuilder;
-    /// let data = HashBuilder::new()
-    ///     .insert_bool("playing", true);
-    /// ```
-    pub fn insert_bool<K: ToString>(self, key: K, value: bool) -> HashBuilder<'a> {
-        self.insert(key, value)
-    }
-
-    /// Add an `Integer` to the `HashBuilder`
-    ///
-    /// ```rust
-    /// use rustache::HashBuilder;
-    /// let data = HashBuilder::new()
-    ///     .insert_int("age", 10i32)
-    ///     .insert_int("drinking age", -21i32);
-    /// ```
-    pub fn insert_int<K: ToString>(self, key: K, value: i32) -> HashBuilder<'a> {
-        self.insert(key, value)
-    }
-
-    /// Add a `Float` to the `HashBuilder`
-    ///
-    /// ```rust
-    /// use rustache::HashBuilder;
-    /// let data = HashBuilder::new()
-    ///     .insert_float("pi", 3.141596f64)
-    ///     .insert_float("phi", 1.61803398875f64);
-    /// ```
-    pub fn insert_float<K: ToString>(self, key: K, value: f64) -> HashBuilder<'a> {
-        self.insert(key, value)
-    }
-
-    /// Add a `Vector` to the `HashBuilder`
-    ///
-    /// ```rust
-    /// use rustache::HashBuilder;
-    /// let data = HashBuilder::new()
-    ///     .insert_vector("classes", |builder| {
-    ///         builder
-    ///             .push_string("Mage".to_string())
-    ///             .push_string("Druid".to_string())
-    ///     });
-    /// ```
-    pub fn insert_vector<F: FnOnce(VecBuilder<'a>) -> VecBuilder<'a>, K: ToString>(self, key: K, f: F) -> HashBuilder<'a> {
-        let builder = f(VecBuilder::new());
-        self.insert(key, builder)
-    }
-
-    /// Add a `Hash` to the `HashBuilder`
-    ///
-    /// ```rust
-    /// use rustache::HashBuilder;
-    /// let data = HashBuilder::new()
-    ///     .insert_hash("hero1", |builder| {
-    ///         builder
-    ///             .insert_string("first_name", "Anduin")
-    ///             .insert_string("last_name", "Wrynn")
-    ///     })
-    ///     .insert_hash("hero2", |builder| {
-    ///         builder
-    ///             .insert_string("first_name", "Jaina")
-    ///             .insert_string("last_name", "Proudmoore")
-    ///     });
-    /// ```
-    pub fn insert_hash<F: FnOnce(HashBuilder<'a>) -> HashBuilder<'a>, K: ToString>(self, key: K, f: F) -> HashBuilder<'a> {
-        let builder = f(HashBuilder::new());
-        self.insert(key, builder)
     }
 
     /// Add a `Lambda` that accepts a String and returns a String to the `HashBuilder`
@@ -172,96 +112,31 @@ impl<'a> VecBuilder<'a> {
     ///     .push("Mage")
     ///     .push("Druid");
     /// ```
+    /// ```rust
+    /// use rustache::VecBuilder;
+    /// let data = VecBuilder::new()
+    ///     .push(VecBuilder::new()
+    ///             .push("Anduin Wrynn".to_string())
+    ///             .push("Jaina Proudmoore".to_string())
+    ///     );
+    /// ```
+    /// ```rust
+    /// use rustache::{HashBuilder, VecBuilder};
+    /// let data = VecBuilder::new()
+    ///     .push(HashBuilder::new()
+    ///             .insert("first_name".to_string(), "Garrosh".to_string())
+    ///             .insert("last_name".to_string(), "Hellscream".to_string())
+    ///     )
+    ///     .push(HashBuilder::new()
+    ///             .insert("first_name".to_string(), "Malfurion".to_string())
+    ///             .insert("last_name".to_string(), "Stormrage".to_string())
+    ///     );
+    /// ```
     pub fn push<V>(mut self, value: V) -> VecBuilder<'a>
         where V: Into<Data<'a>>,
     {
         self.data.push(value.into());
         self
-    }
-
-    /// Add a `String` to the `VecBuilder`
-    ///
-    /// ```rust
-    /// use rustache::VecBuilder;
-    /// let data = VecBuilder::new()
-    ///     .push_string("Mage")
-    ///     .push_string("Druid");
-    /// ```
-    pub fn push_string<T: ToString>(self, value: T) -> VecBuilder<'a> {
-        self.push(value.to_string())
-    }
-
-    /// Add a `Bool` to the `VecBuilder`
-    ///
-    /// ```rust
-    /// use rustache::VecBuilder;
-    /// let data = VecBuilder::new()
-    ///     .push_bool(true)
-    ///     .push_bool(false);
-    /// ```
-    pub fn push_bool(self, value: bool) -> VecBuilder<'a> {
-        self.push(value)
-    }
-
-    /// Add an `Integer` to the `VecBuilder`
-    ///
-    /// ```rust
-    /// use rustache::VecBuilder;
-    /// let data = VecBuilder::new()
-    ///     .push_int(10i32)
-    ///     .push_int(-21i32);
-    /// ```
-    pub fn push_int(self, value: i32) -> VecBuilder<'a> {
-        self.push(value)
-    }
-
-    /// Add a `Float` to the `VecBuilder`
-    ///
-    /// ```rust
-    /// use rustache::VecBuilder;
-    /// let data = VecBuilder::new()
-    ///     .push_float(10.356356f64)
-    ///     .push_float(-21.34956230456f64);
-    /// ```
-    pub fn push_float(self, value: f64) -> VecBuilder<'a> {
-        self.push(value)
-    }
-
-    /// Add a `Vector` to the `VecBuilder`
-    ///
-    /// ```rust
-    /// use rustache::VecBuilder;
-    /// let data = VecBuilder::new()
-    ///     .push_vector(|builder| {
-    ///         builder
-    ///             .push_string("Anduin Wrynn".to_string())
-    ///             .push_string("Jaina Proudmoore".to_string())
-    ///     });
-    /// ```
-    pub fn push_vector<F: FnOnce(VecBuilder<'a>) -> VecBuilder<'a>>(self, f: F) -> VecBuilder<'a> {
-        let builder = f(VecBuilder::new());
-        self.push(builder)
-    }
-
-    /// Add a `Hash` to the `VecBuilder`
-    ///
-    /// ```rust
-    /// use rustache::VecBuilder;
-    /// let data = VecBuilder::new()
-    ///     .push_hash(|builder| {
-    ///         builder
-    ///             .insert_string("first_name".to_string(), "Garrosh".to_string())
-    ///             .insert_string("last_name".to_string(), "Hellscream".to_string())
-    ///     })
-    ///     .push_hash(|builder| {
-    ///         builder
-    ///             .insert_string("first_name".to_string(), "Malfurion".to_string())
-    ///             .insert_string("last_name".to_string(), "Stormrage".to_string())
-    ///     });
-    /// ```
-    pub fn push_hash<F: FnOnce(HashBuilder<'a>) -> HashBuilder<'a>>(self, f: F) -> VecBuilder<'a> {
-        let builder = f(HashBuilder::new());
-        self.push(builder)
     }
 
     /// Add a `Lambda` to the `VecBuilder`
@@ -328,22 +203,21 @@ mod tests {
             Hash(hearthstone))));
 
         let hash2 = HashBuilder::new().set_partials_path("/hearthstone")
-                        .insert_string("first_name", "Anduin")
-                        .insert_string("last_name", "Wrynn")
-                        .insert_int("age", 21i32)
-                        .insert_float("weight", 120.16f64)
-                        .insert_string("class", "Priest")
-                        .insert_bool("died", false)
-                        .insert_vector("class_cards", |builder| {
-                            builder
-                                .push_string(test_string)
-                                .push_string("Prophet Velen")
-                                .push_hash(|builder| {
-                                    builder
-                                        .insert_string("name", "Hearthstone: Heroes of Warcraft")
-                                        .insert_string("release_date", "December, 2014")
-                                })
-                        });
+                        .insert("first_name", "Anduin")
+                        .insert("last_name", "Wrynn")
+                        .insert("age", 21i32)
+                        .insert("weight", 120.16f64)
+                        .insert("class", "Priest")
+                        .insert("died", false)
+                        .insert("class_cards",
+                            VecBuilder::new()
+                                .push(test_string)
+                                .push("Prophet Velen")
+                                .push(HashBuilder::new()
+                                        .insert("name", "Hearthstone: Heroes of Warcraft")
+                                        .insert("release_date", "December, 2014")
+                                )
+                        );
 
         assert_eq!(Hash(hash1), Hash(hash2.data));
         assert_eq!(hash2.partials_path, "/hearthstone");

@@ -40,7 +40,7 @@ fn test_spec_partials_failed_lookup() {
 //     expected: '"*content*"'
 #[test]
 fn test_spec_partials_context() {
-    let data = HashBuilder::new().insert_string("text", "content");
+    let data = HashBuilder::new().insert("text", "content");
 
     let rv = rustache::render_text("\"{{>test_data/test_spec_partials_context}}\"", data);
 
@@ -56,10 +56,10 @@ fn test_spec_partials_context() {
 // #[test]
 // fn test_spec_partials_recursion() {
 //     let data = HashBuilder::new()
-//                 .insert_string("content", "X")
+//                 .insert("content", "X")
 //                 .insert_vector("nodes", |v| {
 //                     v.push_hash(|h| {
-//                         h.insert_string("content", "Y")
+//                         h.insert("content", "Y")
 //                          .insert_vector("nodes", |v| {
 //                             v
 //                          })
@@ -94,7 +94,7 @@ fn test_spec_partials_surrounding_whitespace() {
 //     expected: "  |  >\n>\n"
 #[test]
 fn test_spec_partials_inline_indentation() {
-    let data = HashBuilder::new().insert_string("data", "|");
+    let data = HashBuilder::new().insert("data", "|");
 
     let rv = rustache::render_text("  {{data}}  {{> test_data/test_spec_partials_inline_indentation}}\n", data);
 
@@ -167,7 +167,7 @@ fn test_spec_partials_standalone_without_newline() {
 //       /
 // #[test]
 // fn test_spec_partials_standalone_indentation() {
-//     let data = HashBuilder::new().insert_string("content", "<\n->");
+//     let data = HashBuilder::new().insert("content", "<\n->");
 
 //     let rv = rustache::render_text("|\n\\\n {{>test_data/test_spec_partials_standalone_indentation}}\n/\n", data);
 
@@ -183,7 +183,7 @@ fn test_spec_partials_standalone_without_newline() {
 #[test]
 fn test_spec_partials_padding_whitespace() {
     let data = HashBuilder::new()
-                .insert_bool("boolean", true);
+                .insert("boolean", true);
 
     let rv = rustache::render_text("|{{> test_data/test_spec_partials_padding_whitespace }}|", data);
 
