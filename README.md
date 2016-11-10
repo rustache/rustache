@@ -25,19 +25,14 @@ extern crate rustache;
 
 ## API Methods
 
-The main forward interface that users will interact with when using Rustache are the `rustache::render_file` method and the `rustache::render_text` methods like so:
+The main forward interface that users will interact with when using Rustache
+is the `render` method provided by the `rustache::Render` trait like so:
 
 ```rust
 // Renders the given template string
 let data = rustache::HashBuilder::new().insert("name", "your name");
 let out = Cursor::new(Vec::new());
-rustache::render_text("{{ name }}", data, &mut out).unwrap();
-println!("{}", String::from_utf8(rv.unwrap().into_inner()).unwrap());
-
-// Renders the given template file
-let data = rustache::HashBuilder::new().insert("name", "your name");
-let out = Cursor::new(Vec::new());
-rustache::render_file("test_data/cmdline_test.tmpl", data, &mut out).unwrap();
+data.render("{{ name }}", &mut out).unwrap();
 println!("{}", String::from_utf8(rv.unwrap().into_inner()).unwrap());
 ```
 
@@ -50,7 +45,7 @@ let data = HashBuilder::new()
     .insert("name", "Bob");
 let out = Cursor::new(Vec::new());
 
-rustache::render_text("{{ name }}", data, &mut out);
+data.render("{{ name }}", &mut out);
 ```
 
 Here's an example of how to pass in data in the form of a JSON `enum` to a `render` method:
@@ -59,7 +54,7 @@ Here's an example of how to pass in data in the form of a JSON `enum` to a `rend
 let data = json::from_str(r#"{"name": "Bob"}"#);
 let out = Cursor::new(Vec::new());
 
-rustache::render_text("{{ name }}", data, &mut out);
+data.render("{{ name }}", &mut out);
 ```
 
 ## Testing
