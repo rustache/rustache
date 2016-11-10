@@ -1,7 +1,6 @@
 use std::path::Path;
 use std::fs;
 use std::fs::File;
-use std::fmt;
 use std::io::{Read, Write};
 
 use compiler;
@@ -21,22 +20,12 @@ pub struct Template {
     partials_path: String,
 }
 
+#[derive(Debug)]
 pub enum TemplateError {
     StreamWriteError(String),
     FileReadError(String),
     UnexpectedDataType(String),
     UnexpectedNodeType(String),
-}
-
-impl fmt::Debug for TemplateError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &StreamWriteError(ref val) => write!(f, "StreamWriteError({})", val),
-            &FileReadError(ref val) => write!(f, "FileReadError({})", val),
-            &UnexpectedDataType(ref val) => write!(f, "UnexpectedDataType({})", val),
-            &UnexpectedNodeType(ref val) => write!(f, "UnexpectedNodeType({})", val),
-        }
-    }
 }
 
 impl Template {

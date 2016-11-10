@@ -12,7 +12,6 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::convert::From;
 
-use self::RustacheError::*;
 use self::Data::*;
 
 pub use build::{HashBuilder, VecBuilder};
@@ -22,6 +21,7 @@ pub use rustache::Render;
 pub type RustacheResult<T> = Result<T, RustacheError>;
 
 /// Enum to handle errors from the Rustache library.
+#[derive(Debug)]
 pub enum RustacheError {
     // ParserErrorType(ParserError),
     // CompilerErrorType(CompilerError),
@@ -31,16 +31,6 @@ pub enum RustacheError {
     FileError(String),
     /// Generic enum value for any errors from the template module.
     TemplateErrorType(template::TemplateError),
-}
-
-impl fmt::Debug for RustacheError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &JsonError(ref val) => write!(f, "JsonError: {:?}", val),
-            &FileError(ref val) => write!(f, "FileError: {:?}", val),
-            &TemplateErrorType(ref val) => write!(f, "{:?}", val),
-        }
-    }
 }
 
 // Represents the possible types that passed in data may take on
