@@ -33,7 +33,7 @@ is the `render` method provided by the `rustache::Render` trait like so:
 let data = rustache::HashBuilder::new().insert("name", "your name");
 let out = Cursor::new(Vec::new());
 data.render("{{ name }}", &mut out).unwrap();
-println!("{}", String::from_utf8(rv.unwrap().into_inner()).unwrap());
+println!("{}", String::from_utf8(rv.into_inner()).unwrap());
 ```
 
 ## Examples
