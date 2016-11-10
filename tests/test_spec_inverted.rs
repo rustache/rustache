@@ -1,6 +1,6 @@
 extern crate rustache;
 
-use rustache::{HashBuilder, VecBuilder};
+use rustache::{HashBuilder, Render, VecBuilder};
 use std::io::Cursor;
 
 // - name: Falsey
@@ -12,7 +12,7 @@ use std::io::Cursor;
 fn test_spec_inverted_falsy_bool() {
     let data = HashBuilder::new().insert("boolean", false);
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text("{{^boolean}}This should be rendered.{{/boolean}}", data, &mut rv).unwrap();
+    data.render("{{^boolean}}This should be rendered.{{/boolean}}", &mut rv).unwrap();
 
     assert_eq!("This should be rendered.".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -26,7 +26,7 @@ fn test_spec_inverted_falsy_bool() {
 fn test_spec_inverted_truthy_bool() {
     let data = HashBuilder::new().insert("boolean", true);
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text("{{^boolean}}This should not be rendered.{{/boolean}}", data, &mut rv).unwrap();
+    data.render("{{^boolean}}This should not be rendered.{{/boolean}}", &mut rv).unwrap();
 
     assert_eq!("".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -40,7 +40,7 @@ fn test_spec_inverted_truthy_bool() {
 fn test_spec_inverted_truthy_hash() {
     let data = HashBuilder::new().insert("context", HashBuilder::new().insert("name", "joe"));
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text("{{^context}}Hi {{name}}.{{/context}}", data, &mut rv).unwrap();
+    data.render("{{^context}}Hi {{name}}.{{/context}}", &mut rv).unwrap();
 
     assert_eq!("".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -60,7 +60,7 @@ fn test_spec_inverted_truthy_vec() {
          )
     );
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text("{{^list}}{{n}}{{/list}}", data, &mut rv).unwrap();
+    data.render("{{^list}}{{n}}{{/list}}", &mut rv).unwrap();
 
     assert_eq!("".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -74,7 +74,7 @@ fn test_spec_inverted_truthy_vec() {
 fn test_spec_inverted_falsy_on_empty_vec() {
     let data = HashBuilder::new().insert("list", VecBuilder::new());
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text("{{^list}}Yay lists!{{/list}}", data, &mut rv).unwrap();
+    data.render("{{^list}}Yay lists!{{/list}}", &mut rv).unwrap();
 
     assert_eq!("Yay lists!".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -98,7 +98,7 @@ fn test_spec_inverted_falsy_on_empty_vec() {
 // fn test_spec_inverted_multiple() {
 //     let data = HashBuilder::new().insert_bool("bool", false).insert("two", "second");
 //     let mut rv = Cursor::new(Vec::new());
-//     rustache::render_text("{{^bool}}\n* first\n{{/bool}}\n* {{two}}\n{{^bool}}\n* third\n{{/bool}}", data, &mut rv).unwrap();
+//     data.render("{{^bool}}\n* first\n{{/bool}}\n* {{two}}\n{{^bool}}\n* third\n{{/bool}}", &mut rv).unwrap();
 
 //     assert_eq!("* first\n* second\n* third".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 // }
@@ -112,7 +112,7 @@ fn test_spec_inverted_falsy_on_empty_vec() {
 fn test_spec_inverted_nested_falsy() {
     let data = HashBuilder::new().insert("bool", false);
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text("| A {{^bool}}B {{^bool}}C{{/bool}} D{{/bool}} E |", data, &mut rv).unwrap();
+    data.render("| A {{^bool}}B {{^bool}}C{{/bool}} D{{/bool}} E |", &mut rv).unwrap();
 
     assert_eq!("| A B C D E |".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -126,7 +126,7 @@ fn test_spec_inverted_nested_falsy() {
 fn test_spec_inverted_nested_truthy() {
     let data = HashBuilder::new().insert("bool", true);
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text("| A {{^bool}}B {{^bool}}C{{/bool}} D{{/bool}} E |", data, &mut rv).unwrap();
+    data.render("| A {{^bool}}B {{^bool}}C{{/bool}} D{{/bool}} E |", &mut rv).unwrap();
 
     assert_eq!("| A  E |".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -140,7 +140,7 @@ fn test_spec_inverted_nested_truthy() {
 fn test_spec_inverted_missing_falsey() {
     let data = HashBuilder::new();
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text("[{{^missing}}Cannot find key 'missing'!{{/missing}}]", data, &mut rv).unwrap();
+    data.render("[{{^missing}}Cannot find key 'missing'!{{/missing}}]", &mut rv).unwrap();
 
     assert_eq!("[Cannot find key 'missing'!]".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -161,7 +161,7 @@ fn test_spec_inverted_missing_falsey() {
 //                 })
 //         });
 //     let mut rv = Cursor::new(Vec::new());
-//     rustache::render_text("'{{^a.b.c}}Not Here{{/a.b.c}}' == ''", data)
+//     data.render("'{{^a.b.c}}Not Here{{/a.b.c}}' == ''", data)
 
 //     assert_eq!("'' == ''".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 // }
@@ -180,7 +180,7 @@ fn test_spec_falsey_dotted_names_valid_inverted_section_tags() {
                 )
         );
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text("'{{^a.b.c}}Not Here{{/a.b.c}}' == 'Not Here'", data, &mut rv).unwrap();
+    data.render("'{{^a.b.c}}Not Here{{/a.b.c}}' == 'Not Here'", &mut rv).unwrap();
 
     assert_eq!("'Not Here' == 'Not Here'".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -200,7 +200,7 @@ fn test_spec_falsey_dotted_names_valid_inverted_section_tags() {
 fn test_spec_inverted_surrounding_whitespace() {
     let data = HashBuilder::new().insert("boolean", false);
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text(" | {{^boolean}}\t|\t{{/boolean}} | \n", data, &mut rv).unwrap();
+    data.render(" | {{^boolean}}\t|\t{{/boolean}} | \n", &mut rv).unwrap();
 
     assert_eq!(" | \t|\t | \n".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -214,7 +214,7 @@ fn test_spec_inverted_surrounding_whitespace() {
 // fn test_spec_inverted_internal_whitespace() {
 //     let data = HashBuilder::new().insert("boolean", false);
 //     let mut rv = Cursor::new(Vec::new());
-//     rustache::render_text(" | {{^boolean}} {{! Important Whitespace }}\n {{/boolean}} | \n", data, &mut rv).unwrap();
+//     data.render(" | {{^boolean}} {{! Important Whitespace }}\n {{/boolean}} | \n", &mut rv).unwrap();
 
 //     assert_eq!(" |  \n  | \n".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 // }
@@ -228,7 +228,7 @@ fn test_spec_inverted_surrounding_whitespace() {
 fn test_spec_inverted_indented_inline_sections() {
     let data = HashBuilder::new().insert("boolean", false);
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text(" {{^boolean}}NO{{/boolean}}\n {{^boolean}}WAY{{/boolean}}\n", data, &mut rv).unwrap();
+    data.render(" {{^boolean}}NO{{/boolean}}\n {{^boolean}}WAY{{/boolean}}\n", &mut rv).unwrap();
 
     assert_eq!(" NO\n WAY\n".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -250,7 +250,7 @@ fn test_spec_inverted_indented_inline_sections() {
 // fn test_spec_inverted_standalone_lines() {
 //     let data = HashBuilder::new().insert("boolean", false);
 //     let mut rv = Cursor::new(Vec::new());
-//     rustache::render_text("| This Is\n{{^boolean}}\n|\n{{/boolean}}\n| A Line", data)
+//     data.render("| This Is\n{{^boolean}}\n|\n{{/boolean}}\n| A Line", data)
 
 //     assert_eq!("| This Is\n|\n| A Line".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 // }
@@ -272,7 +272,7 @@ fn test_spec_inverted_indented_inline_sections() {
 // fn test_spec_inverted_standalone_indented_lines() {
 //     let data = HashBuilder::new().insert_bool("boolean", false);
 //     let mut rv = Cursor::new(Vec::new());
-//     rustache::render_text("| This Is\n  {{^boolean}}\n|\n  {{/boolean}}\n| A Line", data)
+//     data.render("| This Is\n  {{^boolean}}\n|\n  {{/boolean}}\n| A Line", data)
 
 //     assert_eq!("| This Is\n|\n| A Line".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 // }
@@ -286,7 +286,7 @@ fn test_spec_inverted_indented_inline_sections() {
 // fn test_spec_inverted_standalone_rn_is_linebreak() {
 //     let data = HashBuilder::new().insert_bool("boolean", false);
 //     let mut rv = Cursor::new(Vec::new());
-//     rustache::render_text("|\r\n{{^boolean}}\r\n{{/boolean}}\r\n|", data)
+//     data.render("|\r\n{{^boolean}}\r\n{{/boolean}}\r\n|", data)
 
 //     assert_eq!("|\r\n|".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 // }
@@ -300,7 +300,7 @@ fn test_spec_inverted_indented_inline_sections() {
 // fn test_spec_inverted_standalone_without_previous_line() {
 //     let data = HashBuilder::new().insert_bool("boolean", false);
 //     let mut rv = Cursor::new(Vec::new());
-//     rustache::render_text("  {{^boolean}}\n^{{/boolean}}\n/", data, &mut rv).unwrap();
+//     data.render("  {{^boolean}}\n^{{/boolean}}\n/", &mut rv).unwrap();
 
 //     assert_eq!("^\n/".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 // }
@@ -314,7 +314,7 @@ fn test_spec_inverted_indented_inline_sections() {
 // fn test_spec_inverted_standalone_without_newline() {
 //     let data = HashBuilder::new().insert_bool("boolean", false);
 //     let mut rv = Cursor::new(Vec::new());
-//     rustache::render_text("^{{^boolean}}\n/\n  {{/boolean}}", data, &mut rv).unwrap();
+//     data.render("^{{^boolean}}\n/\n  {{/boolean}}", &mut rv).unwrap();
 
 //     assert_eq!("^\n/\n".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 // }
@@ -328,7 +328,7 @@ fn test_spec_inverted_indented_inline_sections() {
 fn test_spec_inverted_whitespace_insensitivity() {
     let data = HashBuilder::new().insert("boolean", false);
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text("|{{^ boolean }}={{/ boolean }}|", data, &mut rv).unwrap();
+    data.render("|{{^ boolean }}={{/ boolean }}|", &mut rv).unwrap();
 
     assert_eq!("|=|".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }

@@ -70,21 +70,6 @@ impl Render for ToString {
     }
 }
 
-/// Render the given template string
-///
-/// ```
-/// use rustache::HashBuilder;
-/// use std::io::Cursor;
-///
-/// let data = HashBuilder::new().insert("name", "your name");
-/// let mut rv = Cursor::new(Vec::new());
-/// rustache::render_text("{{ name }}", data, &mut rv).unwrap();
-/// println!("{}", String::from_utf8(rv.into_inner()).unwrap());
-/// ```
-pub fn render_text<Re: Render, W: Write>(input: &str, renderable: Re, writer: &mut W) -> RustacheResult<()> {
-    renderable.render(input, writer)
-}
-
 // parses a Rust JSON hash and matches all possible types that may be passed in
 // returning a HashBuilder 
 fn parse_json(json: &Json) -> HashBuilder {

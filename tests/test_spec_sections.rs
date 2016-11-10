@@ -1,6 +1,6 @@
 extern crate rustache;
 
-use rustache::{HashBuilder, VecBuilder};
+use rustache::{HashBuilder, Render, VecBuilder};
 use std::io::Cursor;
 
 // - name: Truthy
@@ -13,7 +13,7 @@ fn test_spec_sections_truthy_should_render_contents() {
     let data = HashBuilder::new()
         .insert("boolean", true);
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text("{{#boolean}}This should be rendered.{{/boolean}}", data, &mut rv).unwrap();
+    data.render("{{#boolean}}This should be rendered.{{/boolean}}", &mut rv).unwrap();
 
     assert_eq!("This should be rendered.".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -28,7 +28,7 @@ fn test_spec_sections_falsy_should_not_render_contents() {
     let data = HashBuilder::new()
         .insert("boolean", false);
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text("{{#boolean}}This should not be rendered.{{/boolean}}", data, &mut rv).unwrap();
+    data.render("{{#boolean}}This should not be rendered.{{/boolean}}", &mut rv).unwrap();
 
     assert_eq!("".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -45,7 +45,7 @@ fn test_spec_sections_objects_and_hashes_should_be_pushed_onto_context_stack() {
                 .insert("name", "Joe")
         );
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text("{{#context}}Hi {{name}}.{{/context}}", data, &mut rv).unwrap();
+    data.render("{{#context}}Hi {{name}}.{{/context}}", &mut rv).unwrap();
 
     assert_eq!("Hi Joe.".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -112,7 +112,7 @@ fn test_spec_sections_objects_and_hashes_should_be_pushed_onto_context_stack() {
 //                 .insert_int("five", 5)
 //         });
 //     let mut rv = Cursor::new(Vec::new());
-//     rustache::render_text("{{#a}}
+//     data.render("{{#a}}
 //                            {{one}}
 //                            {{#b}}
 //                            {{one}}{{two}}{{one}}
@@ -166,7 +166,7 @@ fn test_spec_sections_list_items_are_iterated() {
                 )
         );
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text("{{#list}}{{item}}{{/list}}", data, &mut rv).unwrap();
+    data.render("{{#list}}{{item}}{{/list}}", &mut rv).unwrap();
 
     assert_eq!("123".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -181,7 +181,7 @@ fn test_spec_sections_empty_lists_behave_like_falsy_values() {
     let data = HashBuilder::new()
         .insert("list", VecBuilder::new());
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text("{{#list}}Yay lists!{{/list}}", data, &mut rv).unwrap();
+    data.render("{{#list}}Yay lists!{{/list}}", &mut rv).unwrap();
 
     assert_eq!("".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -207,7 +207,7 @@ fn test_spec_sections_empty_lists_behave_like_falsy_values() {
 //         .insert_bool("bool", true)
 //         .insert("two", "second");
 //     let mut rv = Cursor::new(Vec::new());
-//     rustache::render_text("{{#bool}}
+//     data.render("{{#bool}}
 //                            * first
 //                            {{/bool}}
 //                            * {{two}}
@@ -235,7 +235,7 @@ fn test_spec_sections_nested_truthy_contents_render() {
     let data = HashBuilder::new()
         .insert("bool", true);
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text("| A {{#bool}}B {{#bool}}C{{/bool}} D{{/bool}} E |", data, &mut rv).unwrap();
+    data.render("| A {{#bool}}B {{#bool}}C{{/bool}} D{{/bool}} E |", &mut rv).unwrap();
 
     assert_eq!("| A B C D E |".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -250,7 +250,7 @@ fn test_spec_sections_nested_falsy_contents_do_not_render() {
     let data = HashBuilder::new()
         .insert("bool", false);
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text("| A {{#bool}}B {{#bool}}C{{/bool}} D{{/bool}} E |", data, &mut rv).unwrap();
+    data.render("| A {{#bool}}B {{#bool}}C{{/bool}} D{{/bool}} E |", &mut rv).unwrap();
 
     assert_eq!("| A  E |".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -264,7 +264,7 @@ fn test_spec_sections_nested_falsy_contents_do_not_render() {
 fn test_spec_sections_failed_context_lookups_are_falsy() {
     let data = HashBuilder::new();
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text("[{{#missing}}Found key 'missing'!{{/missing}}]", data, &mut rv).unwrap();
+    data.render("[{{#missing}}Found key 'missing'!{{/missing}}]", &mut rv).unwrap();
 
     assert_eq!("[]".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -287,7 +287,7 @@ fn test_spec_sections_failed_context_lookups_are_falsy() {
 //                 .push_string("e")
 //         });
 //     let mut rv = Cursor::new(Vec::new());
-//     rustache::render_text("{{#list}}({{.}}){{/list}}", data, &mut rv).unwrap();
+//     data.render("{{#list}}({{.}}){{/list}}", &mut rv).unwrap();
 
 //     assert_eq!("(a)(b)(c)(d)(e)".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 // }
@@ -310,7 +310,7 @@ fn test_spec_sections_failed_context_lookups_are_falsy() {
 //                 .push_int(5)
 //         });
 //     let mut rv = Cursor::new(Vec::new());
-//     rustache::render_text("{{#list}}({{.}}){{/list}}", data, &mut rv).unwrap();
+//     data.render("{{#list}}({{.}}){{/list}}", &mut rv).unwrap();
 
 //     assert_eq!("(1)(2)(3)(4)(5)".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 // }
@@ -333,7 +333,7 @@ fn test_spec_sections_failed_context_lookups_are_falsy() {
 //                 .push_float(5.50)
 //         });
 //     let mut rv = Cursor::new(Vec::new());
-//     rustache::render_text("{{#list}}({{.}}){{/list}}", data, &mut rv).unwrap();
+//     data.render("{{#list}}({{.}}){{/list}}", &mut rv).unwrap();
 
 //     assert_eq!("(1.1)(2.2)(3.3)(4.4)(5.5)".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 // }
@@ -354,7 +354,7 @@ fn test_spec_sections_failed_context_lookups_are_falsy() {
 //             })
 //         });
 //     let mut rv = Cursor::new(Vec::new());
-//     rustache::render_text("'{{#a.b.c}}Here{{/a.b.c}}' == 'Here'", data, &mut rv).unwrap();
+//     data.render("'{{#a.b.c}}Here{{/a.b.c}}' == 'Here'", &mut rv).unwrap();
 
 //     assert_eq!("'Here' == 'Here'".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 // }
@@ -373,7 +373,7 @@ fn test_spec_sections_falsy_dotted_names_are_not_valid_section_tags() {
             )
         );
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text("'{{#a.b.c}}Here{{/a.b.c}}' == ''", data, &mut rv).unwrap();
+    data.render("'{{#a.b.c}}Here{{/a.b.c}}' == ''", &mut rv).unwrap();
 
     assert_eq!("'' == ''".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -388,7 +388,7 @@ fn test_spec_sections_unresolved_dotted_names_are_not_valid_section_tags() {
     let data = HashBuilder::new()
         .insert("a", HashBuilder::new());
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text("'{{#a.b.c}}Here{{/a.b.c}}' == ''", data, &mut rv).unwrap();
+    data.render("'{{#a.b.c}}Here{{/a.b.c}}' == ''", &mut rv).unwrap();
 
     assert_eq!("'' == ''".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -403,7 +403,7 @@ fn test_spec_sections_do_not_alter_surrounding_whitespace() {
     let data = HashBuilder::new()
         .insert("boolean", true);
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text(" | {{#boolean}}\t|\t{{/boolean}} | \n", data, &mut rv).unwrap();
+    data.render(" | {{#boolean}}\t|\t{{/boolean}} | \n", &mut rv).unwrap();
 
     assert_eq!(" | \t|\t | \n".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -418,7 +418,7 @@ fn test_spec_sections_do_not_alter_surrounding_whitespace() {
 //     let data = HashBuilder::new()
 //         .insert_bool("boolean", true);
 //     let mut rv = Cursor::new(Vec::new());
-//     rustache::render_text(" | {{#boolean}} {{! Important Whitespace }}\n {{/boolean}} | \n", data, &mut rv).unwrap();
+//     data.render(" | {{#boolean}} {{! Important Whitespace }}\n {{/boolean}} | \n", &mut rv).unwrap();
 
 //     assert_eq!(" |  \n  | \n".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 // }
@@ -433,7 +433,7 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
     let data = HashBuilder::new()
         .insert("boolean", true);
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text(" {{#boolean}}YES{{/boolean}}\n {{#boolean}}GOOD{{/boolean}}\n", data, &mut rv).unwrap();
+    data.render(" {{#boolean}}YES{{/boolean}}\n {{#boolean}}GOOD{{/boolean}}\n", &mut rv).unwrap();
 
     assert_eq!(" YES\n GOOD\n".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
@@ -456,7 +456,7 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
 //     let data = HashBuilder::new()
 //         .insert("boolean", true);
 //     let mut rv = Cursor::new(Vec::new());
-//     rustache::render_text("|
+//     data.render("|
 //                            | This Is
 //                            {{#boolean}}
 //                            |
@@ -492,7 +492,7 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
 //     let data = HashBuilder::new()
 //         .insert_bool("boolean", true);
 //     let mut rv = Cursor::new(Vec::new());
-//     rustache::render_text("|
+//     data.render("|
 //                            | This Is
 //                              {{#boolean}}
 //                            |
@@ -519,7 +519,7 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
 //     let data = HashBuilder::new()
 //         .insert_bool("boolean", true);
 //     let mut rv = Cursor::new(Vec::new());
-//     rustache::render_text("|\r\n{{#boolean}}\r\n{{/boolean}}\r\n|", data, &mut rv).unwrap();
+//     data.render("|\r\n{{#boolean}}\r\n{{/boolean}}\r\n|", &mut rv).unwrap();
 
 //     assert_eq!("|\r\n|".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 // }
@@ -534,7 +534,7 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
 //     let data = HashBuilder::new()
 //         .insert_bool("boolean", true);
 //     let mut rv = Cursor::new(Vec::new());
-//     rustache::render_text("  {{#boolean}}\n#{{/boolean}}\n/", data, &mut rv).unwrap();
+//     data.render("  {{#boolean}}\n#{{/boolean}}\n/", &mut rv).unwrap();
 
 //     assert_eq!("#\n/".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 // }
@@ -549,7 +549,7 @@ fn test_spec_sections_single_line_sections_do_not_alter_surrounding_whitespace()
 //     let data = HashBuilder::new()
 //         .insert_bool("boolean", true);
 //     let mut rv = Cursor::new(Vec::new());
-//     rustache::render_text("#{{#boolean}}\n/\n  {{/boolean}}", data, &mut rv).unwrap();
+//     data.render("#{{#boolean}}\n/\n  {{/boolean}}", &mut rv).unwrap();
 
 //     assert_eq!("#\n/\n".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 // }
@@ -564,7 +564,7 @@ fn test_spec_sections_superfluous_tag_whitespace_is_ignored() {
     let data = HashBuilder::new()
         .insert("boolean", true);
     let mut rv = Cursor::new(Vec::new());
-    rustache::render_text("|{{# boolean }}={{/ boolean }}|", data, &mut rv).unwrap();
+    data.render("|{{# boolean }}={{/ boolean }}|", &mut rv).unwrap();
 
     assert_eq!("|=|".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
