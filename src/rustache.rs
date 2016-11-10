@@ -70,25 +70,6 @@ impl Render for ToString {
     }
 }
 
-/// Render a template from the given template file
-///
-/// ```
-/// use rustache::HashBuilder;
-/// use std::io::Cursor;
-///
-/// let data = HashBuilder::new().insert("planet", "Earth");
-/// let mut rv = Cursor::new(Vec::new());
-/// rustache::render_file("test_data/cmdline_test.tmpl", data, &mut rv).unwrap();
-/// println!("{}", String::from_utf8(rv.into_inner()).unwrap());
-/// ```
-pub fn render_file<Re: Render, W: Write>(path: &str, renderable: Re, writer: &mut W) -> RustacheResult<()> {
-
-    return match read_file(&Path::new(path)) {
-        Ok(text) => renderable.render(&text[..], writer),
-        Err(err) => Err(FileError(err))
-    }
-}
-
 /// Render the given template string
 ///
 /// ```
