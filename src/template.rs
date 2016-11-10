@@ -336,7 +336,7 @@ impl Template {
     // writer:    io stream
     fn handle_section_node<W: Write>(&mut self,
                                       nodes: &Vec<Node>,
-                                      sectionkey: &String,
+                                      _: &String,
                                       data: &Data,
                                       datastore: &HashMap<String,Data>,
                                       sections: &mut Vec<String>,
@@ -403,8 +403,6 @@ impl Template {
                         // we need to save what sections we have been in, so the data
                         // lookup can happen correctly.  Data lookup is special for sections.
                         &false => {
-                          let foo = sectionkey;
-                          println!("{}", foo);
                           let tmpkey = key.to_string();
                           sections.push(tmpkey.clone());
                           let tmpdata = self.look_up_section_data(&tmpkey, sections, datastore);
