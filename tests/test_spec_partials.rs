@@ -1,6 +1,7 @@
 extern crate rustache;
 
 use rustache::HashBuilder;
+use std::io::Cursor;
 
 //   - name: Basic Behavior
 //     desc: The greater-than operator should expand to the named partial.
@@ -11,10 +12,10 @@ use rustache::HashBuilder;
 #[test]
 fn test_spec_partials_basic_behavior() {
     let data = HashBuilder::new();
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("\"{{>test_data/test_spec_partials_basic}}\"", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("\"{{>test_data/test_spec_partials_basic}}\"", data);
-
-    assert_eq!("\"from partial\"".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("\"from partial\"".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 //   - name: Failed Lookup
@@ -26,10 +27,10 @@ fn test_spec_partials_basic_behavior() {
 #[test]
 fn test_spec_partials_failed_lookup() {
     let data = HashBuilder::new();
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("\"{{>text}}\"", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("\"{{>text}}\"", data);
-
-    assert_eq!("\"\"".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("\"\"".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 //   - name: Context
@@ -41,10 +42,10 @@ fn test_spec_partials_failed_lookup() {
 #[test]
 fn test_spec_partials_context() {
     let data = HashBuilder::new().insert("text", "content");
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("\"{{>test_data/test_spec_partials_context}}\"", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("\"{{>test_data/test_spec_partials_context}}\"", data);
-
-    assert_eq!("\"*content*\"".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("\"*content*\"".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 //   - name: Recursion
@@ -65,10 +66,11 @@ fn test_spec_partials_context() {
 //                          })
 //                     })
 //                 });
+//     let mut rv = Cursor::new(Vec::new());
 
-//     let rv = rustache::render_text("{{>test_data/test_spec_partials_recursion}}", data);
+//     rustache::render_text("{{>test_data/test_spec_partials_recursion}}", data, &mut rv).unwrap();
 
-//     assert_eq!("X<Y<>>".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+//     assert_eq!("X<Y<>>".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 // }
 
 //   - name: Surrounding Whitespace
@@ -80,10 +82,10 @@ fn test_spec_partials_context() {
 #[test]
 fn test_spec_partials_surrounding_whitespace() {
     let data = HashBuilder::new();
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("| {{>test_data/test_spec_partials_whitespace}} |", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("| {{>test_data/test_spec_partials_whitespace}} |", data);
-
-    assert_eq!("| \t|\t |".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("| \t|\t |".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 //   - name: Inline Indentation
@@ -95,10 +97,10 @@ fn test_spec_partials_surrounding_whitespace() {
 #[test]
 fn test_spec_partials_inline_indentation() {
     let data = HashBuilder::new().insert("data", "|");
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("  {{data}}  {{> test_data/test_spec_partials_inline_indentation}}\n", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("  {{data}}  {{> test_data/test_spec_partials_inline_indentation}}\n", data);
-
-    assert_eq!("  |  >\n>\n".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("  |  >\n>\n".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 //   - name: Standalone Line Endings
@@ -110,10 +112,10 @@ fn test_spec_partials_inline_indentation() {
 // #[test]
 // fn test_spec_partials_standalone_line_endings() {
 //     let data = HashBuilder::new();
+//     let mut rv = Cursor::new(Vec::new());
+//     rustache::render_text("|\r\n{{>partial}}\r\n|", data, &mut rv).unwrap();
 
-//     let rv = rustache::render_text("|\r\n{{>partial}}\r\n|", data);
-
-//     assert_eq!("|\r\n>|".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+//     assert_eq!("|\r\n>|".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 // }
 
 //   - name: Standalone Without Previous Line
@@ -125,10 +127,10 @@ fn test_spec_partials_inline_indentation() {
 #[test]
 fn test_spec_partials_standalone_without_previous_line() {
     let data = HashBuilder::new();
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("  {{>test_data/test_spec_partials_standalone_without_previous_line}}\n>", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("  {{>test_data/test_spec_partials_standalone_without_previous_line}}\n>", data);
-
-    assert_eq!("  >\n>\n>".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("  >\n>\n>".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 //   - name: Standalone Without Newline
@@ -140,10 +142,10 @@ fn test_spec_partials_standalone_without_previous_line() {
 #[test]
 fn test_spec_partials_standalone_without_newline() {
     let data = HashBuilder::new();
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text(">\n  {{>test_data/test_spec_partials_standalone_without_newline}}", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text(">\n  {{>test_data/test_spec_partials_standalone_without_newline}}", data);
-
-    assert_eq!(">\n  >\n>".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!(">\n  >\n>".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 //   - name: Standalone Indentation
@@ -169,9 +171,10 @@ fn test_spec_partials_standalone_without_newline() {
 // fn test_spec_partials_standalone_indentation() {
 //     let data = HashBuilder::new().insert("content", "<\n->");
 
-//     let rv = rustache::render_text("|\n\\\n {{>test_data/test_spec_partials_standalone_indentation}}\n/\n", data);
+//     let mut rv = Cursor::new(Vec::new());
+//     rustache::render_text("|\n\\\n {{>test_data/test_spec_partials_standalone_indentation}}\n/\n", data, &mut rv).unwrap();
 
-//     assert_eq!("|\n\\\n |\n <\n ->\n |\n/\n".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+//     assert_eq!("|\n\\\n |\n <\n ->\n |\n/\n".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 // }
 
 //   - name: Padding Whitespace
@@ -184,8 +187,8 @@ fn test_spec_partials_standalone_without_newline() {
 fn test_spec_partials_padding_whitespace() {
     let data = HashBuilder::new()
                 .insert("boolean", true);
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("|{{> test_data/test_spec_partials_padding_whitespace }}|", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("|{{> test_data/test_spec_partials_padding_whitespace }}|", data);
-
-    assert_eq!("|[]|".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("|[]|".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }

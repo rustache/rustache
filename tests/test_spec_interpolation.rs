@@ -1,6 +1,7 @@
 extern crate rustache;
 
 use rustache::HashBuilder;
+use std::io::Cursor;
 
 // - name: No Interpolation
 //   desc: Mustache-free templates should render as-is.
@@ -12,10 +13,10 @@ use rustache::HashBuilder;
 #[test]
 fn test_spec_interpolation_none() {
     let data = HashBuilder::new();
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("Hello from {Mustache}!", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("Hello from {Mustache}!", data);
-
-    assert_eq!("Hello from {Mustache}!".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("Hello from {Mustache}!".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Basic Interpolation
@@ -28,10 +29,10 @@ fn test_spec_interpolation_none() {
 #[test]
 fn test_spec_interpolation_basic() {
     let data = HashBuilder::new().insert("subject", "world");
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("Hello, {{subject}}!", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("Hello, {{subject}}!", data);
-
-    assert_eq!("Hello, world!".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("Hello, world!".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: HTML Escaping
@@ -44,10 +45,10 @@ fn test_spec_interpolation_basic() {
 #[test]
 fn test_spec_interpolation_html_escaping() {
     let data = HashBuilder::new().insert("forbidden", "& \" < >");
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("These characters should be HTML escaped: {{forbidden}}", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("These characters should be HTML escaped: {{forbidden}}", data);
-
-    assert_eq!("These characters should be HTML escaped: &amp; &quot; &lt; &gt;".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("These characters should be HTML escaped: &amp; &quot; &lt; &gt;".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Triple Mustache
@@ -60,10 +61,10 @@ fn test_spec_interpolation_html_escaping() {
 #[test]
 fn test_spec_interpolation_no_html_escaping_triple_mustache() {
     let data = HashBuilder::new().insert("forbidden", "& \" < >");
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("These characters should not be HTML escaped: {{{forbidden}}}", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("These characters should not be HTML escaped: {{{forbidden}}}", data);
-
-    assert_eq!("These characters should not be HTML escaped: & \" < >".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("These characters should not be HTML escaped: & \" < >".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Ampersand
@@ -76,10 +77,10 @@ fn test_spec_interpolation_no_html_escaping_triple_mustache() {
 #[test]
 fn test_spec_interpolation_no_html_escaping_ampersand() {
     let data = HashBuilder::new().insert("forbidden", "& \" < >");
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("These characters should not be HTML escaped: {{&forbidden}}", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("These characters should not be HTML escaped: {{&forbidden}}", data);
-
-    assert_eq!("These characters should not be HTML escaped: & \" < >".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("These characters should not be HTML escaped: & \" < >".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Basic Integer Interpolation
@@ -90,10 +91,10 @@ fn test_spec_interpolation_no_html_escaping_ampersand() {
 #[test]
 fn test_spec_interpolation_integer_basic() {
     let data = HashBuilder::new().insert("mph", 85);
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("{{mph}} miles an hour!", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("{{mph}} miles an hour!", data);
-
-    assert_eq!("85 miles an hour!".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("85 miles an hour!".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Triple Mustache Integer Interpolation
@@ -104,10 +105,10 @@ fn test_spec_interpolation_integer_basic() {
 #[test]
 fn test_spec_interpolation_integer_triple_mustache() {
     let data = HashBuilder::new().insert("mph", 85);
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("{{{mph}}} miles an hour!", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("{{{mph}}} miles an hour!", data);
-
-    assert_eq!("85 miles an hour!".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("85 miles an hour!".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Ampersand Integer Interpolation
@@ -118,10 +119,10 @@ fn test_spec_interpolation_integer_triple_mustache() {
 #[test]
 fn test_spec_interpolation_integer_ampersand() {
     let data = HashBuilder::new().insert("mph", 85);
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("{{mph}} miles an hour!", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("{{mph}} miles an hour!", data);
-
-    assert_eq!("85 miles an hour!".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("85 miles an hour!".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Basic Decimal Interpolation
@@ -132,10 +133,10 @@ fn test_spec_interpolation_integer_ampersand() {
 #[test]
 fn test_spec_interpolation_float_basic() {
     let data = HashBuilder::new().insert("power", 1.210);
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("{{power}} jiggawatts!", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("{{power}} jiggawatts!", data);
-
-    assert_eq!("1.21 jiggawatts!".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("1.21 jiggawatts!".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Triple Mustache Decimal Interpolation
@@ -146,10 +147,10 @@ fn test_spec_interpolation_float_basic() {
 #[test]
 fn test_spec_interpolation_float_triple_mustache() {
     let data = HashBuilder::new().insert("power", 1.210);
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("{{{power}}} jiggawatts!", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("{{{power}}} jiggawatts!", data);
-
-    assert_eq!("1.21 jiggawatts!".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("1.21 jiggawatts!".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Ampersand Decimal Interpolation
@@ -160,10 +161,10 @@ fn test_spec_interpolation_float_triple_mustache() {
 #[test]
 fn test_spec_interpolation_float_ampersand() {
     let data = HashBuilder::new().insert("power", 1.210);
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("{{&power}} jiggawatts!", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("{{&power}} jiggawatts!", data);
-
-    assert_eq!("1.21 jiggawatts!".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("1.21 jiggawatts!".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Basic Context Miss Interpolation
@@ -174,10 +175,10 @@ fn test_spec_interpolation_float_ampersand() {
 #[test]
 fn test_spec_interpolation_context_miss() {
     let data = HashBuilder::new();
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("I ({{cannot}}) be seen!", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("I ({{cannot}}) be seen!", data);
-
-    assert_eq!("I () be seen!".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("I () be seen!".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Triple Mustache Context Miss Interpolation
@@ -188,10 +189,10 @@ fn test_spec_interpolation_context_miss() {
 #[test]
 fn test_spec_interpolation_context_miss_triple_mustache() {
     let data = HashBuilder::new();
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("I ({{{cannot}}}) be seen!", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("I ({{{cannot}}}) be seen!", data);
-
-    assert_eq!("I () be seen!".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("I () be seen!".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Ampersand Context Miss Interpolation
@@ -202,10 +203,10 @@ fn test_spec_interpolation_context_miss_triple_mustache() {
 #[test]
 fn test_spec_interpolation_context_miss_ampersand() {
     let data = HashBuilder::new();
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("I ({{cannot}}) be seen!", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("I ({{cannot}}) be seen!", data);
-
-    assert_eq!("I () be seen!".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("I () be seen!".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Dotted Names - Basic Interpolation
@@ -216,10 +217,10 @@ fn test_spec_interpolation_context_miss_ampersand() {
 #[test]
 fn test_spec_interpolation_dotted_names_basic() {
     let data = HashBuilder::new().insert("person", HashBuilder::new().insert("name", "Joe"));
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("\"{{person.name}}\" == \"{{#person}}{{name}}{{/person}}\"", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("\"{{person.name}}\" == \"{{#person}}{{name}}{{/person}}\"", data);
-
-    assert_eq!("\"Joe\" == \"Joe\"".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("\"Joe\" == \"Joe\"".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Dotted Names - Triple Mustache Interpolation
@@ -233,10 +234,10 @@ fn test_spec_interpolation_dotted_names_triple_mustache() {
                 .insert("person", HashBuilder::new()
                     .insert("name", "Joe")
                 );
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("\"{{{person.name}}}\" == \"{{#person}}{{{name}}}{{/person}}\"", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("\"{{{person.name}}}\" == \"{{#person}}{{{name}}}{{/person}}\"", data);
-
-    assert_eq!("\"Joe\" == \"Joe\"".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("\"Joe\" == \"Joe\"".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Dotted Names - Ampersand Interpolation
@@ -250,10 +251,10 @@ fn test_spec_interpolation_dotted_names_ampersand() {
                 .insert("person", HashBuilder::new()
                     .insert("name", "Joe")
                 );
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("\"{{&person.name}}\" == \"{{#person}}{{&name}}{{/person}}\"", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("\"{{&person.name}}\" == \"{{#person}}{{&name}}{{/person}}\"", data);
-
-    assert_eq!("\"Joe\" == \"Joe\"".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("\"Joe\" == \"Joe\"".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Dotted Names - Arbitrary Depth
@@ -276,10 +277,10 @@ fn test_spec_interpolation_dotted_names_arbitrary_depth() {
                         )
                     )
                 );
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("\"{{a.b.c.d.e.name}}\" == \"Phil\"", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("\"{{a.b.c.d.e.name}}\" == \"Phil\"", data);
-
-    assert_eq!("\"Phil\" == \"Phil\"".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("\"Phil\" == \"Phil\"".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Dotted Names - Broken Chains
@@ -291,10 +292,10 @@ fn test_spec_interpolation_dotted_names_arbitrary_depth() {
 #[test]
 fn test_spec_interpolation_dotted_broken_chains() {
     let data = HashBuilder::new();
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("\"{{a.b.c}}\" == \"\"", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("\"{{a.b.c}}\" == \"\"", data);
-
-    assert_eq!("\"\" == \"\"".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("\"\" == \"\"".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Dotted Names - Broken Chain Resolution
@@ -313,10 +314,10 @@ fn test_spec_interpolation_dotted_broken_chain_resolution() {
                 .insert("c", HashBuilder::new()
                     .insert("name", "Jim")
                 );
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("\"{{a.b.c}}\" == \"\"", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("\"{{a.b.c}}\" == \"\"", data);
-
-    assert_eq!("\"\" == \"\"".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("\"\" == \"\"".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Dotted Names - Initial Resolution
@@ -349,10 +350,10 @@ fn test_spec_interpolation_dotted_initial_resolution() {
                         )
                     )
                 );
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("\"{{#a}}{{b.c.d.e.name}}{{/a}}\" == \"Phil\"", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("\"{{#a}}{{b.c.d.e.name}}{{/a}}\" == \"Phil\"", data);
-
-    assert_eq!("\"Phil\" == \"Phil\"".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("\"Phil\" == \"Phil\"".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Dotted Names - Context Precedence
@@ -373,10 +374,10 @@ fn test_spec_interpolation_dotted_context_precedence() {
                         .insert("name", "ERROR")
                     )
                 );
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("{{#a}}{{b.c}}{{/a}}", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("{{#a}}{{b.c}}{{/a}}", data);
-
-    assert_eq!("".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Interpolation - Surrounding Whitespace
@@ -387,10 +388,10 @@ fn test_spec_interpolation_dotted_context_precedence() {
 #[test]
 fn test_spec_interpolation_surrounding_whitespace_basic() {
     let data = HashBuilder::new().insert("string", "---");
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("| {{string}} |", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("| {{string}} |", data);
-
-    assert_eq!("| --- |".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("| --- |".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Triple Mustache - Surrounding Whitespace
@@ -401,10 +402,10 @@ fn test_spec_interpolation_surrounding_whitespace_basic() {
 #[test]
 fn test_spec_interpolation_surrounding_whitespace_triple_mustache() {
     let data = HashBuilder::new().insert("string", "---");
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("| {{{string}}} |", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("| {{{string}}} |", data);
-
-    assert_eq!("| --- |".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("| --- |".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Ampersand - Surrounding Whitespace
@@ -415,10 +416,10 @@ fn test_spec_interpolation_surrounding_whitespace_triple_mustache() {
 #[test]
 fn test_spec_interpolation_surrounding_whitespace_ampersand() {
     let data = HashBuilder::new().insert("string", "---");
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("| {{&string}} |", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("| {{&string}} |", data);
-
-    assert_eq!("| --- |".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("| --- |".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Interpolation - Standalone
@@ -429,10 +430,10 @@ fn test_spec_interpolation_surrounding_whitespace_ampersand() {
 #[test]
 fn test_spec_interpolation_standalone_basic() {
     let data = HashBuilder::new().insert("string", "---");
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("  {{string}}\n", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("  {{string}}\n", data);
-
-    assert_eq!("  ---\n".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("  ---\n".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Triple Mustache - Standalone
@@ -443,10 +444,10 @@ fn test_spec_interpolation_standalone_basic() {
 #[test]
 fn test_spec_interpolation_standalone_triple_mustache() {
     let data = HashBuilder::new().insert("string", "---");
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("  {{{string}}}\n", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("  {{{string}}}\n", data);
-
-    assert_eq!("  ---\n".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("  ---\n".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Ampersand - Standalone
@@ -457,10 +458,10 @@ fn test_spec_interpolation_standalone_triple_mustache() {
 #[test]
 fn test_spec_interpolation_standalone_ampersand() {
     let data = HashBuilder::new().insert("string", "---");
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("  {{&string}}\n", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("  {{&string}}\n", data);
-
-    assert_eq!("  ---\n".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("  ---\n".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Interpolation With Padding
@@ -471,10 +472,10 @@ fn test_spec_interpolation_standalone_ampersand() {
 #[test]
 fn test_spec_interpolation_with_padding() {
   let data = HashBuilder::new().insert("string", "---");
+  let mut rv = Cursor::new(Vec::new());
+  rustache::render_text("|{{ string }}|", data, &mut rv).unwrap();
 
-  let rv = rustache::render_text("|{{ string }}|", data);
-
-  assert_eq!("|---|".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+  assert_eq!("|---|".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Triple Mustache With Padding
@@ -485,10 +486,10 @@ fn test_spec_interpolation_with_padding() {
 #[test]
 fn test_spec_interpolation_triple_mustache_with_padding() {
     let data = HashBuilder::new().insert("string", "---");
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("|{{{ string }}}|", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("|{{{ string }}}|", data);
-
-    assert_eq!("|---|".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("|---|".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 // - name: Ampersand With Padding
@@ -499,9 +500,9 @@ fn test_spec_interpolation_triple_mustache_with_padding() {
 #[test]
 fn test_spec_interpolation_ampersand_with_padding() {
     let data = HashBuilder::new().insert("string", "---");
+    let mut rv = Cursor::new(Vec::new());
+    rustache::render_text("|{{& string }}|", data, &mut rv).unwrap();
 
-    let rv = rustache::render_text("|{{& string }}|", data);
-
-    assert_eq!("|---|".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("|---|".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 

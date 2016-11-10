@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{Cursor, Read};
+use std::io::{Read, Write};
 use std::path::Path;
 use compiler;
 use parser;
@@ -13,39 +13,33 @@ use RustacheResult;
 use RustacheError::{JsonError, FileError};
 
 /// Defines a `renderable` trait, so that all of our data is renderable
-pub trait Render<R: Read> {
+pub trait Render {
     /// `render` function on a `renderable` returns a `reader`
-    fn render(&self, template: &str) -> RustacheResult<R>;
+    fn render<W: Write>(&self, template: &str, writer: &mut W) -> RustacheResult<()>;
 }
 
 /// Implement the `renderable` trait on the HashBuilder type
-impl<'a> Render<Cursor<Vec<u8>>> for HashBuilder<'a> {
-    fn render(&self, template: &str) -> RustacheResult<Cursor<Vec<u8>>> {
-        // Create the stream we are going to write to.
-        let mut stream = Cursor::new(Vec::new());
-
+impl<'a> Render for HashBuilder<'a> {
+    fn render<W: Write>(&self, template: &str, writer: &mut W) -> RustacheResult<()> {
         // Create our nodes
         let tokens = compiler::create_tokens(template);
         let nodes = parser::parse_nodes(&tokens);
-        
-        // Write to our stream.
-        try!(Template::new().render_data(&mut stream, self, &nodes));
-        
-        // Return the stream as a Reader.
-        Ok(stream)
-    } 
+
+        // Render and write out
+        Template::new().render_data(writer, self, &nodes)
+    }
 }
 
 
 /// Implement the `renderable` trait on the JSON type
-impl Render<Cursor<Vec<u8>>> for Json {
-    fn render(&self, template: &str) -> RustacheResult<Cursor<Vec<u8>>> {
-       parse_json(self).render(template)
+impl Render for Json {
+    fn render<W: Write>(&self, template: &str, writer: &mut W) -> RustacheResult<()> {
+        parse_json(self).render(template, writer)
     }
 }
 
-impl Render<Cursor<Vec<u8>>> for Path {
-    fn render(&self, template: &str) -> RustacheResult<Cursor<Vec<u8>>> {
+impl Render for Path {
+    fn render<W: Write>(&self, template: &str, writer: &mut W) -> RustacheResult<()> {
 
         return match read_file(self) {
             Ok(text) => {
@@ -55,8 +49,7 @@ impl Render<Cursor<Vec<u8>>> for Path {
                     Err(err) => return Err(JsonError(format!("Invalid JSON. {}", err)))
                 };
 
-                let hb = parse_json(&json);
-                hb.render(template)
+                parse_json(&json).render(template, writer)
             },
             Err(err) => {
                 Err(FileError(err))
@@ -65,16 +58,15 @@ impl Render<Cursor<Vec<u8>>> for Path {
     }
 }
 
-impl Render<Cursor<Vec<u8>>> for String {
-    fn render(&self, template: &str) -> RustacheResult<Cursor<Vec<u8>>> {
+impl Render for ToString {
+    fn render<W: Write>(&self, template: &str, writer: &mut W) -> RustacheResult<()> {
 
-        let json = match Json::from_str(&self[..]) {
+        let json = match Json::from_str(&self.to_string()) {
             Ok(json) => json,
             Err(err) => return Err(JsonError(format!("Invalid JSON. {}", err)))
         };
 
-        let hb = parse_json(&json);
-        hb.render(template)
+        parse_json(&json).render(template, writer)
     }
 }
 
@@ -82,15 +74,17 @@ impl Render<Cursor<Vec<u8>>> for String {
 ///
 /// ```
 /// use rustache::HashBuilder;
+/// use std::io::Cursor;
 ///
 /// let data = HashBuilder::new().insert("planet", "Earth");
-/// let rv = rustache::render_file("test_data/cmdline_test.tmpl", data);
-/// println!("{}", String::from_utf8(rv.unwrap().into_inner()).unwrap());
+/// let mut rv = Cursor::new(Vec::new());
+/// rustache::render_file("test_data/cmdline_test.tmpl", data, &mut rv).unwrap();
+/// println!("{}", String::from_utf8(rv.into_inner()).unwrap());
 /// ```
-pub fn render_file<R: Read, Re: Render<R>>(path: &str, renderable: Re) -> RustacheResult<R> {
+pub fn render_file<Re: Render, W: Write>(path: &str, renderable: Re, writer: &mut W) -> RustacheResult<()> {
 
     return match read_file(&Path::new(path)) {
-        Ok(text) => renderable.render(&text[..]),
+        Ok(text) => renderable.render(&text[..], writer),
         Err(err) => Err(FileError(err))
     }
 }
@@ -99,13 +93,15 @@ pub fn render_file<R: Read, Re: Render<R>>(path: &str, renderable: Re) -> Rustac
 ///
 /// ```
 /// use rustache::HashBuilder;
+/// use std::io::Cursor;
 ///
 /// let data = HashBuilder::new().insert("name", "your name");
-/// let rv = rustache::render_text("{{ name }}", data);
-/// println!("{}", String::from_utf8(rv.unwrap().into_inner()).unwrap());
+/// let mut rv = Cursor::new(Vec::new());
+/// rustache::render_text("{{ name }}", data, &mut rv).unwrap();
+/// println!("{}", String::from_utf8(rv.into_inner()).unwrap());
 /// ```
-pub fn render_text<R: Read, Re: Render<R>>(input: &str, renderable: Re) -> RustacheResult<R> {
-    renderable.render(input)
+pub fn render_text<Re: Render, W: Write>(input: &str, renderable: Re, writer: &mut W) -> RustacheResult<()> {
+    renderable.render(input, writer)
 }
 
 // parses a Rust JSON hash and matches all possible types that may be passed in
