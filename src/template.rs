@@ -725,13 +725,12 @@ impl Template {
 mod template_tests {
     use std::fs::File;
     use std::path::Path;
-    use std::io::{self, Cursor, Seek, SeekFrom};
+    use std::io::{self, Cursor, Read, Seek, SeekFrom};
     use std::str;
 
     use parser;
     use parser::Node;
     use parser::Node::{Value, Static, Unescaped, Section, Part};
-    use rustache;
     use compiler;
     use template::Template;
     use build::{HashBuilder, VecBuilder};
@@ -1135,12 +1134,14 @@ mod template_tests {
                                                   .push("<tr><td>Sean</td><td>Chen</td></tr>")
                                                   .push("<tr><td>Fleur</td><td>Dragan</td></tr>")
                                                   .push("<tr><td>Jim</td><td>O'Brien</td></tr>")));
+        let path = Path::new("test_data/section_with_partial_template.html");
+        let contents = File::open(path)
+            .and_then(|mut fp| {
+                let mut contents = String::new();
+                fp.read_to_string(&mut contents)
+                    .map(move |_| contents)
+            }).unwrap();
 
-        let contents = match rustache::read_file(&Path::new("test_data/section_with_partial_template.\
-                                                             html")) {
-            Err(err) => err,
-            Ok(text) => text,
-        };
         let mut tokens = compiler::create_tokens(&contents[..]);
         let nodes = parser::parse_nodes(&mut tokens);
 
