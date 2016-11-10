@@ -27,3 +27,4 @@ rusti.sh
 !/examples/*.rs
 Cargo.lock
 /test_data/index.html
+test_data/section_with_partial.html
