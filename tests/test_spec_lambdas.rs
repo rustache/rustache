@@ -42,7 +42,7 @@ fn test_spec_lambdas_interpolation() {
 fn test_spec_lambdas_interpolation_expansion() {
     let mut f = |_| { "{{planet}}".to_string() };
     let data = HashBuilder::new()
-                    .insert_string("planet", "world")
+                    .insert("planet", "world")
                     .insert_lambda("lambda", &mut f);
 
     let rv = rustache::render_text("Hello, {{lambda}}!", data);
@@ -66,7 +66,7 @@ fn test_spec_lambdas_interpolation_expansion() {
 // #[test]
 // fn test_spec_lambdas_interpolation_alternate_delimeters() {
 //     let data = HashBuilder::new()
-//                 .insert_string("planet", "world")
+//                 .insert("planet", "world")
 //                 .insert_lambda("lambda", |_| {
 //                     "|planet| => {{planet}}".to_string()               
 //                 });
@@ -149,7 +149,7 @@ fn test_spec_lambdas_section() {
                     }
                 };
     let data = HashBuilder::new()
-                .insert_string("x", "Error!")
+                .insert("x", "Error!")
                 .insert_lambda("lambda", &mut f);
 
     let rv = rustache::render_text("<{{#lambda}}{{x}}{{/lambda}}>", data);
@@ -179,7 +179,7 @@ fn test_spec_lambdas_section_expansion() {
                    result
                 };
     let data = HashBuilder::new()
-                .insert_string("planet", "Earth")
+                .insert("planet", "Earth")
                 .insert_lambda("lambda", &mut f);
 
     let rv = rustache::render_text("<{{#lambda}}-{{/lambda}}>", data);
@@ -203,7 +203,7 @@ fn test_spec_lambdas_section_expansion() {
 // #[test]
 // fn test_spec_lambdas_section_alternate_delimeters() {
 //     let data = HashBuilder::new()
-//                 .insert_string("planet", "Earth")
+//                 .insert("planet", "Earth")
 //                 .insert_lambda("lambda", |txt| {
 //                     let mut result = txt.to_string();
 //                     result.push_str("{{planet}} => |planet|");
@@ -261,7 +261,7 @@ fn test_spec_lambdas_section_multiple_calls() {
 fn test_spec_lambdas_inverted_section() {
     let mut f = |_| { "false".to_string() };
     let data = HashBuilder::new()
-                .insert_string("static", "static")
+                .insert("static", "static")
                 .insert_lambda("lambda", &mut f);
 
     let rv = rustache::render_text("<{{^lambda}}{{static}}{{/lambda}}>", data);

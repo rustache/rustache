@@ -1,6 +1,6 @@
 extern crate rustache;
 
-use rustache::HashBuilder;
+use rustache::{HashBuilder, VecBuilder};
 
 // - name: Falsey
 //   desc: Falsey sections should have their contents rendered.
@@ -9,7 +9,7 @@ use rustache::HashBuilder;
 //   expected: '"This should be rendered."'
 #[test]
 fn test_spec_inverted_falsy_bool() {
-    let data = HashBuilder::new().insert_bool("boolean", false);
+    let data = HashBuilder::new().insert("boolean", false);
     let rv = rustache::render_text("{{^boolean}}This should be rendered.{{/boolean}}", data);
 
     assert_eq!("This should be rendered.".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
@@ -22,7 +22,7 @@ fn test_spec_inverted_falsy_bool() {
 //   expected: '""'
 #[test]
 fn test_spec_inverted_truthy_bool() {
-    let data = HashBuilder::new().insert_bool("boolean", true);
+    let data = HashBuilder::new().insert("boolean", true);
     let rv = rustache::render_text("{{^boolean}}This should not be rendered.{{/boolean}}", data);
 
     assert_eq!("".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
@@ -35,7 +35,7 @@ fn test_spec_inverted_truthy_bool() {
 //   expected: '""'
 #[test]
 fn test_spec_inverted_truthy_hash() {
-    let data = HashBuilder::new().insert_hash("context", |builder| { builder.insert_string("name", "joe") });
+    let data = HashBuilder::new().insert("context", HashBuilder::new().insert("name", "joe"));
     let rv = rustache::render_text("{{^context}}Hi {{name}}.{{/context}}", data);
 
     assert_eq!("".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
@@ -48,13 +48,13 @@ fn test_spec_inverted_truthy_hash() {
 //   expected: '""'
 #[test]
 fn test_spec_inverted_truthy_vec() {
-    let data = HashBuilder::new().insert_vector("list", |vec| {
-        vec.push_hash(|h| { 
-          h.insert_string("n", "1")
-           .insert_string("n", "2")
-           .insert_string("n", "3")
-         })
-    });
+    let data = HashBuilder::new().insert("list", VecBuilder::new()
+        .push(HashBuilder::new()
+           .insert("n", "1")
+           .insert("n", "2")
+           .insert("n", "3")
+         )
+    );
     let rv = rustache::render_text("{{^list}}{{n}}{{/list}}", data);
 
     assert_eq!("".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
@@ -67,9 +67,7 @@ fn test_spec_inverted_truthy_vec() {
 //   expected: '"Yay lists!"'
 #[test]
 fn test_spec_inverted_falsy_on_empty_vec() {
-    let data = HashBuilder::new().insert_vector("list", |vec| {
-        vec
-    });
+    let data = HashBuilder::new().insert("list", VecBuilder::new());
     let rv = rustache::render_text("{{^list}}Yay lists!{{/list}}", data);
 
     assert_eq!("Yay lists!".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
@@ -92,7 +90,7 @@ fn test_spec_inverted_falsy_on_empty_vec() {
 //     * third
 // #[test]
 // fn test_spec_inverted_multiple() {
-//     let data = HashBuilder::new().insert_bool("bool", false).insert_string("two", "second");
+//     let data = HashBuilder::new().insert_bool("bool", false).insert("two", "second");
 //     let rv = rustache::render_text("{{^bool}}\n* first\n{{/bool}}\n* {{two}}\n{{^bool}}\n* third\n{{/bool}}", data);
 
 //     assert_eq!("* first\n* second\n* third".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
@@ -106,7 +104,7 @@ fn test_spec_inverted_falsy_on_empty_vec() {
 #[test]
 fn test_spec_inverted_nested_falsy() {
 
-    let data = HashBuilder::new().insert_bool("bool", false);
+    let data = HashBuilder::new().insert("bool", false);
     let rv = rustache::render_text("| A {{^bool}}B {{^bool}}C{{/bool}} D{{/bool}} E |", data);
 
     assert_eq!("| A B C D E |".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
@@ -119,7 +117,7 @@ fn test_spec_inverted_nested_falsy() {
 //   expected: "| A  E |"
 #[test]
 fn test_spec_inverted_nested_truthy() {
-    let data = HashBuilder::new().insert_bool("bool", true);
+    let data = HashBuilder::new().insert("bool", true);
     let rv = rustache::render_text("| A {{^bool}}B {{^bool}}C{{/bool}} D{{/bool}} E |", data);
 
     assert_eq!("| A  E |".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
@@ -166,13 +164,11 @@ fn test_spec_inverted_missing_falsey() {
 #[test]
 fn test_spec_falsey_dotted_names_valid_inverted_section_tags() {
     let data = HashBuilder::new()
-        .insert_hash("a", |builder| {
-            builder
-                .insert_hash("b", |builder| {
-                    builder
-                        .insert_bool("c", false)
-                })
-        });
+        .insert("a", HashBuilder::new()
+                .insert("b", HashBuilder::new()
+                        .insert("c", false)
+                )
+        );
     let rv = rustache::render_text("'{{^a.b.c}}Not Here{{/a.b.c}}' == 'Not Here'", data);
 
     assert_eq!("'Not Here' == 'Not Here'".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
@@ -191,7 +187,7 @@ fn test_spec_falsey_dotted_names_valid_inverted_section_tags() {
 //   expected: " | \t|\t | \n"
 #[test]
 fn test_spec_inverted_surrounding_whitespace() {
-    let data = HashBuilder::new().insert_bool("boolean", false);
+    let data = HashBuilder::new().insert("boolean", false);
     let rv = rustache::render_text(" | {{^boolean}}\t|\t{{/boolean}} | \n", data);
 
     assert_eq!(" | \t|\t | \n".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
@@ -204,7 +200,7 @@ fn test_spec_inverted_surrounding_whitespace() {
 //   expected: " |  \n  | \n"
 // #[test]
 // fn test_spec_inverted_internal_whitespace() {
-//     let data = HashBuilder::new().insert_bool("boolean", false);
+//     let data = HashBuilder::new().insert("boolean", false);
 
 //     let rv = rustache::render_text(" | {{^boolean}} {{! Important Whitespace }}\n {{/boolean}} | \n", data);
 
@@ -218,7 +214,7 @@ fn test_spec_inverted_surrounding_whitespace() {
 //   expected: " NO\n WAY\n"
 #[test]
 fn test_spec_inverted_indented_inline_sections() {
-    let data = HashBuilder::new().insert_bool("boolean", false);
+    let data = HashBuilder::new().insert("boolean", false);
     let rv = rustache::render_text(" {{^boolean}}NO{{/boolean}}\n {{^boolean}}WAY{{/boolean}}\n", data);
 
     assert_eq!(" NO\n WAY\n".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
@@ -239,7 +235,7 @@ fn test_spec_inverted_indented_inline_sections() {
 //     | A Line
 // #[test]
 // fn test_spec_inverted_standalone_lines() {
-//     let data = HashBuilder::new().insert_bool("boolean", false);
+//     let data = HashBuilder::new().insert("boolean", false);
 
 //     let rv = rustache::render_text("| This Is\n{{^boolean}}\n|\n{{/boolean}}\n| A Line", data)
 
@@ -317,7 +313,7 @@ fn test_spec_inverted_indented_inline_sections() {
 //   expected: '|=|'
 #[test]
 fn test_spec_inverted_whitespace_insensitivity() {
-    let data = HashBuilder::new().insert_bool("boolean", false);
+    let data = HashBuilder::new().insert("boolean", false);
     let rv = rustache::render_text("|{{^ boolean }}={{/ boolean }}|", data);
 
     assert_eq!("|=|".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());

@@ -29,12 +29,12 @@ The main forward interface that users will interact with when using Rustache are
 
 ```rust
 // Renders the given template string
-let data = rustache::HashBuilder::new().insert_string("name", "your name");
+let data = rustache::HashBuilder::new().insert("name", "your name");
 let rv = rustache::render_text("{{ name }}", data);
 println!("{}", String::from_utf8(rv.unwrap().into_inner()).unwrap());
 
 // Renders the given template file
-let data = rustache::HashBuilder::new().insert_string("name", "your name");
+let data = rustache::HashBuilder::new().insert("name", "your name");
 let rv = rustache::render_file("test_data/cmdline_test.tmpl", data);
 println!("{}", String::from_utf8(rv.unwrap().into_inner()).unwrap());
 ```
@@ -45,7 +45,7 @@ Here's an example of how to pass in data to the `render_text` method using the `
 
 ```rust
 let data = HashBuilder::new()
-    .insert_string("name", "Bob");
+    .insert("name", "Bob");
 
 rustache::render_text("{{ name }}", data);
 ```

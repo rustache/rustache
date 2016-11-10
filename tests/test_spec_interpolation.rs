@@ -27,7 +27,7 @@ fn test_spec_interpolation_none() {
 //     Hello, world!
 #[test]
 fn test_spec_interpolation_basic() {
-    let data = HashBuilder::new().insert_string("subject", "world");
+    let data = HashBuilder::new().insert("subject", "world");
 
     let rv = rustache::render_text("Hello, {{subject}}!", data);
 
@@ -43,7 +43,7 @@ fn test_spec_interpolation_basic() {
 //     These characters should be HTML escaped: &amp; &quot; &lt; &gt;
 #[test]
 fn test_spec_interpolation_html_escaping() {
-    let data = HashBuilder::new().insert_string("forbidden", "& \" < >");
+    let data = HashBuilder::new().insert("forbidden", "& \" < >");
 
     let rv = rustache::render_text("These characters should be HTML escaped: {{forbidden}}", data);
 
@@ -59,7 +59,7 @@ fn test_spec_interpolation_html_escaping() {
 //     These characters should not be HTML escaped: & " < >
 #[test]
 fn test_spec_interpolation_no_html_escaping_triple_mustache() {
-    let data = HashBuilder::new().insert_string("forbidden", "& \" < >");
+    let data = HashBuilder::new().insert("forbidden", "& \" < >");
 
     let rv = rustache::render_text("These characters should not be HTML escaped: {{{forbidden}}}", data);
 
@@ -75,7 +75,7 @@ fn test_spec_interpolation_no_html_escaping_triple_mustache() {
 //     These characters should not be HTML escaped: & " < >
 #[test]
 fn test_spec_interpolation_no_html_escaping_ampersand() {
-    let data = HashBuilder::new().insert_string("forbidden", "& \" < >");
+    let data = HashBuilder::new().insert("forbidden", "& \" < >");
 
     let rv = rustache::render_text("These characters should not be HTML escaped: {{&forbidden}}", data);
 
@@ -89,7 +89,7 @@ fn test_spec_interpolation_no_html_escaping_ampersand() {
 //   expected: '"85 miles an hour!"'
 #[test]
 fn test_spec_interpolation_integer_basic() {
-    let data = HashBuilder::new().insert_int("mph", 85);
+    let data = HashBuilder::new().insert("mph", 85);
 
     let rv = rustache::render_text("{{mph}} miles an hour!", data);
 
@@ -103,7 +103,7 @@ fn test_spec_interpolation_integer_basic() {
 //   expected: '"85 miles an hour!"'
 #[test]
 fn test_spec_interpolation_integer_triple_mustache() {
-    let data = HashBuilder::new().insert_int("mph", 85);
+    let data = HashBuilder::new().insert("mph", 85);
 
     let rv = rustache::render_text("{{{mph}}} miles an hour!", data);
 
@@ -117,7 +117,7 @@ fn test_spec_interpolation_integer_triple_mustache() {
 //   expected: '"85 miles an hour!"'
 #[test]
 fn test_spec_interpolation_integer_ampersand() {
-    let data = HashBuilder::new().insert_int("mph", 85);
+    let data = HashBuilder::new().insert("mph", 85);
 
     let rv = rustache::render_text("{{mph}} miles an hour!", data);
 
@@ -131,7 +131,7 @@ fn test_spec_interpolation_integer_ampersand() {
 //   expected: '"1.21 jiggawatts!"'
 #[test]
 fn test_spec_interpolation_float_basic() {
-    let data = HashBuilder::new().insert_float("power", 1.210);
+    let data = HashBuilder::new().insert("power", 1.210);
 
     let rv = rustache::render_text("{{power}} jiggawatts!", data);
 
@@ -145,7 +145,7 @@ fn test_spec_interpolation_float_basic() {
 //   expected: '"1.21 jiggawatts!"'
 #[test]
 fn test_spec_interpolation_float_triple_mustache() {
-    let data = HashBuilder::new().insert_float("power", 1.210);
+    let data = HashBuilder::new().insert("power", 1.210);
 
     let rv = rustache::render_text("{{{power}}} jiggawatts!", data);
 
@@ -159,7 +159,7 @@ fn test_spec_interpolation_float_triple_mustache() {
 //   expected: '"1.21 jiggawatts!"'
 #[test]
 fn test_spec_interpolation_float_ampersand() {
-    let data = HashBuilder::new().insert_float("power", 1.210);
+    let data = HashBuilder::new().insert("power", 1.210);
 
     let rv = rustache::render_text("{{&power}} jiggawatts!", data);
 
@@ -215,7 +215,7 @@ fn test_spec_interpolation_context_miss_ampersand() {
 //   expected: '"Joe" == "Joe"'
 #[test]
 fn test_spec_interpolation_dotted_names_basic() {
-    let data = HashBuilder::new().insert_hash("person", |h| { h.insert_string("name", "Joe") });
+    let data = HashBuilder::new().insert("person", HashBuilder::new().insert("name", "Joe"));
 
     let rv = rustache::render_text("\"{{person.name}}\" == \"{{#person}}{{name}}{{/person}}\"", data);
 
@@ -230,9 +230,9 @@ fn test_spec_interpolation_dotted_names_basic() {
 #[test]
 fn test_spec_interpolation_dotted_names_triple_mustache() {
     let data = HashBuilder::new()
-                .insert_hash("person", |h| {
-                    h.insert_string("name", "Joe")
-                });
+                .insert("person", HashBuilder::new()
+                    .insert("name", "Joe")
+                );
 
     let rv = rustache::render_text("\"{{{person.name}}}\" == \"{{#person}}{{{name}}}{{/person}}\"", data);
 
@@ -247,9 +247,9 @@ fn test_spec_interpolation_dotted_names_triple_mustache() {
 #[test]
 fn test_spec_interpolation_dotted_names_ampersand() {
     let data = HashBuilder::new()
-                .insert_hash("person", |h| {
-                    h.insert_string("name", "Joe")
-                });
+                .insert("person", HashBuilder::new()
+                    .insert("name", "Joe")
+                );
 
     let rv = rustache::render_text("\"{{&person.name}}\" == \"{{#person}}{{&name}}{{/person}}\"", data);
 
@@ -265,17 +265,17 @@ fn test_spec_interpolation_dotted_names_ampersand() {
 #[test]
 fn test_spec_interpolation_dotted_names_arbitrary_depth() {
     let data = HashBuilder::new()
-                .insert_hash("a", |h| { 
-                    h.insert_hash("b", |h| {
-                        h.insert_hash("c", |h| {
-                            h.insert_hash("d", |h| {
-                                h.insert_hash("e", |h| { 
-                                    h.insert_string("name", "Phil")
-                                })
-                            })
-                        })
-                    })
-                });
+                .insert("a", HashBuilder::new()
+                    .insert("b", HashBuilder::new()
+                        .insert("c", HashBuilder::new()
+                            .insert("d", HashBuilder::new()
+                                .insert("e", HashBuilder::new()
+                                    .insert("name", "Phil")
+                                )
+                            )
+                        )
+                    )
+                );
 
     let rv = rustache::render_text("\"{{a.b.c.d.e.name}}\" == \"Phil\"", data);
 
@@ -307,14 +307,12 @@ fn test_spec_interpolation_dotted_broken_chains() {
 #[test]
 fn test_spec_interpolation_dotted_broken_chain_resolution() {
     let data = HashBuilder::new()
-                .insert_hash("a", |h| {
-                    h.insert_hash("b", |h| {
-                        h
-                    })
-                })
-                .insert_hash("c", |h| {
-                    h.insert_string("name", "Jim")
-                });
+                .insert("a", HashBuilder::new()
+                    .insert("b", HashBuilder::new())
+                )
+                .insert("c", HashBuilder::new()
+                    .insert("name", "Jim")
+                );
 
     let rv = rustache::render_text("\"{{a.b.c}}\" == \"\"", data);
 
@@ -331,26 +329,26 @@ fn test_spec_interpolation_dotted_broken_chain_resolution() {
 #[test]
 fn test_spec_interpolation_dotted_initial_resolution() {
     let data = HashBuilder::new()
-                .insert_hash("a", |h| { 
-                    h.insert_hash("b", |h| {
-                        h.insert_hash("c", |h| {
-                            h.insert_hash("d", |h| {
-                                h.insert_hash("e", |h| { 
-                                    h.insert_string("name", "Phil")
-                                })
-                            })
-                        })
-                    })
-                })
-                .insert_hash("b", |h| {
-                    h.insert_hash("c", |h| {
-                        h.insert_hash("d", |h| {
-                            h.insert_hash("e", |h| { 
-                                h.insert_string("name", "Wrong")
-                            })
-                        })
-                    })
-                });
+                .insert("a", HashBuilder::new()
+                    .insert("b", HashBuilder::new()
+                        .insert("c", HashBuilder::new()
+                            .insert("d", HashBuilder::new()
+                                .insert("e", HashBuilder::new()
+                                    .insert("name", "Phil")
+                                )
+                            )
+                        )
+                    )
+                )
+                .insert("b", HashBuilder::new()
+                    .insert("c", HashBuilder::new()
+                        .insert("d", HashBuilder::new()
+                            .insert("e", HashBuilder::new()
+                                .insert("name", "Wrong")
+                            )
+                        )
+                    )
+                );
 
     let rv = rustache::render_text("\"{{#a}}{{b.c.d.e.name}}{{/a}}\" == \"Phil\"", data);
 
@@ -367,16 +365,14 @@ fn test_spec_interpolation_dotted_initial_resolution() {
 #[test]
 fn test_spec_interpolation_dotted_context_precedence() {
     let data = HashBuilder::new()
-                .insert_hash("a", |h| {
-                    h.insert_hash("b", |h| {
-                        h
-                    })
-                })
-                .insert_hash("b", |h| {
-                    h.insert_hash("c", |h| {
-                        h.insert_string("name", "ERROR")
-                    })
-                });
+                .insert("a", HashBuilder::new()
+                    .insert("b", HashBuilder::new())
+                )
+                .insert("b", HashBuilder::new()
+                    .insert("c", HashBuilder::new()
+                        .insert("name", "ERROR")
+                    )
+                );
 
     let rv = rustache::render_text("{{#a}}{{b.c}}{{/a}}", data);
 
@@ -390,7 +386,7 @@ fn test_spec_interpolation_dotted_context_precedence() {
 //   expected: '| --- |'
 #[test]
 fn test_spec_interpolation_surrounding_whitespace_basic() {
-    let data = HashBuilder::new().insert_string("string", "---");
+    let data = HashBuilder::new().insert("string", "---");
 
     let rv = rustache::render_text("| {{string}} |", data);
 
@@ -404,7 +400,7 @@ fn test_spec_interpolation_surrounding_whitespace_basic() {
 //   expected: '| --- |'
 #[test]
 fn test_spec_interpolation_surrounding_whitespace_triple_mustache() {
-    let data = HashBuilder::new().insert_string("string", "---");
+    let data = HashBuilder::new().insert("string", "---");
 
     let rv = rustache::render_text("| {{{string}}} |", data);
 
@@ -418,7 +414,7 @@ fn test_spec_interpolation_surrounding_whitespace_triple_mustache() {
 //   expected: '| --- |'
 #[test]
 fn test_spec_interpolation_surrounding_whitespace_ampersand() {
-    let data = HashBuilder::new().insert_string("string", "---");
+    let data = HashBuilder::new().insert("string", "---");
 
     let rv = rustache::render_text("| {{&string}} |", data);
 
@@ -432,7 +428,7 @@ fn test_spec_interpolation_surrounding_whitespace_ampersand() {
 //   expected: "  ---\n"
 #[test]
 fn test_spec_interpolation_standalone_basic() {
-    let data = HashBuilder::new().insert_string("string", "---");
+    let data = HashBuilder::new().insert("string", "---");
 
     let rv = rustache::render_text("  {{string}}\n", data);
 
@@ -446,7 +442,7 @@ fn test_spec_interpolation_standalone_basic() {
 //   expected: "  ---\n"
 #[test]
 fn test_spec_interpolation_standalone_triple_mustache() {
-    let data = HashBuilder::new().insert_string("string", "---");
+    let data = HashBuilder::new().insert("string", "---");
 
     let rv = rustache::render_text("  {{{string}}}\n", data);
 
@@ -460,7 +456,7 @@ fn test_spec_interpolation_standalone_triple_mustache() {
 //   expected: "  ---\n"
 #[test]
 fn test_spec_interpolation_standalone_ampersand() {
-    let data = HashBuilder::new().insert_string("string", "---");
+    let data = HashBuilder::new().insert("string", "---");
 
     let rv = rustache::render_text("  {{&string}}\n", data);
 
@@ -474,7 +470,7 @@ fn test_spec_interpolation_standalone_ampersand() {
 //   expected: '|---|'
 #[test]
 fn test_spec_interpolation_with_padding() {
-  let data = HashBuilder::new().insert_string("string", "---");
+  let data = HashBuilder::new().insert("string", "---");
 
   let rv = rustache::render_text("|{{ string }}|", data);
 
@@ -488,7 +484,7 @@ fn test_spec_interpolation_with_padding() {
 //   expected: '|---|'
 #[test]
 fn test_spec_interpolation_triple_mustache_with_padding() {
-    let data = HashBuilder::new().insert_string("string", "---");
+    let data = HashBuilder::new().insert("string", "---");
 
     let rv = rustache::render_text("|{{{ string }}}|", data);
 
@@ -502,10 +498,10 @@ fn test_spec_interpolation_triple_mustache_with_padding() {
 //   expected: '|---|'
 #[test]
 fn test_spec_interpolation_ampersand_with_padding() {
-    let data = HashBuilder::new().insert_string("string", "---");
+    let data = HashBuilder::new().insert("string", "---");
 
     let rv = rustache::render_text("|{{& string }}|", data);
-    
+
     assert_eq!("|---|".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
 }
 

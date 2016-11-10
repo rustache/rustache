@@ -630,24 +630,23 @@ mod template_tests {
     use rustache;
     use compiler;
     use template::Template;
-    use build::{HashBuilder};
+    use build::{HashBuilder, VecBuilder};
     use Data::{Strng};
 
     #[test]
     fn test_look_up_section_data() {
     let hb = HashBuilder::new()
-                .insert_hash("a", |h| {
-                    h.insert_hash("b", |h| {
-                        h.insert_string("name", "Phil")
-                        .insert_hash("c", |h| {
-                            h.insert_hash("d", |h| {
-                                h.insert_hash("e", |h| {
-                                    h
-                                })
-                            })
-                        })
-                    })
-                });
+                .insert("a", HashBuilder::new()
+                        .insert("b", HashBuilder::new()
+                            .insert("name", "Phil")
+                            .insert("c", HashBuilder::new()
+                                .insert("d", HashBuilder::new()
+                                    .insert("e", HashBuilder::new()
+                                )
+                            )
+                        )
+                    )
+                );
 
         let key = "name".to_string();
         let sections = vec!["a".to_string(), "b".to_string(), "c".to_string(), "d".to_string(), "e".to_string()];
@@ -669,11 +668,11 @@ mod template_tests {
 
     #[test]
     fn test_look_up_section_data_also() {
-    let hb = HashBuilder::new().insert_hash("a", |h| { h })
-                               .insert_hash("b", |h| { h.insert_string("name", "Phil") })
-                               .insert_hash("c", |h| { h })
-                               .insert_hash("d", |h| { h })
-                               .insert_hash("e", |h| { h });
+    let hb = HashBuilder::new().insert("a", HashBuilder::new())
+                               .insert("b", HashBuilder::new().insert("name", "Phil"))
+                               .insert("c", HashBuilder::new())
+                               .insert("d", HashBuilder::new())
+                               .insert("e", HashBuilder::new());
 
         let key = "name".to_string();
         let sections = vec!["a".to_string(), "b".to_string(), "c".to_string(), "d".to_string(), "e".to_string()];
@@ -702,7 +701,7 @@ mod template_tests {
 
         let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Value("value", "{{ value }}".to_string())];
-        let data = HashBuilder::new().insert_string("value", s1);
+        let data = HashBuilder::new().insert("value", s1);
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
@@ -710,7 +709,7 @@ mod template_tests {
         assert_eq!(a1, str::from_utf8(w.get_ref()).unwrap());
 
         w = Cursor::new(Vec::new());
-        let newdata = HashBuilder::new().insert_string("value", s2);
+        let newdata = HashBuilder::new().insert("value", s2);
         let rv = Template::new().render_data(&mut w, &newdata, &nodes);
         match rv { _ => {} }
 
@@ -723,11 +722,11 @@ mod template_tests {
         let template = "{{#repo}}<b>{{name}}</b>{{/repo}}";
         let tokens = compiler::create_tokens(template);
         let nodes = parser::parse_nodes(&tokens);
-        let data = HashBuilder::new().insert_vector("repo", |v| {
-                                        v.push_hash(|h| { h.insert_string("name", "resque") })
-                                        .push_hash(|h| { h.insert_string("name", "hub") })
-                                        .push_hash(|h| { h.insert_string("name", "rip") })
-                                    });
+        let data = HashBuilder::new().insert("repo", VecBuilder::new()
+                                        .push(HashBuilder::new().insert("name", "resque"))
+                                        .push(HashBuilder::new().insert("name", "hub"))
+                                        .push(HashBuilder::new().insert("name", "rip"))
+                                    );
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
@@ -740,7 +739,7 @@ mod template_tests {
         let s = "1<2 <b>hello</b>";
         let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Unescaped("value", "{{ value }}".to_string())];
-        let data = HashBuilder::new().insert_string("value", s);
+        let data = HashBuilder::new().insert("value", s);
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
@@ -751,7 +750,7 @@ mod template_tests {
     #[test]
     fn test_render_to_io_stream() {
         let mut w = Cursor::new(Vec::new());
-        let data = HashBuilder::new().insert_string("value1", "The heading");
+        let data = HashBuilder::new().insert("value1", "The heading");
         let nodes: Vec<Node> = vec![Static("<h1>"), Value("value1", "{{ value1 }}".to_string()), Static("</h1>")];
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
@@ -764,7 +763,7 @@ mod template_tests {
     fn test_unescaped_node_correct_bool_false_data() {
         let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Static("<h1>"), Unescaped("value1", "{{& value1 }}".to_string()), Static("</h1>")];
-        let data = HashBuilder::new().insert_bool("value1", false);
+        let data = HashBuilder::new().insert("value1", false);
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
@@ -776,7 +775,7 @@ mod template_tests {
     fn test_unescaped_node_correct_bool_true_data() {
         let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Static("<h1>"), Unescaped("value1", "{{& value1 }}".to_string()), Static("</h1>")];
-        let data = HashBuilder::new().insert_bool("value1", true);
+        let data = HashBuilder::new().insert("value1", true);
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
@@ -789,9 +788,9 @@ mod template_tests {
         let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Section("value1", vec![Value("value", "{{ value }}".to_string())], false, "{{# value1 }}".to_string(), "{{/ value1 }}".to_string())];
         let data = HashBuilder::new()
-            .insert_hash("value1", |builder| {
-                builder.insert_string("value", "<Section Value>")
-            });
+            .insert("value1", HashBuilder::new()
+                .insert("value", "<Section Value>")
+            );
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
@@ -804,14 +803,13 @@ mod template_tests {
         let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Section("names", vec![Value("name", "{{ name }}".to_string())], false, "{{# names }}".to_string(), "{{/ names }}".to_string())];
         let data = HashBuilder::new()
-            .insert_hash("names", |builder| {
-                builder.insert_vector("name", |builder| {
-                    builder
-                        .push_string("tom")
-                        .push_string("robert")
-                        .push_string("joe")
-                })
-            });
+            .insert("names", HashBuilder::new()
+                .insert("name", VecBuilder::new()
+                        .push("tom")
+                        .push("robert")
+                        .push("joe")
+                )
+            );
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
@@ -829,9 +827,9 @@ mod template_tests {
     //                 builder
     //                     .insert_vector("name", |builder| {
     //                         builder
-    //                             .push_string("tom")
-    //                             .push_string("robert")
-    //                             .push_string("joe")
+    //                             .push("tom")
+    //                             .push("robert")
+    //                             .push("joe")
     //                 })
     //             })
     //         });
@@ -880,7 +878,7 @@ mod template_tests {
     // #[test]
     // fn test_spec_lambdas_inverted_section_using_render_text() {
     //     let data = HashBuilder::new()
-    //                 .insert_string("static", "static")
+    //                 .insert("static", "static")
     //                 .insert_lambda("lambda", |_| {
     //                     "false".to_string()
     //                 });
@@ -894,7 +892,7 @@ mod template_tests {
     fn test_value_node_correct_false_bool_data() {
         let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Value("value1", "{{ value1 }}".to_string())];
-        let data = HashBuilder::new().insert_bool("value1", false);
+        let data = HashBuilder::new().insert("value1", false);
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
@@ -906,7 +904,7 @@ mod template_tests {
     fn test_value_node_correct_true_bool_data() {
         let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Value("value1", "{{ value1 }}".to_string())];
-        let data = HashBuilder::new().insert_bool("value1", true);
+        let data = HashBuilder::new().insert("value1", true);
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }
@@ -918,7 +916,7 @@ mod template_tests {
     fn test_partial_node_correct_data() {
         let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Static("A wise woman once said: "), Part("hopper_quote.partial", "{{> hopper_quote.partial }}")];
-        let data = HashBuilder::new().insert_string("author", "Grace Hopper")
+        let data = HashBuilder::new().insert("author", "Grace Hopper")
                                      .set_partials_path("test_data");
 
         let mut s: String = String::new();
@@ -934,8 +932,8 @@ mod template_tests {
     fn test_partial_node_correct_data_with_extra() {
         let mut w = Cursor::new(Vec::new());
         let nodes: Vec<Node> = vec![Static("A wise woman once said: "), Part("hopper_quote.partial", "{{> hopper_quote.partial }}"), Static(" something else "), Value("extra", "{{ extra }}".to_string())];
-        let data = HashBuilder::new().insert_string("author", "Grace Hopper")
-                                     .insert_string("extra", "extra data")
+        let data = HashBuilder::new().insert("author", "Grace Hopper")
+                                     .insert("extra", "extra data")
                                      .set_partials_path("test_data");
 
         let mut s: String = String::new();
@@ -952,15 +950,13 @@ mod template_tests {
         let mut w = Cursor::new(Vec::new());
         let data = HashBuilder::new()
             .set_partials_path("test_data")
-            .insert_hash("people", |builder| {
-                builder.insert_vector("information", |builder| {
-                    builder
-                        .push_string("<tr><td>Jarrod</td><td>Ruhland</td></tr>")
-                        .push_string("<tr><td>Sean</td><td>Chen</td></tr>")
-                        .push_string("<tr><td>Fleur</td><td>Dragan</td></tr>")
-                        .push_string("<tr><td>Jim</td><td>O'Brien</td></tr>")
-                    }
-                )}
+            .insert("people", HashBuilder::new()
+                .insert("information", VecBuilder::new()
+                        .push("<tr><td>Jarrod</td><td>Ruhland</td></tr>")
+                        .push("<tr><td>Sean</td><td>Chen</td></tr>")
+                        .push("<tr><td>Fleur</td><td>Dragan</td></tr>")
+                        .push("<tr><td>Jim</td><td>O'Brien</td></tr>")
+                )
             );
 
         let contents = match rustache::read_file(&Path::new("test_data/section_with_partial_template.html")) {
@@ -999,7 +995,7 @@ mod template_tests {
         let nodes = parser::parse_nodes(&mut tokens);
         let mut f = |_| { planets.pop().unwrap().to_string() };
         let data = HashBuilder::new().insert_lambda("lambda", &mut f)
-                                     .insert_string("planet", "world");
+                                     .insert("planet", "world");
 
         let rv = Template::new().render_data(&mut w, &data, &nodes);
         match rv { _ => {} }

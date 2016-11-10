@@ -83,7 +83,7 @@ impl Render<Cursor<Vec<u8>>> for String {
 /// ```
 /// use rustache::HashBuilder;
 ///
-/// let data = HashBuilder::new().insert_string("planet", "Earth");
+/// let data = HashBuilder::new().insert("planet", "Earth");
 /// let rv = rustache::render_file("test_data/cmdline_test.tmpl", data);
 /// println!("{}", String::from_utf8(rv.unwrap().into_inner()).unwrap());
 /// ```
@@ -100,7 +100,7 @@ pub fn render_file<R: Read, Re: Render<R>>(path: &str, renderable: Re) -> Rustac
 /// ```
 /// use rustache::HashBuilder;
 ///
-/// let data = HashBuilder::new().insert_string("name", "your name");
+/// let data = HashBuilder::new().insert("name", "your name");
 /// let rv = rustache::render_text("{{ name }}", data);
 /// println!("{}", String::from_utf8(rv.unwrap().into_inner()).unwrap());
 /// ```
@@ -115,43 +115,36 @@ fn parse_json(json: &Json) -> HashBuilder {
     for (k, v) in json.as_object().unwrap().iter() {
         match v {
             &I64(num) => {
-                data = data.insert_string(&k[..], num.to_string());
+                data = data.insert(&k[..], num.to_string());
             }
             &U64(num) => {
-                data = data.insert_string(&k[..], num.to_string());
+                data = data.insert(&k[..], num.to_string());
             },
             &F64(num) => {
-                data = data.insert_string(&k[..], num.to_string());
+                data = data.insert(&k[..], num.to_string());
             },
             &Boolean(val) => {
-                data = data.insert_bool(&k[..], val);
+                data = data.insert(&k[..], val);
             },
             &Array(ref list) => {
-                data = data.insert_vector(&k[..], |mut builder| {
-                    for item in list.iter() {
-                        builder = match *item {
-                            Object(_) => builder.push_hash(|_| {
-                                parse_json(item)
-                            }),
-                            Array(_) => builder.push_vector(|_| {
-                                parse_json_vector(item)
-                            }),
-                            JString(_) => builder.push_string(item.as_string().unwrap()),
-                            Boolean(_) => builder.push_bool(item.as_boolean().unwrap()),
-                            _ => builder
-                        }
+                let mut builder = VecBuilder::new();
+                for item in list.iter() {
+                    builder = match *item {
+                        Object(_) => builder.push(parse_json(item)),
+                        Array(_) => builder.push(parse_json_vector(item)),
+                        JString(_) => builder.push(item.as_string().unwrap()),
+                        Boolean(_) => builder.push(item.as_boolean().unwrap()),
+                        _ => builder
                     }
-                    builder
-                });
+                }
+                data = data.insert(&k[..], builder);
             },
             &Object(_) => {
-                data = data.insert_hash(&k[..], |_| {
-                    parse_json(v)
-                });
+                data = data.insert(&k[..], parse_json(v));
             },
             &Null => {},
             &JString(ref text) => {
-                data = data.insert_string(&k[..], &text[..]);
+                data = data.insert(&k[..], &text[..]);
             },
         }
     }
@@ -166,43 +159,36 @@ fn parse_json_vector(json: &Json) -> VecBuilder {
     for v in json.as_array().unwrap().iter() {
         match v {
             &I64(num) => {
-                data = data.push_string(num.to_string());
+                data = data.push(num.to_string());
             }
             &U64(num) => {
-                data = data.push_string(num.to_string());
+                data = data.push(num.to_string());
             },
             &F64(num) => {
-                data = data.push_string(num.to_string());
+                data = data.push(num.to_string());
             },
             &Boolean(val) => {
-                data = data.push_bool(val);
+                data = data.push(val);
             },
             &Array(ref list) => {
-                data = data.push_vector(|mut builder| {
-                    for item in list.iter() {
-                        builder = match *item {
-                            Object(_) => builder.push_hash(|_| {
-                                parse_json(item)
-                            }),
-                            Array(_) => builder.push_vector(|_| {
-                                parse_json_vector(item)
-                            }),
-                            JString(_) => builder.push_string(item.as_string().unwrap()),
-                            Boolean(_) => builder.push_bool(item.as_boolean().unwrap()),
-                            _ => builder
-                        }
+                let mut builder = VecBuilder::new();
+                for item in list.iter() {
+                    builder = match *item {
+                        Object(_) => builder.push(parse_json(item)),
+                        Array(_) => builder.push(parse_json_vector(item)),
+                        JString(_) => builder.push(item.as_string().unwrap()),
+                        Boolean(_) => builder.push(item.as_boolean().unwrap()),
+                        _ => builder
                     }
-                    builder
-                });
+                }
+                data = data.push(builder);
             },
             &Object(_) => {
-                data = data.push_hash(|_| {
-                    parse_json(v)
-                });
+                data = data.push(parse_json(v));
             },
             &Null => {},
             &JString(ref text) => {
-                data = data.push_string(&text[..]);
+                data = data.push(&text[..]);
             },
         }
     }

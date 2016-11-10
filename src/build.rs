@@ -1,8 +1,8 @@
-use std::cell::RefCell;
 use std::collections::HashMap;
+use std::convert::Into;
 
 use Data;
-use Data::{Strng, Bool, Integer, Float, Vector, Hash, Lambda};
+use Data::{Hash, Vector};
 
 /// `HashBuilder` is a helper type that constructs `Data` types in a HashMap
 #[derive(Debug)]
@@ -22,99 +22,43 @@ impl<'a> HashBuilder<'a> {
         }
     }
 
-    /// Add a `String` to the `HashBuilder`
+    /// Add a `Into<Data>` to the `HashBuilder`
     ///
     /// ```rust
     /// use rustache::HashBuilder;
+    /// use std::convert::Into;
     /// let data = HashBuilder::new()
-    ///     .insert_string("game", "Hearthstone: Heroes of Warcraft");
+    ///     .insert("game", "Hearthstone: Heroes of Warcraft");
     /// ```
-    pub fn insert_string<K: ToString, V: ToString>(self, key: K, value: V) -> HashBuilder<'a> {
-        let HashBuilder { mut data, partials_path } = self;
-        data.insert(key.to_string(), Strng(value.to_string()));
-        HashBuilder { data: data, partials_path: partials_path }
-    }
-
-    /// Add a `Boolean` to the `HashBuilder`
-    ///
+    /// ```rust
+    /// use rustache::{HashBuilder, VecBuilder};
+    /// let data = HashBuilder::new()
+    ///     .insert("classes",
+    ///         VecBuilder::new()
+    ///             .push("Mage".to_string())
+    ///             .push("Druid".to_string())
+    ///     );
+    /// ```
     /// ```rust
     /// use rustache::HashBuilder;
     /// let data = HashBuilder::new()
-    ///     .insert_bool("playing", true);
+    ///     .insert("hero1",
+    ///         HashBuilder::new()
+    ///             .insert("first_name", "Anduin")
+    ///             .insert("last_name", "Wrynn")
+    ///     )
+    ///     .insert("hero2",
+    ///         HashBuilder::new()
+    ///             .insert("first_name", "Jaina")
+    ///             .insert("last_name", "Proudmoore")
+    ///     );
     /// ```
-    pub fn insert_bool<K: ToString>(self, key: K, value: bool) -> HashBuilder<'a> {
-        let HashBuilder { mut data, partials_path } = self;
-        data.insert(key.to_string(), Bool(value));
-        HashBuilder { data: data, partials_path: partials_path }
-    }
-
-    /// Add an `Integer` to the `HashBuilder`
-    ///
-    /// ```rust
-    /// use rustache::HashBuilder;
-    /// let data = HashBuilder::new()
-    ///     .insert_int("age", 10i32)
-    ///     .insert_int("drinking age", -21i32);
-    /// ```
-    pub fn insert_int<K: ToString>(self, key: K, value: i32) -> HashBuilder<'a> {
-        let HashBuilder { mut data, partials_path } = self;
-        data.insert(key.to_string(), Integer(value));
-        HashBuilder { data: data, partials_path: partials_path }
-    }
-
-    /// Add a `Float` to the `HashBuilder`
-    ///
-    /// ```rust
-    /// use rustache::HashBuilder;
-    /// let data = HashBuilder::new()
-    ///     .insert_float("pi", 3.141596f64)
-    ///     .insert_float("phi", 1.61803398875f64);
-    /// ```
-    pub fn insert_float<K: ToString>(self, key: K, value: f64) -> HashBuilder<'a> {
-        let HashBuilder { mut data, partials_path } = self;
-        data.insert(key.to_string(), Float(value));
-        HashBuilder { data: data, partials_path: partials_path }
-    }
-
-    /// Add a `Vector` to the `HashBuilder`
-    ///
-    /// ```rust
-    /// use rustache::HashBuilder;
-    /// let data = HashBuilder::new()
-    ///     .insert_vector("classes", |builder| {
-    ///         builder
-    ///             .push_string("Mage".to_string())
-    ///             .push_string("Druid".to_string())
-    ///     });
-    /// ```
-    pub fn insert_vector<F: FnOnce(VecBuilder<'a>) -> VecBuilder<'a>, K: ToString>(self, key: K, f: F) -> HashBuilder<'a> {
-        let HashBuilder { mut data, partials_path } = self;
-        let builder = f(VecBuilder::new());
-        data.insert(key.to_string(), builder.build());
-        HashBuilder { data: data, partials_path: partials_path }
-    }
-
-    /// Add a `Hash` to the `HashBuilder`
-    ///
-    /// ```rust
-    /// use rustache::HashBuilder;
-    /// let data = HashBuilder::new()
-    ///     .insert_hash("hero1", |builder| {
-    ///         builder
-    ///             .insert_string("first_name", "Anduin")
-    ///             .insert_string("last_name", "Wrynn")
-    ///     })
-    ///     .insert_hash("hero2", |builder| {
-    ///         builder
-    ///             .insert_string("first_name", "Jaina")
-    ///             .insert_string("last_name", "Proudmoore")
-    ///     });
-    /// ```
-    pub fn insert_hash<F: FnOnce(HashBuilder<'a>) -> HashBuilder<'a>, K: ToString>(self, key: K, f: F) -> HashBuilder<'a> {
-        let HashBuilder { mut data, partials_path } = self;
-        let builder = f(HashBuilder::new());
-        data.insert(key.to_string(), builder.build());
-        HashBuilder { data: data, partials_path: partials_path }
+    pub fn insert<K, V>(mut self, key: K, value: V) -> HashBuilder<'a>
+        where K: ToString,
+              V: Into<Data<'a>>,
+    {
+        self.data.insert(key.to_string(), value.into());
+        self
     }
 
     /// Add a `Lambda` that accepts a String and returns a String to the `HashBuilder`
@@ -126,9 +70,7 @@ impl<'a> HashBuilder<'a> {
     ///     .insert_lambda("lambda", &mut f);
     /// ```
     pub fn insert_lambda<K: ToString>(self, key: K, f: &'a mut FnMut(String) -> String) -> HashBuilder<'a> {
-        let HashBuilder { mut data, partials_path } = self;
-        data.insert(key.to_string(), Lambda(RefCell::new(f)));
-        HashBuilder { data: data, partials_path: partials_path }
+        self.insert(key, f)
     }
 
     /// Set a path to partials data
@@ -139,6 +81,12 @@ impl<'a> HashBuilder<'a> {
     /// Return the built `Data`
     fn build(self) -> Data<'a> {
         Hash(self.data)
+    }
+}
+
+impl<'a> From<HashBuilder<'a>> for Data<'a> {
+    fn from(v: HashBuilder<'a>) -> Data<'a> {
+        v.build()
     }
 }
 
@@ -155,101 +103,40 @@ impl<'a> VecBuilder<'a> {
         }
     }
 
-    /// Add a `String` to the `VecBuilder`
+    /// Add a `Into<Data>` to the `VecBuilder`
     ///
     /// ```rust
     /// use rustache::VecBuilder;
+    /// use std::convert::Into;
     /// let data = VecBuilder::new()
-    ///     .push_string("Mage")
-    ///     .push_string("Druid");
+    ///     .push("Mage")
+    ///     .push("Druid");
     /// ```
-    pub fn push_string<T: ToString>(self, value: T) -> VecBuilder<'a> {
-        let VecBuilder { mut data } = self;
-        data.push(Strng(value.to_string()));
-        VecBuilder { data: data }
-    }
-
-    /// Add a `Bool` to the `VecBuilder`
-    ///
     /// ```rust
     /// use rustache::VecBuilder;
     /// let data = VecBuilder::new()
-    ///     .push_bool(true)
-    ///     .push_bool(false);
+    ///     .push(VecBuilder::new()
+    ///             .push("Anduin Wrynn".to_string())
+    ///             .push("Jaina Proudmoore".to_string())
+    ///     );
     /// ```
-    pub fn push_bool(self, value: bool) -> VecBuilder<'a> {
-        let VecBuilder { mut data } = self;
-        data.push(Bool(value));
-        VecBuilder { data: data }
-    }
-
-    /// Add an `Integer` to the `VecBuilder`
-    ///
     /// ```rust
-    /// use rustache::VecBuilder;
+    /// use rustache::{HashBuilder, VecBuilder};
     /// let data = VecBuilder::new()
-    ///     .push_int(10i32)
-    ///     .push_int(-21i32);
+    ///     .push(HashBuilder::new()
+    ///             .insert("first_name".to_string(), "Garrosh".to_string())
+    ///             .insert("last_name".to_string(), "Hellscream".to_string())
+    ///     )
+    ///     .push(HashBuilder::new()
+    ///             .insert("first_name".to_string(), "Malfurion".to_string())
+    ///             .insert("last_name".to_string(), "Stormrage".to_string())
+    ///     );
     /// ```
-    pub fn push_int(self, value: i32) -> VecBuilder<'a> {
-        let VecBuilder { mut data } = self;
-        data.push(Integer(value));
-        VecBuilder { data: data }
-    }
-
-    /// Add a `Float` to the `VecBuilder`
-    ///
-    /// ```rust
-    /// use rustache::VecBuilder;
-    /// let data = VecBuilder::new()
-    ///     .push_float(10.356356f64)
-    ///     .push_float(-21.34956230456f64);
-    /// ```
-    pub fn push_float(self, value: f64) -> VecBuilder<'a> {
-        let VecBuilder { mut data } = self;
-        data.push(Float(value));
-        VecBuilder { data: data }
-    }
-
-    /// Add a `Vector` to the `VecBuilder`
-    ///
-    /// ```rust
-    /// use rustache::VecBuilder;
-    /// let data = VecBuilder::new()
-    ///     .push_vector(|builder| {
-    ///         builder
-    ///             .push_string("Anduin Wrynn".to_string())
-    ///             .push_string("Jaina Proudmoore".to_string())
-    ///     });
-    /// ```
-    pub fn push_vector<F: FnOnce(VecBuilder<'a>) -> VecBuilder<'a>>(self, f: F) -> VecBuilder<'a> {
-        let VecBuilder { mut data } = self;
-        let builder = f(VecBuilder::new());
-        data.push(builder.build());
-        VecBuilder { data: data }
-    }
-
-    /// Add a `Hash` to the `VecBuilder`
-    ///
-    /// ```rust
-    /// use rustache::VecBuilder;
-    /// let data = VecBuilder::new()
-    ///     .push_hash(|builder| {
-    ///         builder
-    ///             .insert_string("first_name".to_string(), "Garrosh".to_string())
-    ///             .insert_string("last_name".to_string(), "Hellscream".to_string())
-    ///     })
-    ///     .push_hash(|builder| {
-    ///         builder
-    ///             .insert_string("first_name".to_string(), "Malfurion".to_string())
-    ///             .insert_string("last_name".to_string(), "Stormrage".to_string())
-    ///     });
-    /// ```
-    pub fn push_hash<F: FnOnce(HashBuilder<'a>) -> HashBuilder<'a>>(self, f: F) -> VecBuilder<'a> {
-        let VecBuilder { mut data } = self;
-        let builder = f(HashBuilder::new());
-        data.push(builder.build());
-        VecBuilder { data: data }
+    pub fn push<V>(mut self, value: V) -> VecBuilder<'a>
+        where V: Into<Data<'a>>,
+    {
+        self.data.push(value.into());
+        self
     }
 
     /// Add a `Lambda` to the `VecBuilder`
@@ -261,14 +148,18 @@ impl<'a> VecBuilder<'a> {
     ///     .push_lambda(&mut f);
     /// ```
     pub fn push_lambda(self, f: &'a mut FnMut(String) -> String) -> VecBuilder <'a> {
-        let VecBuilder { mut data } = self;
-        data.push(Lambda(RefCell::new(f)));
-        VecBuilder { data: data }
+        self.push(f)
     }
 
     /// Return the built `Data`
     fn build(self) -> Data<'a> {
         Vector(self.data)
+    }
+}
+
+impl<'a> From<VecBuilder<'a>> for Data<'a> {
+    fn from(v: VecBuilder<'a>) -> Data<'a> {
+        v.build()
     }
 }
 
@@ -312,22 +203,21 @@ mod tests {
             Hash(hearthstone))));
 
         let hash2 = HashBuilder::new().set_partials_path("/hearthstone")
-                        .insert_string("first_name", "Anduin")
-                        .insert_string("last_name", "Wrynn")
-                        .insert_int("age", 21i32)
-                        .insert_float("weight", 120.16f64)
-                        .insert_string("class", "Priest")
-                        .insert_bool("died", false)
-                        .insert_vector("class_cards", |builder| {
-                            builder
-                                .push_string(test_string)
-                                .push_string("Prophet Velen")
-                                .push_hash(|builder| {
-                                    builder
-                                        .insert_string("name", "Hearthstone: Heroes of Warcraft")
-                                        .insert_string("release_date", "December, 2014")
-                                })
-                        });
+                        .insert("first_name", "Anduin")
+                        .insert("last_name", "Wrynn")
+                        .insert("age", 21i32)
+                        .insert("weight", 120.16f64)
+                        .insert("class", "Priest")
+                        .insert("died", false)
+                        .insert("class_cards",
+                            VecBuilder::new()
+                                .push(test_string)
+                                .push("Prophet Velen")
+                                .push(HashBuilder::new()
+                                        .insert("name", "Hearthstone: Heroes of Warcraft")
+                                        .insert("release_date", "December, 2014")
+                                )
+                        );
 
         assert_eq!(Hash(hash1), Hash(hash2.data));
         assert_eq!(hash2.partials_path, "/hearthstone");
