@@ -1,6 +1,7 @@
 extern crate rustache;
 
-use rustache::HashBuilder;
+use rustache::{HashBuilder, Render};
+use std::io::Cursor;
 
 // - name: Interpolation
 //     desc: A lambda's return value should be interpolated.
@@ -19,10 +20,11 @@ fn test_spec_lambdas_interpolation() {
     let mut f = |_| { "world".to_string() };
     let data = HashBuilder::new()
                 .insert_lambda("lambda", &mut f);
+    let mut rv = Cursor::new(Vec::new());
 
-    let rv = rustache::render_text("Hello, {{lambda}}!", data);
+    data.render("Hello, {{lambda}}!", &mut rv).unwrap();
 
-    assert_eq!("Hello, world!".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("Hello, world!".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 //   - name: Interpolation - Expansion
@@ -44,10 +46,11 @@ fn test_spec_lambdas_interpolation_expansion() {
     let data = HashBuilder::new()
                     .insert("planet", "world")
                     .insert_lambda("lambda", &mut f);
+    let mut rv = Cursor::new(Vec::new());
 
-    let rv = rustache::render_text("Hello, {{lambda}}!", data);
+    data.render("Hello, {{lambda}}!", &mut rv).unwrap();
 
-    assert_eq!("Hello, world!".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("Hello, world!".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 //   - name: Interpolation - Alternate Delimiters
@@ -68,12 +71,13 @@ fn test_spec_lambdas_interpolation_expansion() {
 //     let data = HashBuilder::new()
 //                 .insert("planet", "world")
 //                 .insert_lambda("lambda", |_| {
-//                     "|planet| => {{planet}}".to_string()               
+//                     "|planet| => {{planet}}".to_string()
 //                 });
+//     let mut rv = Cursor::new(Vec::new());
 
-//     let rv = rustache::render_text("{{= | | =}}\nHello, (|&lambda|)!", data);
+//     data.render("{{= | | =}}\nHello, (|&lambda|)!", &mut rv).unwrap();
 
-//     assert_eq!("Hello, (|planet| => world)!".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+//     assert_eq!("Hello, (|planet| => world)!".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 // }
 
 //   - name: Interpolation - Multiple Calls
@@ -97,10 +101,11 @@ fn test_spec_lambdas_interpolation_multiple_calls() {
     };
     let data = HashBuilder::new()
                 .insert_lambda("lambda", &mut f);
+    let mut rv = Cursor::new(Vec::new());
 
-    let rv = rustache::render_text("{{lambda}} == {{{lambda}}} == {{lambda}}", data);
+    data.render("{{lambda}} == {{{lambda}}} == {{lambda}}", &mut rv).unwrap();
 
-    assert_eq!("1 == 2 == 3".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("1 == 2 == 3".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 //   - name: Escaping
@@ -120,10 +125,11 @@ fn test_spec_lambdas_escaping() {
     let mut f = |_| { ">".to_string() };
     let data = HashBuilder::new()
                 .insert_lambda("lambda", &mut f);
+    let mut rv = Cursor::new(Vec::new());
 
-    let rv = rustache::render_text("<{{lambda}}{{{lambda}}}", data);
+    data.render("<{{lambda}}{{{lambda}}}", &mut rv).unwrap();
 
-    assert_eq!("<&gt;>".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("<&gt;>".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 //   - name: Section
@@ -151,10 +157,11 @@ fn test_spec_lambdas_section() {
     let data = HashBuilder::new()
                 .insert("x", "Error!")
                 .insert_lambda("lambda", &mut f);
+    let mut rv = Cursor::new(Vec::new());
 
-    let rv = rustache::render_text("<{{#lambda}}{{x}}{{/lambda}}>", data);
+    data.render("<{{#lambda}}{{x}}{{/lambda}}>", &mut rv).unwrap();
 
-    assert_eq!("<yes>".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("<yes>".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 //   - name: Section - Expansion
@@ -181,10 +188,11 @@ fn test_spec_lambdas_section_expansion() {
     let data = HashBuilder::new()
                 .insert("planet", "Earth")
                 .insert_lambda("lambda", &mut f);
+    let mut rv = Cursor::new(Vec::new());
 
-    let rv = rustache::render_text("<{{#lambda}}-{{/lambda}}>", data);
+    data.render("<{{#lambda}}-{{/lambda}}>", &mut rv).unwrap();
 
-    assert_eq!("<-Earth->".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("<-Earth->".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 //   - name: Section - Alternate Delimiters
@@ -210,10 +218,11 @@ fn test_spec_lambdas_section_expansion() {
 //                     result.push_str(txt.as_slice());
 //                     result
 //                 });
+//     let mut rv = Cursor::new(Vec::new());
 
-//     let rv = rustache::render_text_from_hb("{{= | | =}}<|#lambda|-|/lambda|>", data);
+//     data.render_from_hb("{{= | | =}}<|#lambda|-|/lambda|>", &mut rv).unwrap();
 
-//     assert_eq!("<-{{planet}} => Earth->".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+//     assert_eq!("<-{{planet}} => Earth->".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 // }
 
 //   - name: Section - Multiple Calls
@@ -238,10 +247,11 @@ fn test_spec_lambdas_section_multiple_calls() {
                 };
     let data = HashBuilder::new()
                 .insert_lambda("lambda", &mut f);
+    let mut rv = Cursor::new(Vec::new());
 
-    let rv = rustache::render_text("{{#lambda}}FILE{{/lambda}} != {{#lambda}}LINE{{/lambda}}", data);
+    data.render("{{#lambda}}FILE{{/lambda}} != {{#lambda}}LINE{{/lambda}}", &mut rv).unwrap();
 
-    assert_eq!("__FILE__ != __LINE__".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("__FILE__ != __LINE__".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 
 //   - name: Inverted Section
@@ -263,9 +273,10 @@ fn test_spec_lambdas_inverted_section() {
     let data = HashBuilder::new()
                 .insert("static", "static")
                 .insert_lambda("lambda", &mut f);
+    let mut rv = Cursor::new(Vec::new());
 
-    let rv = rustache::render_text("<{{^lambda}}{{static}}{{/lambda}}>", data);
+    data.render("<{{^lambda}}{{static}}{{/lambda}}>", &mut rv).unwrap();
 
-    assert_eq!("<>".to_string(), String::from_utf8(rv.unwrap().into_inner()).unwrap());
+    assert_eq!("<>".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
 

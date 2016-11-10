@@ -16,7 +16,7 @@ use self::RustacheError::*;
 use self::Data::*;
 
 pub use build::{HashBuilder, VecBuilder};
-pub use rustache::{render_file, render_text, Render};
+pub use rustache::Render;
 
 /// Alias for Result<T, RustacheError>
 pub type RustacheResult<T> = Result<T, RustacheError>;
