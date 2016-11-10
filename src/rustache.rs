@@ -46,15 +46,13 @@ impl Render for Path {
 
                 let json = match Json::from_str(&text) {
                     Ok(json) => json,
-                    Err(err) => return Err(JsonError(format!("Invalid JSON. {}", err)))
+                    Err(err) => return Err(JsonError(format!("Invalid JSON. {}", err))),
                 };
 
                 parse_json(&json).render(template, writer)
-            },
-            Err(err) => {
-                Err(FileError(err))
             }
-        }
+            Err(err) => Err(FileError(err)),
+        };
     }
 }
 
@@ -63,7 +61,7 @@ impl Render for ToString {
 
         let json = match Json::from_str(&self.to_string()) {
             Ok(json) => json,
-            Err(err) => return Err(JsonError(format!("Invalid JSON. {}", err)))
+            Err(err) => return Err(JsonError(format!("Invalid JSON. {}", err))),
         };
 
         parse_json(&json).render(template, writer)
@@ -71,7 +69,7 @@ impl Render for ToString {
 }
 
 // parses a Rust JSON hash and matches all possible types that may be passed in
-// returning a HashBuilder 
+// returning a HashBuilder
 fn parse_json(json: &Json) -> HashBuilder {
     let mut data = HashBuilder::new();
     for (k, v) in json.as_object().unwrap().iter() {
@@ -81,13 +79,13 @@ fn parse_json(json: &Json) -> HashBuilder {
             }
             &U64(num) => {
                 data = data.insert(&k[..], num.to_string());
-            },
+            }
             &F64(num) => {
                 data = data.insert(&k[..], num.to_string());
-            },
+            }
             &Boolean(val) => {
                 data = data.insert(&k[..], val);
-            },
+            }
             &Array(ref list) => {
                 let mut builder = VecBuilder::new();
                 for item in list.iter() {
@@ -96,18 +94,18 @@ fn parse_json(json: &Json) -> HashBuilder {
                         Array(_) => builder.push(parse_json_vector(item)),
                         JString(_) => builder.push(item.as_string().unwrap()),
                         Boolean(_) => builder.push(item.as_boolean().unwrap()),
-                        _ => builder
+                        _ => builder,
                     }
                 }
                 data = data.insert(&k[..], builder);
-            },
+            }
             &Object(_) => {
                 data = data.insert(&k[..], parse_json(v));
-            },
-            &Null => {},
+            }
+            &Null => {}
             &JString(ref text) => {
                 data = data.insert(&k[..], &text[..]);
-            },
+            }
         }
     }
 
@@ -125,13 +123,13 @@ fn parse_json_vector(json: &Json) -> VecBuilder {
             }
             &U64(num) => {
                 data = data.push(num.to_string());
-            },
+            }
             &F64(num) => {
                 data = data.push(num.to_string());
-            },
+            }
             &Boolean(val) => {
                 data = data.push(val);
-            },
+            }
             &Array(ref list) => {
                 let mut builder = VecBuilder::new();
                 for item in list.iter() {
@@ -140,18 +138,18 @@ fn parse_json_vector(json: &Json) -> VecBuilder {
                         Array(_) => builder.push(parse_json_vector(item)),
                         JString(_) => builder.push(item.as_string().unwrap()),
                         Boolean(_) => builder.push(item.as_boolean().unwrap()),
-                        _ => builder
+                        _ => builder,
                     }
                 }
                 data = data.push(builder);
-            },
+            }
             &Object(_) => {
                 data = data.push(parse_json(v));
-            },
-            &Null => {},
+            }
+            &Null => {}
             &JString(ref text) => {
                 data = data.push(&text[..]);
-            },
+            }
         }
     }
     data
@@ -164,15 +162,25 @@ pub fn read_file(path: &Path) -> Result<String, String> {
     let rv: Result<String, String>; //Err(format!("read file failed: {}", display));
     // Open the file path
     let mut file = match File::open(path) {
-        Err(why) => { rv = Err(format!("{}: \"{}\"", why, display)); return rv; },
-        Ok(file) => { file },
+        Err(why) => {
+            rv = Err(format!("{}: \"{}\"", why, display));
+            return rv;
+        }
+        Ok(file) => file,
     };
 
     // Read the file contents into a heap allocated string
     let mut text = String::new();
     match file.read_to_string(&mut text) {
-        Err(why) => return { rv = Err(format!("{}", why)); return rv; },
-        Ok(_) => { rv = Ok(text); },
+        Err(why) => {
+            return {
+                rv = Err(format!("{}", why));
+                return rv;
+            }
+        }
+        Ok(_) => {
+            rv = Ok(text);
+        }
     };
 
     rv

@@ -10,7 +10,7 @@ pub struct HashBuilder<'a> {
     #[doc(hidden)]
     pub data: HashMap<String, Data<'a>>,
     #[doc(hidden)]
-    pub partials_path: &'a str
+    pub partials_path: &'a str,
 }
 
 impl<'a> HashBuilder<'a> {
@@ -18,7 +18,7 @@ impl<'a> HashBuilder<'a> {
     pub fn new() -> HashBuilder<'a> {
         HashBuilder {
             data: HashMap::new(),
-            partials_path: ""
+            partials_path: "",
         }
     }
 
@@ -55,7 +55,7 @@ impl<'a> HashBuilder<'a> {
     /// ```
     pub fn insert<K, V>(mut self, key: K, value: V) -> HashBuilder<'a>
         where K: ToString,
-              V: Into<Data<'a>>,
+              V: Into<Data<'a>>
     {
         self.data.insert(key.to_string(), value.into());
         self
@@ -69,13 +69,19 @@ impl<'a> HashBuilder<'a> {
     /// let data = HashBuilder::new()
     ///     .insert_lambda("lambda", &mut f);
     /// ```
-    pub fn insert_lambda<K: ToString>(self, key: K, f: &'a mut FnMut(String) -> String) -> HashBuilder<'a> {
+    pub fn insert_lambda<K: ToString>(self,
+                                      key: K,
+                                      f: &'a mut FnMut(String) -> String)
+                                      -> HashBuilder<'a> {
         self.insert(key, f)
     }
 
     /// Set a path to partials data
     pub fn set_partials_path(self, path: &'a str) -> HashBuilder<'a> {
-        HashBuilder { data: self.data, partials_path: path }
+        HashBuilder {
+            data: self.data,
+            partials_path: path,
+        }
     }
 
     /// Return the built `Data`
@@ -92,15 +98,13 @@ impl<'a> From<HashBuilder<'a>> for Data<'a> {
 
 /// `VecBuilder` is a helper type that constructs `Data` types in a Vector
 pub struct VecBuilder<'a> {
-    data: Vec<Data<'a>>
+    data: Vec<Data<'a>>,
 }
 
 impl<'a> VecBuilder<'a> {
     /// Create a new `VecBuilder` instance
     pub fn new() -> VecBuilder<'a> {
-        VecBuilder {
-            data: Vec::new()
-        }
+        VecBuilder { data: Vec::new() }
     }
 
     /// Add a `Into<Data>` to the `VecBuilder`
@@ -133,7 +137,7 @@ impl<'a> VecBuilder<'a> {
     ///     );
     /// ```
     pub fn push<V>(mut self, value: V) -> VecBuilder<'a>
-        where V: Into<Data<'a>>,
+        where V: Into<Data<'a>>
     {
         self.data.push(value.into());
         self
@@ -147,7 +151,7 @@ impl<'a> VecBuilder<'a> {
     /// let data = VecBuilder::new()
     ///     .push_lambda(&mut f);
     /// ```
-    pub fn push_lambda(self, f: &'a mut FnMut(String) -> String) -> VecBuilder <'a> {
+    pub fn push_lambda(self, f: &'a mut FnMut(String) -> String) -> VecBuilder<'a> {
         self.push(f)
     }
 
@@ -187,8 +191,10 @@ mod tests {
         let test_string = String::from("Conan the Sorcerian");
 
         let mut hearthstone = HashMap::new();
-        hearthstone.insert("name".to_string(), Strng("Hearthstone: Heroes of Warcraft".to_string()));
-        hearthstone.insert("release_date".to_string(), Strng("December, 2014".to_string()));
+        hearthstone.insert("name".to_string(),
+                           Strng("Hearthstone: Heroes of Warcraft".to_string()));
+        hearthstone.insert("release_date".to_string(),
+                           Strng("December, 2014".to_string()));
 
         let mut hash1 = HashMap::new();
         hash1.insert("first_name".to_string(), Strng("Anduin".to_string()));
@@ -197,27 +203,26 @@ mod tests {
         hash1.insert("weight".to_string(), Float(120.16f64));
         hash1.insert("class".to_string(), Strng("Priest".to_string()));
         hash1.insert("died".to_string(), Bool(false));
-        hash1.insert("class_cards".to_string(), Vector(vec!(
-            Strng(test_string.clone()),
-            Strng("Prophet Velen".to_string()),
-            Hash(hearthstone))));
+        hash1.insert("class_cards".to_string(),
+                     Vector(vec![Strng(test_string.clone()),
+                                 Strng("Prophet Velen".to_string()),
+                                 Hash(hearthstone)]));
 
-        let hash2 = HashBuilder::new().set_partials_path("/hearthstone")
-                        .insert("first_name", "Anduin")
-                        .insert("last_name", "Wrynn")
-                        .insert("age", 21i32)
-                        .insert("weight", 120.16f64)
-                        .insert("class", "Priest")
-                        .insert("died", false)
-                        .insert("class_cards",
-                            VecBuilder::new()
-                                .push(test_string)
-                                .push("Prophet Velen")
-                                .push(HashBuilder::new()
-                                        .insert("name", "Hearthstone: Heroes of Warcraft")
-                                        .insert("release_date", "December, 2014")
-                                )
-                        );
+        let hash2 = HashBuilder::new()
+            .set_partials_path("/hearthstone")
+            .insert("first_name", "Anduin")
+            .insert("last_name", "Wrynn")
+            .insert("age", 21i32)
+            .insert("weight", 120.16f64)
+            .insert("class", "Priest")
+            .insert("died", false)
+            .insert("class_cards",
+                    VecBuilder::new()
+                        .push(test_string)
+                        .push("Prophet Velen")
+                        .push(HashBuilder::new()
+                            .insert("name", "Hearthstone: Heroes of Warcraft")
+                            .insert("release_date", "December, 2014")));
 
         assert_eq!(Hash(hash1), Hash(hash2.data));
         assert_eq!(hash2.partials_path, "/hearthstone");

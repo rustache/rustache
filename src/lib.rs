@@ -23,14 +23,14 @@ pub type RustacheResult<T> = Result<T, RustacheError>;
 
 /// Enum to handle errors from the Rustache library.
 pub enum RustacheError {
-    //ParserErrorType(ParserError),
-    //CompilerErrorType(CompilerError),
+    // ParserErrorType(ParserError),
+    // CompilerErrorType(CompilerError),
     /// Error parsing JSON data
     JsonError(String),
     /// Error opening or reading a file
     FileError(String),
     /// Generic enum value for any errors from the template module.
-    TemplateErrorType(template::TemplateError)
+    TemplateErrorType(template::TemplateError),
 }
 
 impl fmt::Debug for RustacheError {
@@ -52,7 +52,7 @@ pub enum Data<'a> {
     Float(f64),
     Vector(Vec<Data<'a>>),
     Hash(HashMap<String, Data<'a>>),
-    Lambda(RefCell<&'a mut FnMut(String) -> String>)
+    Lambda(RefCell<&'a mut FnMut(String) -> String>),
 }
 
 impl<'a, 'b> From<&'b str> for Data<'a> {
@@ -116,7 +116,7 @@ impl<'a> PartialEq for Data<'a> {
             (&Vector(ref val0), &Vector(ref val1)) => val0 == val1,
             (&Hash(ref val0), &Hash(ref val1)) => val0 == val1,
             (&Lambda(_), &Lambda(_)) => panic!("Can't compare closures"),
-            (_, _) => false
+            (_, _) => false,
         }
     }
 }
@@ -125,13 +125,13 @@ impl<'a> PartialEq for Data<'a> {
 impl<'a> fmt::Debug for Data<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Strng(ref val)   => write!(f, "Strng({:?})", val),
-            Bool(val)        => write!(f, "Boolean({:?})", val),
+            Strng(ref val) => write!(f, "Strng({:?})", val),
+            Bool(val) => write!(f, "Boolean({:?})", val),
             Integer(ref val) => write!(f, "Integer({:?})", val),
-            Float(ref val)   => write!(f, "Float({:?})", val),
-            Vector(ref val)  => write!(f, "Vector({:?})", val),
-            Hash(ref val)    => write!(f, "Hash({:?})", val),
-            Lambda(_)        => write!(f, "Lambda(...)")
+            Float(ref val) => write!(f, "Float({:?})", val),
+            Vector(ref val) => write!(f, "Vector({:?})", val),
+            Hash(ref val) => write!(f, "Hash({:?})", val),
+            Lambda(_) => write!(f, "Lambda(...)"),
         }
     }
 }

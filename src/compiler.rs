@@ -18,7 +18,7 @@ pub enum Token<'a> {
     CTag(&'a str, &'a str), // (name, tag, whitespace)
     Raw(&'a str, &'a str), // (name, tag)
     Partial(&'a str, &'a str), // (name, tag)
-    Comment
+    Comment,
 }
 
 // Entry point to the template compiler. It compiles a token list of
@@ -32,7 +32,9 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
     let len = contents.len();
 
     // (text)(whitespace)( (tag) )(whitespace)
-    let re = Regex::new(r"(?s)(.*?)([ \t\r\n]*)(\{\{(\{?\S?\s*?[\w\.\s]*.*?\s*?\}?)\}\})([ \t\r\n]*)").unwrap();
+    let re =
+        Regex::new(r"(?s)(.*?)([ \t\r\n]*)(\{\{(\{?\S?\s*?[\w\.\s]*.*?\s*?\}?)\}\})([ \t\r\n]*)")
+            .unwrap();
 
     // Grab all captures and process
     for cap in re.captures_iter(contents) {
@@ -84,8 +86,8 @@ fn add_token<'a>(inner: &'a str, outer: &'a str, tokens: &mut Vec<Token<'a>>) {
         "^" => tokens.push(OTag(inner[1..].trim(), true, outer)),
         ">" => tokens.push(Partial(inner[1..].trim(), outer)),
         "&" => tokens.push(Raw(inner[1..].trim(), outer)),
-        "{" => tokens.push(Raw(inner[1 .. inner.len() - 1].trim(), outer)),
-        _   => tokens.push(Variable(inner.trim(), outer))
+        "{" => tokens.push(Raw(inner[1..inner.len() - 1].trim(), outer)),
+        _ => tokens.push(Variable(inner.trim(), outer)),
     }
 }
 
@@ -124,15 +126,15 @@ mod compiler_tests {
                             Text(" "),
                             Partial("partial", "{{> partial }}"),
                             Text(" "),
-                            Text("</h1> </div>")
-                            ];
+                            Text("</h1> </div>")];
 
         assert_eq!(expected, tokens);
     }
 
     #[test]
     fn test_all_directives() {
-        let contents = "{{!comment}}{{#section}}{{/section}}{{^isection}}{{/isection}}{{>partial}}{{&unescaped}}{{value}}other crap";
+        let contents = "{{!comment}}{{#section}}{{/section}}{{^isection}}{{/isection}}{{>partial}}{{&unescaped}}{{value}}other \
+                        crap";
         let tokens = compiler::create_tokens(contents);
         let expected = vec![Comment,
                             OTag("section", false, "{{#section}}"),
@@ -187,7 +189,8 @@ mod compiler_tests {
     fn test_working_section() {
         let contents = "{{#section}}{{/section}}";
         let tokens = compiler::create_tokens(contents);
-        let expected = vec![OTag("section", false, "{{#section}}"), CTag("section", "{{/section}}")];
+        let expected = vec![OTag("section", false, "{{#section}}"),
+                            CTag("section", "{{/section}}")];
         assert_eq!(expected, tokens);
     }
 
