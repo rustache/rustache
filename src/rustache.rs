@@ -1,6 +1,4 @@
-use std::fs::File;
-use std::io::{Read, Write};
-use std::path::Path;
+use std::io::Write;
 use compiler;
 use parser;
 use rustc_serialize::json::Json;
@@ -10,7 +8,7 @@ use build::{HashBuilder, VecBuilder};
 use template::Template;
 
 use RustacheResult;
-use RustacheError::{JsonError, FileError};
+use RustacheError::JsonError;
 
 /// Defines a `renderable` trait, so that all of our data is renderable
 pub trait Render {
@@ -35,24 +33,6 @@ impl<'a> Render for HashBuilder<'a> {
 impl Render for Json {
     fn render<W: Write>(&self, template: &str, writer: &mut W) -> RustacheResult<()> {
         parse_json(self).render(template, writer)
-    }
-}
-
-impl Render for Path {
-    fn render<W: Write>(&self, template: &str, writer: &mut W) -> RustacheResult<()> {
-
-        return match read_file(self) {
-            Ok(text) => {
-
-                let json = match Json::from_str(&text) {
-                    Ok(json) => json,
-                    Err(err) => return Err(JsonError(format!("Invalid JSON. {}", err))),
-                };
-
-                parse_json(&json).render(template, writer)
-            }
-            Err(err) => Err(FileError(err)),
-        };
     }
 }
 
@@ -153,35 +133,4 @@ fn parse_json_vector(json: &Json) -> VecBuilder {
         }
     }
     data
-}
-
-// Hide from documentation
-#[doc(hidden)]
-pub fn read_file(path: &Path) -> Result<String, String> {
-    let display = path.display();
-    let rv: Result<String, String>; //Err(format!("read file failed: {}", display));
-    // Open the file path
-    let mut file = match File::open(path) {
-        Err(why) => {
-            rv = Err(format!("{}: \"{}\"", why, display));
-            return rv;
-        }
-        Ok(file) => file,
-    };
-
-    // Read the file contents into a heap allocated string
-    let mut text = String::new();
-    match file.read_to_string(&mut text) {
-        Err(why) => {
-            return {
-                rv = Err(format!("{}", why));
-                return rv;
-            }
-        }
-        Ok(_) => {
-            rv = Ok(text);
-        }
-    };
-
-    rv
 }
