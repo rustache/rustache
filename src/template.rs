@@ -124,18 +124,15 @@ impl Template {
         // we end up with the previous vector plus: [{}, { "value", "foo"}, {}]
         //
         for section in sections.iter() {
-            match datastore.get(section) {
-                None => {}
-                Some(data) => {
-                    match *data {
-                        Hash(ref h) => {
-                            hashes.insert(0, h);
-                        }
-                        Vector(_) => {
-                            return Some(data);
-                        }
-                        _ => {}
+            if let Some(data) = datastore.get(section) {
+                match *data {
+                    Hash(ref h) => {
+                        hashes.insert(0, h);
                     }
+                    Vector(_) => {
+                        return Some(data);
+                    }
+                    _ => {}
                 }
             }
         }
