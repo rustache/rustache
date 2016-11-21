@@ -12,6 +12,7 @@ deps/
 *.dummy
 *.exe
 *-test
+*.rs.bk
 /src/generated/mimes.txt
 /src/generated/mimegen
 /src/response/mimes/mod.rs
