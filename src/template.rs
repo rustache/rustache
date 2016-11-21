@@ -12,20 +12,10 @@ use Data::{Strng, Bool, Integer, Float, Vector, Hash, Lambda};
 use build::HashBuilder;
 use std::collections::HashMap;
 
-use RustacheResult;
-use RustacheError::TemplateErrorType;
-use self::TemplateError::*;
+use errors::*;
 
 pub struct Template {
     partials_path: String,
-}
-
-#[derive(Debug)]
-pub enum TemplateError {
-    StreamWriteError(String),
-    FileReadError(String),
-    UnexpectedDataType(String),
-    UnexpectedNodeType(String),
 }
 
 impl Template {
@@ -38,10 +28,9 @@ impl Template {
                                  writer: &mut W,
                                  data: &str,
                                  errstr: &str)
-                                 -> RustacheResult<()> {
+                                 -> Result<()> {
         writer.write_fmt(format_args!("{}", &data[..])).map_err(|e| {
-            let msg = format!("{}: {}", e, errstr);
-            TemplateErrorType(StreamWriteError(msg))
+            ErrorKind::StreamWriteError(e, errstr.into()).into()
         })
     }
 
@@ -160,7 +149,7 @@ impl Template {
                                                        data: &HashMap<String, Data>,
                                                        raw: String,
                                                        writer: &mut W)
-                                                       -> RustacheResult<()> {
+                                                       -> Result<()> {
         let val = (*f)(raw);
         let tokens = compiler::create_tokens(&val[..]);
         let nodes = parser::parse_nodes(&tokens);
@@ -173,7 +162,7 @@ impl Template {
                                                      data: &HashMap<String, Data>,
                                                      raw: String,
                                                      writer: &mut W)
-                                                     -> RustacheResult<()> {
+                                                     -> Result<()> {
         let val = (*f)(raw);
         let value = self.escape_html(&val[..]);
         let tokens = compiler::create_tokens(&value[..]);
@@ -198,7 +187,7 @@ impl Template {
                                                 key: String,
                                                 datastore: &HashMap<String, Data>,
                                                 writer: &mut W)
-                                                -> RustacheResult<()> {
+                                                -> Result<()> {
         let mut rv = Ok(());
         let mut tmp: String = String::new();
         match *data {
@@ -207,7 +196,7 @@ impl Template {
                 match *node {
                     Unescaped(_, _) => tmp = tmp + val,
                     Value(_, _) => tmp = self.escape_html(&val[..]),
-                    _ => return Err(TemplateErrorType(UnexpectedNodeType(format!("{:?}", node)))),
+                    _ => return Err(ErrorKind::UnexpectedNodeType(format!("{:?}", node)).into()),
                 }
                 rv = self.write_to_stream(writer, &tmp, "render: unescaped node string fail");
             }
@@ -268,7 +257,7 @@ impl Template {
                                                                       raw,
                                                                       writer)
                     }
-                    _ => return Err(TemplateErrorType(UnexpectedNodeType(format!("{:?}", node)))),
+                    _ => return Err(ErrorKind::UnexpectedNodeType(format!("{:?}", node)).into()),
                 }
             }
         }
@@ -287,7 +276,7 @@ impl Template {
                                       nodes: &[Node],
                                       datastore: &HashMap<String, Data>,
                                       writer: &mut W)
-                                      -> RustacheResult<()> {
+                                      -> Result<()> {
         let mut rv = Ok(());
         for node in nodes.iter() {
             match *node {
@@ -343,7 +332,7 @@ impl Template {
                                      datastore: &HashMap<String, Data>,
                                      sections: &mut Vec<String>,
                                      writer: &mut W)
-                                     -> RustacheResult<()> {
+                                     -> Result<()> {
         let mut rv = Ok(());
         // there's a special case if the section tag data was a lambda
         // if so, the lambda is used to generate the values for the tag inside the section
@@ -363,28 +352,22 @@ impl Template {
                                 rv = self.handle_node(node, h, writer);
                             }
                             Strng(ref val) => {
-                                return Err(TemplateErrorType(UnexpectedDataType(format!("{}",
-                                                                                        val))))
+                                return Err(ErrorKind::UnexpectedDataType(format!("{}", val)).into())
                             }
                             Bool(ref val) => {
-                                return Err(TemplateErrorType(UnexpectedDataType(format!("{}",
-                                                                                        val))))
+                                return Err(ErrorKind::UnexpectedDataType(format!("{}", val)).into())
                             }
                             Integer(ref val) => {
-                                return Err(TemplateErrorType(UnexpectedDataType(format!("{}",
-                                                                                        val))))
+                                return Err(ErrorKind::UnexpectedDataType(format!("{}", val)).into())
                             }
                             Float(ref val) => {
-                                return Err(TemplateErrorType(UnexpectedDataType(format!("{}",
-                                                                                        val))))
+                                return Err(ErrorKind::UnexpectedDataType(format!("{}", val)).into())
                             }
                             Vector(ref val) => {
-                                return Err(TemplateErrorType(UnexpectedDataType(format!("{:?}",
-                                                                                        val))))
+                                return Err(ErrorKind::UnexpectedDataType(format!("{:?}", val)).into())
                             }
                             Lambda(_) => {
-                                return Err(TemplateErrorType(UnexpectedDataType("lambda"
-                                    .to_string())))
+                                return Err(ErrorKind::UnexpectedDataType("lambda".into()).into())
                             }
                         }
                     }
@@ -501,7 +484,7 @@ impl Template {
                                           filename: &str,
                                           datastore: &HashMap<String, Data>,
                                           writer: &mut W)
-                                          -> RustacheResult<()> {
+                                          -> Result<()> {
         let path = Path::new(&self.partials_path.clone()).join(filename);
         if fs::metadata(&path).is_ok() {
 
@@ -515,8 +498,7 @@ impl Template {
                     self.render(writer, datastore, &nodes)
                 }
                 Err(err) => {
-                    let msg = format!("{}: {}", err, filename);
-                    Err(TemplateErrorType(FileReadError(msg)))
+                    Err(ErrorKind::FileReadError(err, filename.into()).into())
                 }
             }
         } else {
@@ -529,7 +511,7 @@ impl Template {
                              node: &Node,
                              datastore: &HashMap<String, Data>,
                              writer: &mut W)
-                             -> RustacheResult<()> {
+                             -> Result<()> {
         let mut rv = Ok(());
 
         match *node {
@@ -599,7 +581,7 @@ impl Template {
                             writer: &mut W,
                             data: &HashMap<String, Data>,
                             nodes: &[Node])
-                            -> RustacheResult<()> {
+                            -> Result<()> {
         // nodes are what the template file is parsed into
         // we have to iterate through each one and handle it as
         // the kind of node it is
@@ -614,7 +596,7 @@ impl Template {
                                  writer: &mut W,
                                  datastore: &HashBuilder,
                                  nodes: &[Node])
-                                 -> RustacheResult<()> {
+                                 -> Result<()> {
         // we need to hang on to the partials path internally,
         // if there is one, for class methods to use.
         self.partials_path.truncate(0);

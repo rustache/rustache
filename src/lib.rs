@@ -1,9 +1,11 @@
 #![deny(missing_docs)]
+#![recursion_limit = "1024"]
 
 //! The main crate for the Rustache library.
 //!
 //! Rustache is a flexible template engine for Rust.
-
+#[macro_use]
+extern crate error_chain;
 extern crate rustc_serialize;
 
 use std::fmt;
@@ -17,20 +19,7 @@ pub use build::{HashBuilder, VecBuilder};
 pub use rustache::Render;
 
 /// Alias for Result<T, `RustacheError`>
-pub type RustacheResult<T> = Result<T, RustacheError>;
-
-/// Enum to handle errors from the Rustache library.
-#[derive(Debug)]
-pub enum RustacheError {
-    // ParserErrorType(ParserError),
-    // CompilerErrorType(CompilerError),
-    /// Error parsing JSON data
-    JsonError(String),
-    /// Error opening or reading a file
-    FileError(String),
-    /// Generic enum value for any errors from the template module.
-    TemplateErrorType(template::TemplateError),
-}
+pub use errors::*;
 
 // Represents the possible types that passed in data may take on
 #[doc(hidden)]
@@ -126,6 +115,7 @@ impl<'a> fmt::Debug for Data<'a> {
 }
 
 // Internal Modules
+mod errors;
 mod rustache;
 mod compiler;
 mod parser;

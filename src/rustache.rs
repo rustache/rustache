@@ -6,19 +6,17 @@ use rustc_serialize::json::Json::{Boolean, Null, I64, U64, F64, Array, Object};
 use rustc_serialize::json::Json::String as JString;
 use build::{HashBuilder, VecBuilder};
 use template::Template;
-
-use RustacheResult;
-use RustacheError::JsonError;
+use errors::*;
 
 /// Defines a `renderable` trait, so that all of our data is renderable
 pub trait Render {
     /// `render` function on a `renderable` returns a `reader`
-    fn render<W: Write>(&self, template: &str, writer: &mut W) -> RustacheResult<()>;
+    fn render<W: Write>(&self, template: &str, writer: &mut W) -> Result<()>;
 }
 
 /// Implement the `renderable` trait on the `HashBuilder` type
 impl<'a> Render for HashBuilder<'a> {
-    fn render<W: Write>(&self, template: &str, writer: &mut W) -> RustacheResult<()> {
+    fn render<W: Write>(&self, template: &str, writer: &mut W) -> Result<()> {
         // Create our nodes
         let tokens = compiler::create_tokens(template);
         let nodes = parser::parse_nodes(&tokens);
@@ -31,17 +29,17 @@ impl<'a> Render for HashBuilder<'a> {
 
 /// Implement the `renderable` trait on the JSON type
 impl Render for Json {
-    fn render<W: Write>(&self, template: &str, writer: &mut W) -> RustacheResult<()> {
+    fn render<W: Write>(&self, template: &str, writer: &mut W) -> Result<()> {
         parse_json(self).render(template, writer)
     }
 }
 
 impl Render for ToString {
-    fn render<W: Write>(&self, template: &str, writer: &mut W) -> RustacheResult<()> {
+    fn render<W: Write>(&self, template: &str, writer: &mut W) -> Result<()> {
 
         let json = match Json::from_str(&self.to_string()) {
             Ok(json) => json,
-            Err(err) => return Err(JsonError(format!("Invalid JSON. {}", err))),
+            Err(err) => return Err(err.into()),
         };
 
         parse_json(&json).render(template, writer)
