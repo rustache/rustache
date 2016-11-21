@@ -41,12 +41,9 @@ impl Template {
                                  -> RustacheResult<()> {
         let mut rv: RustacheResult<()> = Ok(());
         let status = writer.write_fmt(format_args!("{}", &data[..]));
-        match status {
-            Err(err) => {
-                let msg = format!("{}: {}", err, errstr);
-                rv = Err(TemplateErrorType(StreamWriteError(msg)));
-            }
-            Ok(_) => {}
+        if let Err(err) = status {
+            let msg = format!("{}: {}", err, errstr);
+            rv = Err(TemplateErrorType(StreamWriteError(msg)));
         }
 
         rv
@@ -672,11 +669,8 @@ impl Template {
         // the kind of node it is
         for node in nodes.iter() {
             rv = self.handle_node(node, data, writer);
-            match rv {
-                Err(_) => {
-                    return rv;
-                }
-                _ => {}
+            if let Err(_) = rv {
+                return rv;
             }
 
         }
