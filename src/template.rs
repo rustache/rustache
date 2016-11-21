@@ -628,8 +628,7 @@ impl Template {
                     false
                 };
                 match (truthy, *inverted) {
-                    (true, true) => {}
-                    (false, false) => {}
+                    (true, true) | (false, false) => {}
                     (true, false) => {
                         let ref val = datastore[&tmp];
                         let mut sections = vec![tmp.clone()];
