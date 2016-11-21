@@ -1,5 +1,4 @@
 #![deny(missing_docs)]
-#![deny(warnings)]
 
 //! The main crate for the Rustache library.
 //!
