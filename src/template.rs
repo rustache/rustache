@@ -320,8 +320,7 @@ impl Template {
                         false
                     };
                     match (truthy, *inverted) {
-                        (true, true) => {}
-                        (false, false) => {}
+                        (true, true) | (false, false) => {}
                         (true, false) => {
                             let val = &datastore[&tmp];
                             let mut sections = vec![tmp.clone()];
@@ -412,20 +411,7 @@ impl Template {
             match *node {
                 // unescaped is simple, just look up the data in the
                 // special way sections need to and handle the node
-                Unescaped(key, _) => {
-                    let tmpkey = key.to_string();
-                    let tmpdata = self.look_up_section_data(&tmpkey, sections, datastore);
-                    if tmpdata.is_some() {
-                        rv = self.handle_unescaped_or_value_node(node,
-                                                                 tmpdata.unwrap(),
-                                                                 key.to_string(),
-                                                                 datastore,
-                                                                 writer);
-                    }
-                }
-                // unescaped is simple, just look up the data in the
-                // special way sections need to and handle the node
-                Value(key, _) => {
+                Unescaped(key, _) | Value(key, _) => {
                     let tmpkey = key.to_string();
                     let tmpdata = self.look_up_section_data(&tmpkey, sections, datastore);
                     if tmpdata.is_some() {
@@ -503,17 +489,16 @@ impl Template {
     fn get_section_text(&self, children: &[Node]) -> Box<String> {
         let mut temp = Box::new(String::new());
         for child in children.iter() {
-            match child {
-                &Static(text) => temp.push_str(text),
-                &Value(_, ref text) => temp.push_str(&text[..]),
-                &Section(_, ref children, _, ref open, ref close) => {
+            match *child {
+                Static(text) | Part(_, text) => temp.push_str(text),
+                Value(_, ref text) |
+                Unescaped(_, ref text) => temp.push_str(&text[..]),
+                Section(_, ref children, _, ref open, ref close) => {
                     let rv = self.get_section_text(children);
                     temp.push_str(&open[..]);
                     temp.push_str(&rv[..]);
                     temp.push_str(&close[..]);
                 }
-                &Unescaped(_, ref text) => temp.push_str(&text[..]),
-                &Part(_, text) => temp.push_str(text),
             }
         }
         temp
@@ -566,19 +551,9 @@ impl Template {
         let mut rv = Ok(());
 
         match *node {
-            Unescaped(key, _) => {
-                let tmp = key.to_string();
-                if datastore.contains_key(&tmp) {
-                    let val = &datastore[&tmp];
-                    rv = self.handle_unescaped_or_value_node(node,
-                                                             val,
-                                                             "".to_string(),
-                                                             datastore,
-                                                             writer);
-                }
-            }
             // value nodes contain tags who's data gets HTML escaped
             // when it gets written out
+            Unescaped(key, _) |
             Value(key, _) => {
                 let tmp = key.to_string();
                 if datastore.contains_key(&tmp) {
