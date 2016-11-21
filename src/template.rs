@@ -83,7 +83,7 @@ impl Template {
     //
     fn look_up_section_data<'a, 'b>(&self,
                                     key: &str,
-                                    sections: &Vec<String>,
+                                    sections: &[String],
                                     datastore: &'b HashMap<String, Data<'a>>)
                                     -> Option<&'b Data<'a>> {
         let mut rv = None;
@@ -304,7 +304,7 @@ impl Template {
     // if the data in the template data for the tag name is "falsy"
     //
     fn handle_inverted_node<W: Write>(&mut self,
-                                      nodes: &Vec<Node>,
+                                      nodes: &[Node],
                                       datastore: &HashMap<String, Data>,
                                       writer: &mut W)
                                       -> RustacheResult<()> {
@@ -361,7 +361,7 @@ impl Template {
     // datastore: HashBuilder data
     // writer:    io stream
     fn handle_section_node<W: Write>(&mut self,
-                                     nodes: &Vec<Node>,
+                                     nodes: &[Node],
                                      _: &str,
                                      data: &Data,
                                      datastore: &HashMap<String, Data>,
@@ -512,7 +512,7 @@ impl Template {
     // so we iterate through the children of the section, pulling out
     // the raw text and creating a string of it to pass to the lambda.
     //
-    fn get_section_text(&self, children: &Vec<Node>) -> Box<String> {
+    fn get_section_text(&self, children: &[Node]) -> Box<String> {
         let mut temp = Box::new(String::new());
         for child in children.iter() {
             match child {
@@ -653,7 +653,7 @@ impl Template {
     pub fn render<W: Write>(&mut self,
                             writer: &mut W,
                             data: &HashMap<String, Data>,
-                            nodes: &Vec<Node>)
+                            nodes: &[Node])
                             -> RustacheResult<()> {
         let mut rv = Ok(());
 
@@ -675,7 +675,7 @@ impl Template {
     pub fn render_data<W: Write>(&mut self,
                                  writer: &mut W,
                                  datastore: &HashBuilder,
-                                 nodes: &Vec<Node>)
+                                 nodes: &[Node])
                                  -> RustacheResult<()> {
         // we need to hang on to the partials path internally,
         // if there is one, for class methods to use.
