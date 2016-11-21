@@ -165,8 +165,8 @@ impl Template {
                                                        writer: &mut W)
                                                        -> RustacheResult<()> {
         let val = (*f)(raw);
-        let mut tokens = compiler::create_tokens(&val[..]);
-        let nodes = parser::parse_nodes(&mut tokens);
+        let tokens = compiler::create_tokens(&val[..]);
+        let nodes = parser::parse_nodes(&tokens);
 
         self.render(writer, data, &nodes)
     }
@@ -179,8 +179,8 @@ impl Template {
                                                      -> RustacheResult<()> {
         let val = (*f)(raw);
         let value = self.escape_html(&val[..]);
-        let mut tokens = compiler::create_tokens(&value[..]);
-        let nodes = parser::parse_nodes(&mut tokens);
+        let tokens = compiler::create_tokens(&value[..]);
+        let nodes = parser::parse_nodes(&tokens);
 
         self.render(writer, data, &nodes)
     }
@@ -517,8 +517,8 @@ impl Template {
             let file = File::open(&path).and_then(|ref mut f| f.read_to_string(&mut contents));
             match file {
                 Ok(_) => {
-                    let mut tokens = compiler::create_tokens(&contents[..]);
-                    let nodes = parser::parse_nodes(&mut tokens);
+                    let tokens = compiler::create_tokens(&contents[..]);
+                    let nodes = parser::parse_nodes(&tokens);
 
                     rv = self.render(writer, datastore, &nodes);
                 }
