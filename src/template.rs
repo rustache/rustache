@@ -1069,7 +1069,8 @@ mod template_tests {
                 let mut contents = String::new();
                 fp.read_to_string(&mut contents)
                     .map(move |_| contents)
-            }).unwrap();
+            })
+            .unwrap();
 
         let mut tokens = compiler::create_tokens(&contents[..]);
         let nodes = parser::parse_nodes(&mut tokens);
