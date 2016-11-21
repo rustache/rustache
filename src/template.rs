@@ -49,7 +49,7 @@ impl Template {
             Ok(_) => {}
         }
 
-        return rv;
+        rv
     }
 
     // method to escape HTML for default value tags
@@ -170,7 +170,7 @@ impl Template {
             rv = datastore.get(key);
         }
 
-        return rv;
+        rv
     }
 
     fn handle_unescaped_lambda_interpolation<W: Write>(&mut self,
@@ -183,7 +183,7 @@ impl Template {
         let mut tokens = compiler::create_tokens(&val[..]);
         let nodes = parser::parse_nodes(&mut tokens);
 
-        return self.render(writer, data, &nodes);
+        self.render(writer, data, &nodes)
     }
 
     fn handle_escaped_lambda_interpolation<W: Write>(&mut self,
@@ -197,7 +197,7 @@ impl Template {
         let mut tokens = compiler::create_tokens(&value[..]);
         let nodes = parser::parse_nodes(&mut tokens);
 
-        return self.render(writer, data, &nodes);
+        self.render(writer, data, &nodes)
     }
 
     // data:      the data value for the tag/node we're handling
@@ -302,7 +302,7 @@ impl Template {
             }
         }
 
-        return rv;
+        rv
     }
 
     // nodes:     children of the inverted section tag
@@ -362,7 +362,7 @@ impl Template {
             }
         }
 
-        return rv;
+        rv
     }
 
     // nodes:     the section's children
@@ -496,7 +496,7 @@ impl Template {
             }
         }
 
-        return rv;
+        rv
     }
 
     // section data is considered false in a few cases:
@@ -519,7 +519,7 @@ impl Template {
             _ => {}
         }
 
-        return rv;
+        rv
     }
 
     // children: a vector of nodes representing the template text
@@ -586,7 +586,7 @@ impl Template {
             }
         } // if the file is not found, it's supposed to fail silently
 
-        return rv;
+        rv
     }
 
     fn handle_node<W: Write>(&mut self,
@@ -665,7 +665,7 @@ impl Template {
             }
         }
 
-        return rv;
+        rv
     }
     // writer: an io::stream to write the rendered template out to
     // data:   the internal HashBuilder data store
@@ -691,7 +691,7 @@ impl Template {
 
         }
 
-        return rv;
+        rv
     }
 
     // main entry point to Template
@@ -705,7 +705,7 @@ impl Template {
         self.partials_path.truncate(0);
         self.partials_path.push_str(datastore.partials_path);
 
-        return self.render(writer, &datastore.data, nodes);
+        self.render(writer, &datastore.data, nodes)
     }
 }
 
