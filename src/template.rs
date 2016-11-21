@@ -257,7 +257,7 @@ impl Template {
             // TODO: this one doesn't quite make sense.  i don't think we need it.
             Hash(ref hash) => {
                 if hash.contains_key(&key) {
-                    let ref tmp = hash[&key];
+                    let tmp = &hash[&key];
                     rv = self.handle_unescaped_or_value_node(node,
                                                              tmp,
                                                              key.to_string(),
@@ -335,7 +335,7 @@ impl Template {
                         (true, true) => {}
                         (false, false) => {}
                         (true, false) => {
-                            let ref val = datastore[&tmp];
+                            let val = &datastore[&tmp];
                             let mut sections = vec![tmp.clone()];
                             rv = self.handle_section_node(children,
                                                           &tmp,
@@ -581,7 +581,7 @@ impl Template {
             Unescaped(key, _) => {
                 let tmp = key.to_string();
                 if datastore.contains_key(&tmp) {
-                    let ref val = datastore[&tmp];
+                    let val = &datastore[&tmp];
                     rv = self.handle_unescaped_or_value_node(node,
                                                              val,
                                                              "".to_string(),
@@ -594,7 +594,7 @@ impl Template {
             Value(key, _) => {
                 let tmp = key.to_string();
                 if datastore.contains_key(&tmp) {
-                    let ref val = datastore[&tmp];
+                    let val = &datastore[&tmp];
                     rv = self.handle_unescaped_or_value_node(node,
                                                              val,
                                                              "".to_string(),
@@ -624,7 +624,7 @@ impl Template {
                 match (truthy, *inverted) {
                     (true, true) | (false, false) => {}
                     (true, false) => {
-                        let ref val = datastore[&tmp];
+                        let val = &datastore[&tmp];
                         let mut sections = vec![tmp.clone()];
                         rv = self.handle_section_node(children,
                                                       &tmp,
