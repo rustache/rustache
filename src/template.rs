@@ -296,9 +296,6 @@ impl Template {
                                       datastore: &HashMap<String, Data>,
                                       writer: &mut W)
                                       -> RustacheResult<()> {
-        println!("handle inverted node: nodes: {:?}, datastore: {:?}",
-                 nodes,
-                 datastore);
         let mut rv = Ok(());
         for node in nodes.iter() {
             match *node {
