@@ -57,6 +57,8 @@ let out = Cursor::new(Vec::new());
 data.render("{{ name }}", &mut out);
 ```
 
+For more examples please see the `tests` directory.
+
 ## Testing
 
 Simply clone and run:
@@ -73,7 +75,7 @@ cargo test
 
 - [ ] Thread errors through the parser and compiler:
 
-- [ ] Fill out samples folder.
+- [ ] Real world project examples.
 
 - [ ] Handle Build and Parser operations concurrently
 
