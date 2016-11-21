@@ -352,7 +352,7 @@ impl Template {
                 let raw = self.get_section_text(nodes);
                 return self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(),
                                                                   datastore,
-                                                                  *raw,
+                                                                  raw,
                                                                   writer);
             }
             Vector(ref v) => {
@@ -472,22 +472,18 @@ impl Template {
     // so we iterate through the children of the section, pulling out
     // the raw text and creating a string of it to pass to the lambda.
     //
-    fn get_section_text(&self, children: &[Node]) -> Box<String> {
-        let mut temp = Box::new(String::new());
-        for child in children.iter() {
+    fn get_section_text(&self, children: &[Node]) -> String {
+        children.iter().map(|child| {
             match *child {
-                Static(text) | Part(_, text) => temp.push_str(text),
+                Static(text) | Part(_, text) => text.into(),
                 Value(_, ref text) |
-                Unescaped(_, ref text) => temp.push_str(&text[..]),
+                Unescaped(_, ref text) => String::from(&text[..]),
                 Section(_, ref children, _, ref open, ref close) => {
                     let rv = self.get_section_text(children);
-                    temp.push_str(&open[..]);
-                    temp.push_str(&rv[..]);
-                    temp.push_str(&close[..]);
+                    format!("{}{}{}", &open[..], &rv[..], &close[..])
                 }
             }
-        }
-        temp
+        }).collect()
     }
 
     // filename:  the filename of the partial template to include,
