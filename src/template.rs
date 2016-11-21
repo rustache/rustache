@@ -108,16 +108,10 @@ impl Template {
         //                           {"value": "foo", "c": { "cdata": foo }},
         //                           { b: { "value": "foo", c: {"cdata": foo}}]
         for section in sections.iter() {
-            match hash.get(section) {
-                None => {}
-                Some(data) => {
-                    match *data {
-                        Hash(ref h) => {
-                            hashes.insert(0, h);
-                            hash = h;
-                        }
-                        _ => {}
-                    }
+            if let Some(data) = hash.get(section) {
+                if let Hash(ref h) = *data {
+                    hashes.insert(0, h);
+                    hash = h;
                 }
             }
         }
