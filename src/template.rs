@@ -222,9 +222,10 @@ impl Template {
             }
             // TODO: this one doesn't quite make sense.  i don't think we need it.
             Bool(ref val) => {
-                match val {
-                    &true => tmp.push_str("true"),
-                    &false => tmp.push_str("false"),
+                if *val {
+                    tmp.push_str("true")
+                } else {
+                    tmp.push_str("false")
                 }
                 rv = self.write_to_stream(writer, &tmp, "render: unescaped node bool");
             }
