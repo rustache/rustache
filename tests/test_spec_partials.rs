@@ -1,6 +1,6 @@
 extern crate rustache;
 
-use rustache::{HashBuilder, Render};
+use rustache::{HashBuilder, Render, VecBuilder};
 use std::io::Cursor;
 
 //   - name: Basic Behavior
@@ -54,24 +54,23 @@ fn test_spec_partials_context() {
 //     template: '{{>node}}'
 //     partials: { node: '{{content}}<{{#nodes}}{{>node}}{{/nodes}}>' }
 //     expected: 'X<Y<>>'
-// #[test]
-// fn test_spec_partials_recursion() {
-//     let data = HashBuilder::new()
-//                 .insert("content", "X")
-//                 .insert_vector("nodes", |v| {
-//                     v.push_hash(|h| {
-//                         h.insert("content", "Y")
-//                          .insert_vector("nodes", |v| {
-//                             v
-//                          })
-//                     })
-//                 });
-//     let mut rv = Cursor::new(Vec::new());
+#[test]
+fn test_spec_partials_recursion() {
+    let data = HashBuilder::new()
+        .insert("content", "X")
+        .insert("nodes", VecBuilder::new()
+            .push(HashBuilder::new()
+                .insert("content", "Y")
+                    .insert("nodes", VecBuilder::new()
+                    )
+            )
+        );
+    let mut rv = Cursor::new(Vec::new());
 
-//     data.render("{{>test_data/test_spec_partials_recursion}}", &mut rv).unwrap();
+    data.render("{{>test_data/test_spec_partials_recursion}}", &mut rv).unwrap();
 
-//     assert_eq!("X<Y<>>".to_string(), String::from_utf8(rv.into_inner()).unwrap());
-// }
+    assert_eq!("X<Y<>>".to_string(), String::from_utf8(rv.into_inner()).unwrap());
+}
 
 //   - name: Surrounding Whitespace
 //     desc: The greater-than operator should not alter surrounding whitespace.
@@ -109,14 +108,15 @@ fn test_spec_partials_inline_indentation() {
 //     template: "|\r\n{{>partial}}\r\n|"
 //     partials: { partial: ">" }
 //     expected: "|\r\n>|"
-// #[test]
-// fn test_spec_partials_standalone_line_endings() {
-//     let data = HashBuilder::new();
-//     let mut rv = Cursor::new(Vec::new());
-//     data.render("|\r\n{{>partial}}\r\n|", &mut rv).unwrap();
+#[test]
+#[ignore]
+fn test_spec_partials_standalone_line_endings() {
+    let data = HashBuilder::new();
+    let mut rv = Cursor::new(Vec::new());
+    data.render("|\r\n{{>partial}}\r\n|", &mut rv).unwrap();
 
-//     assert_eq!("|\r\n>|".to_string(), String::from_utf8(rv.into_inner()).unwrap());
-// }
+    assert_eq!("|\r\n>|".to_string(), String::from_utf8(rv.into_inner()).unwrap());
+}
 
 //   - name: Standalone Without Previous Line
 //     desc: Standalone tags should not require a newline to precede them.
@@ -167,15 +167,16 @@ fn test_spec_partials_standalone_without_newline() {
 //       ->
 //        |
 //       /
-// #[test]
-// fn test_spec_partials_standalone_indentation() {
-//     let data = HashBuilder::new().insert("content", "<\n->");
+#[test]
+#[ignore]
+fn test_spec_partials_standalone_indentation() {
+    let data = HashBuilder::new().insert("content", "<\n->");
 
-//     let mut rv = Cursor::new(Vec::new());
-//     data.render("|\n\\\n {{>test_data/test_spec_partials_standalone_indentation}}\n/\n", &mut rv).unwrap();
+    let mut rv = Cursor::new(Vec::new());
+    data.render("|\n\\\n {{>test_data/test_spec_partials_standalone_indentation}}\n/\n", &mut rv).unwrap();
 
-//     assert_eq!("|\n\\\n |\n <\n ->\n |\n/\n".to_string(), String::from_utf8(rv.into_inner()).unwrap());
-// }
+    assert_eq!("|\n\\\n |\n <\n ->\n |\n/\n".to_string(), String::from_utf8(rv.into_inner()).unwrap());
+}
 
 //   - name: Padding Whitespace
 //     desc: Superfluous in-tag whitespace should be ignored.

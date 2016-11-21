@@ -66,19 +66,22 @@ fn test_spec_lambdas_interpolation_expansion() {
 //         clojure: '(fn [] "|planet| => {{planet}}")'
 //     template: "{{= | | =}}\nHello, (|&lambda|)!"
 //     expected: "Hello, (|planet| => world)!"
-// #[test]
-// fn test_spec_lambdas_interpolation_alternate_delimeters() {
-//     let data = HashBuilder::new()
-//                 .insert("planet", "world")
-//                 .insert_lambda("lambda", |_| {
-//                     "|planet| => {{planet}}".to_string()
-//                 });
-//     let mut rv = Cursor::new(Vec::new());
+#[test]
+#[ignore]
+fn test_spec_lambdas_interpolation_alternate_delimeters() {
+    let mut f = |_| {
+        "|planet| => {{planet}}".to_string()
+    };
 
-//     data.render("{{= | | =}}\nHello, (|&lambda|)!", &mut rv).unwrap();
+    let data = HashBuilder::new()
+        .insert("planet", "world")
+        .insert_lambda("lambda", &mut f);
+    let mut rv = Cursor::new(Vec::new());
 
-//     assert_eq!("Hello, (|planet| => world)!".to_string(), String::from_utf8(rv.into_inner()).unwrap());
-// }
+    data.render("{{= | | =}}\nHello, (|&lambda|)!", &mut rv).unwrap();
+
+    assert_eq!("Hello, (|planet| => world)!".to_string(), String::from_utf8(rv.into_inner()).unwrap());
+}
 
 //   - name: Interpolation - Multiple Calls
 //     desc: Interpolated lambdas should not be cached.
@@ -208,22 +211,24 @@ fn test_spec_lambdas_section_expansion() {
 //         clojure: '(fn [text] (str text "{{planet}} => |planet|" text))'
 //     template: "{{= | | =}}<|#lambda|-|/lambda|>"
 //     expected: "<-{{planet}} => Earth->"
-// #[test]
-// fn test_spec_lambdas_section_alternate_delimeters() {
-//     let data = HashBuilder::new()
-//                 .insert("planet", "Earth")
-//                 .insert_lambda("lambda", |txt| {
-//                     let mut result = txt.to_string();
-//                     result.push_str("{{planet}} => |planet|");
-//                     result.push_str(txt.as_slice());
-//                     result
-//                 });
-//     let mut rv = Cursor::new(Vec::new());
+#[test]
+#[ignore]
+fn test_spec_lambdas_section_alternate_delimeters() {
+    let mut f = |txt: String| {
+        let mut result = txt.to_string();
+        result.push_str("{{planet}} => |planet|");
+        result.push_str(&txt[..]);
+        result
+    };
+    let data = HashBuilder::new()
+        .insert("planet", "Earth")
+        .insert_lambda("lambda", &mut f);
+    let mut rv = Cursor::new(Vec::new());
 
-//     data.render_from_hb("{{= | | =}}<|#lambda|-|/lambda|>", &mut rv).unwrap();
+    data.render("{{= | | =}}<|#lambda|-|/lambda|>", &mut rv).unwrap();
 
-//     assert_eq!("<-{{planet}} => Earth->".to_string(), String::from_utf8(rv.into_inner()).unwrap());
-// }
+    assert_eq!("<-{{planet}} => Earth->".to_string(), String::from_utf8(rv.into_inner()).unwrap());
+}
 
 //   - name: Section - Multiple Calls
 //     desc: Lambdas used for sections should not be cached.

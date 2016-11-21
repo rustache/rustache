@@ -93,28 +93,30 @@ fn test_spec_standalone_line_ending_comment() {
 //   data: { }
 //   template: "  {{! I'm Still Standalone }}\n!"
 //   expected: "!"
-// #[test]
-// fn test_spec_standalone_without_prev_line_comment() {
-//     let data = HashBuilder::new();
-//     let mut rv = Cursor::new(Vec::new());
-//     data.render("  {{! I'm Still Standalone }}\n!", &mut rv).unwrap();
+#[test]
+#[ignore]
+fn test_spec_standalone_without_prev_line_comment() {
+    let data = HashBuilder::new();
+    let mut rv = Cursor::new(Vec::new());
+    data.render("  {{! I'm Still Standalone }}\n!", &mut rv).unwrap();
 
-//     assert_eq!("!".to_string(), String::from_utf8(rv.into_inner()).unwrap());
-// }
+    assert_eq!("!".to_string(), String::from_utf8(rv.into_inner()).unwrap());
+}
 
 // - name: Standalone Without Newline
 //   desc: Standalone tags should not require a newline to follow them.
 //   data: { }
 //   template: "!\n  {{! I'm Still Standalone }}"
 //   expected: "!\n"
-// #[test]
-// fn test_spec_standalone_without_newline_comment() {
-//     let data = HashBuilder::new();
-//     let mut rv = Cursor::new(Vec::new());
-//     data.render("!\n  {{! I'm Still Standalone }}", &mut rv).unwrap();
+#[test]
+#[ignore]
+fn test_spec_standalone_without_newline_comment() {
+    let data = HashBuilder::new();
+    let mut rv = Cursor::new(Vec::new());
+    data.render("!\n  {{! I'm Still Standalone }}", &mut rv).unwrap();
 
-//     assert_eq!("!\n".to_string(), String::from_utf8(rv.into_inner()).unwrap());
-// }
+    assert_eq!("!\n".to_string(), String::from_utf8(rv.into_inner()).unwrap());
+}
 
 // - name: Multiline Standalone
 //   desc: All standalone comment lines should be removed.

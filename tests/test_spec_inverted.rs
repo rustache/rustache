@@ -94,14 +94,15 @@ fn test_spec_inverted_falsy_on_empty_vec() {
 //     * first
 //     * second
 //     * third
-// #[test]
-// fn test_spec_inverted_multiple() {
-//     let data = HashBuilder::new().insert_bool("bool", false).insert("two", "second");
-//     let mut rv = Cursor::new(Vec::new());
-//     data.render("{{^bool}}\n* first\n{{/bool}}\n* {{two}}\n{{^bool}}\n* third\n{{/bool}}", &mut rv).unwrap();
+#[test]
+#[ignore]
+fn test_spec_inverted_multiple() {
+    let data = HashBuilder::new().insert("bool", false).insert("two", "second");
+    let mut rv = Cursor::new(Vec::new());
+    data.render("{{^bool}}\n* first\n{{/bool}}\n* {{two}}\n{{^bool}}\n* third\n{{/bool}}", &mut rv).unwrap();
 
-//     assert_eq!("* first\n* second\n* third".to_string(), String::from_utf8(rv.into_inner()).unwrap());
-// }
+    assert_eq!("* first\n* second\n* third".to_string(), String::from_utf8(rv.into_inner()).unwrap());
+}
 
 // - name: Nested (Falsey)
 //   desc: Nested falsey sections should have their contents rendered.
@@ -150,21 +151,20 @@ fn test_spec_inverted_missing_falsey() {
 //   data: { a: { b: { c: true } } }
 //   template: '"{{^a.b.c}}Not Here{{/a.b.c}}" == ""'
 //   expected: '"" == ""'
-// #[test]
-// fn test_spec_truthy_dotted_names_valid_inverted_section_tags() {
-//     let data = HashBuilder::new()
-//         .insert_hash("a", |builder| {
-//             builder
-//                 .insert_hash("b", |builder| {
-//                     builder
-//                         .insert_bool("c", true)
-//                 })
-//         });
-//     let mut rv = Cursor::new(Vec::new());
-//     data.render("'{{^a.b.c}}Not Here{{/a.b.c}}' == ''", data)
+#[test]
+#[ignore]
+fn test_spec_truthy_dotted_names_valid_inverted_section_tags() {
+    let data = HashBuilder::new()
+        .insert("a", HashBuilder::new()
+            .insert("b", HashBuilder::new()
+                        .insert("c", true)
+                )
+        );
+    let mut rv = Cursor::new(Vec::new());
+    data.render("'{{^a.b.c}}Not Here{{/a.b.c}}' == ''", &mut rv).unwrap();
 
-//     assert_eq!("'' == ''".to_string(), String::from_utf8(rv.into_inner()).unwrap());
-// }
+    assert_eq!("'' == ''".to_string(), String::from_utf8(rv.into_inner()).unwrap());
+}
 
 // - name: Dotted Names - Falsey
 //   desc: Dotted names should be valid for Inverted Section tags.
@@ -210,14 +210,14 @@ fn test_spec_inverted_surrounding_whitespace() {
 //   data: { boolean: false }
 //   template: " | {{^boolean}} {{! Important Whitespace }}\n {{/boolean}} | \n"
 //   expected: " |  \n  | \n"
-// #[test]
-// fn test_spec_inverted_internal_whitespace() {
-//     let data = HashBuilder::new().insert("boolean", false);
-//     let mut rv = Cursor::new(Vec::new());
-//     data.render(" | {{^boolean}} {{! Important Whitespace }}\n {{/boolean}} | \n", &mut rv).unwrap();
+#[test]
+fn test_spec_inverted_internal_whitespace() {
+    let data = HashBuilder::new().insert("boolean", false);
+    let mut rv = Cursor::new(Vec::new());
+    data.render(" | {{^boolean}} {{! Important Whitespace }}\n {{/boolean}} | \n", &mut rv).unwrap();
 
-//     assert_eq!(" |  \n  | \n".to_string(), String::from_utf8(rv.into_inner()).unwrap());
-// }
+    assert_eq!(" |  \n  | \n".to_string(), String::from_utf8(rv.into_inner()).unwrap());
+}
 
 // - name: Indented Inline Sections
 //   desc: Single-line sections should not alter surrounding whitespace.
@@ -246,14 +246,15 @@ fn test_spec_inverted_indented_inline_sections() {
 //     | This Is
 //     |
 //     | A Line
-// #[test]
-// fn test_spec_inverted_standalone_lines() {
-//     let data = HashBuilder::new().insert("boolean", false);
-//     let mut rv = Cursor::new(Vec::new());
-//     data.render("| This Is\n{{^boolean}}\n|\n{{/boolean}}\n| A Line", data)
+#[test]
+#[ignore]
+fn test_spec_inverted_standalone_lines() {
+    let data = HashBuilder::new().insert("boolean", false);
+    let mut rv = Cursor::new(Vec::new());
+    data.render("| This Is\n{{^boolean}}\n|\n{{/boolean}}\n| A Line", &mut rv).unwrap();
 
-//     assert_eq!("| This Is\n|\n| A Line".to_string(), String::from_utf8(rv.into_inner()).unwrap());
-// }
+    assert_eq!("| This Is\n|\n| A Line".to_string(), String::from_utf8(rv.into_inner()).unwrap());
+}
 
 // - name: Standalone Indented Lines
 //   desc: Standalone indented lines should be removed from the template.
@@ -268,56 +269,60 @@ fn test_spec_inverted_indented_inline_sections() {
 //     | This Is
 //     |
 //     | A Line
-// #[test]
-// fn test_spec_inverted_standalone_indented_lines() {
-//     let data = HashBuilder::new().insert_bool("boolean", false);
-//     let mut rv = Cursor::new(Vec::new());
-//     data.render("| This Is\n  {{^boolean}}\n|\n  {{/boolean}}\n| A Line", data)
+#[test]
+#[ignore]
+fn test_spec_inverted_standalone_indented_lines() {
+    let data = HashBuilder::new().insert("boolean", false);
+    let mut rv = Cursor::new(Vec::new());
+    data.render("| This Is\n  {{^boolean}}\n|\n  {{/boolean}}\n| A Line", &mut rv).unwrap();
 
-//     assert_eq!("| This Is\n|\n| A Line".to_string(), String::from_utf8(rv.into_inner()).unwrap());
-// }
+    assert_eq!("| This Is\n|\n| A Line".to_string(), String::from_utf8(rv.into_inner()).unwrap());
+}
 
 // - name: Standalone Line Endings
 //   desc: '"\r\n" should be considered a newline for standalone tags.'
 //   data: { boolean: false }
 //   template: "|\r\n{{^boolean}}\r\n{{/boolean}}\r\n|"
 //   expected: "|\r\n|"
-// #[test]
-// fn test_spec_inverted_standalone_rn_is_linebreak() {
-//     let data = HashBuilder::new().insert_bool("boolean", false);
-//     let mut rv = Cursor::new(Vec::new());
-//     data.render("|\r\n{{^boolean}}\r\n{{/boolean}}\r\n|", data)
+#[test]
+#[ignore]
+fn test_spec_inverted_standalone_rn_is_linebreak() {
+    let data = HashBuilder::new().insert("boolean", false);
+    let mut rv = Cursor::new(Vec::new());
+    data.render("|\r\n{{^boolean}}\r\n{{/boolean}}\r\n|", &mut rv).unwrap();
 
-//     assert_eq!("|\r\n|".to_string(), String::from_utf8(rv.into_inner()).unwrap());
-// }
+    assert_eq!("|\r\n|".to_string(), String::from_utf8(rv.into_inner()).unwrap());
+}
 
 // - name: Standalone Without Previous Line
 //   desc: Standalone tags should not require a newline to precede them.
 //   data: { boolean: false }
 //   template: "  {{^boolean}}\n^{{/boolean}}\n/"
 //   expected: "^\n/"
-// #[test]
-// fn test_spec_inverted_standalone_without_previous_line() {
-//     let data = HashBuilder::new().insert_bool("boolean", false);
-//     let mut rv = Cursor::new(Vec::new());
-//     data.render("  {{^boolean}}\n^{{/boolean}}\n/", &mut rv).unwrap();
+#[test]
+#[ignore]
+fn test_spec_inverted_standalone_without_previous_line() {
+    let data = HashBuilder::new().insert("boolean", false);
+    let mut rv = Cursor::new(Vec::new());
+    data.render("  {{^boolean}}\n^{{/boolean}}\n/", &mut rv).unwrap();
 
-//     assert_eq!("^\n/".to_string(), String::from_utf8(rv.into_inner()).unwrap());
-// }
+    assert_eq!("^\n/".to_string(), String::from_utf8(rv.into_inner()).unwrap());
+}
 
 // - name: Standalone Without Newline
 //   desc: Standalone tags should not require a newline to follow them.
 //   data: { boolean: false }
 //   template: "^{{^boolean}}\n/\n  {{/boolean}}"
 //   expected: "^\n/\n"
-// #[test]
-// fn test_spec_inverted_standalone_without_newline() {
-//     let data = HashBuilder::new().insert_bool("boolean", false);
-//     let mut rv = Cursor::new(Vec::new());
-//     data.render("^{{^boolean}}\n/\n  {{/boolean}}", &mut rv).unwrap();
+#[test]
+#[ignore]
+fn test_spec_inverted_standalone_without_newline() {
+    let data = HashBuilder::new().insert("boolean", false);
+    let mut rv = Cursor::new(Vec::new());
+    data.render("^{{^boolean}}\n/\n  {{/boolean}}", &mut rv).unwrap();
 
-//     assert_eq!("^\n/\n".to_string(), String::from_utf8(rv.into_inner()).unwrap());
-// }
+    assert_eq!("^\n/\n".to_string(), String::from_utf8(rv.into_inner()).unwrap());
+}
 
 // - name: Padding
 //   desc: Superfluous in-tag whitespace should be ignored.
@@ -332,5 +337,3 @@ fn test_spec_inverted_whitespace_insensitivity() {
 
     assert_eq!("|=|".to_string(), String::from_utf8(rv.into_inner()).unwrap());
 }
-
-
