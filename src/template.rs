@@ -502,7 +502,6 @@ impl Template {
                                           datastore: &HashMap<String, Data>,
                                           writer: &mut W)
                                           -> RustacheResult<()> {
-        let mut rv: RustacheResult<()> = Ok(());;
         let path = Path::new(&self.partials_path.clone()).join(filename);
         if fs::metadata(&path).is_ok() {
 
@@ -513,16 +512,17 @@ impl Template {
                     let tokens = compiler::create_tokens(&contents[..]);
                     let nodes = parser::parse_nodes(&tokens);
 
-                    rv = self.render(writer, datastore, &nodes);
+                    self.render(writer, datastore, &nodes)
                 }
                 Err(err) => {
                     let msg = format!("{}: {}", err, filename);
-                    rv = Err(TemplateErrorType(FileReadError(msg)));
+                    Err(TemplateErrorType(FileReadError(msg)))
                 }
             }
-        } // if the file is not found, it's supposed to fail silently
-
-        rv
+        } else {
+            // if the file is not found, it's supposed to fail silently
+            Ok(())
+        }
     }
 
     fn handle_node<W: Write>(&mut self,
