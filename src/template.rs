@@ -241,34 +241,22 @@ impl Template {
             // TODO: this one doesn't quite make sense.  i don't think we need it.
             Vector(ref list) => {
                 for item in list.iter() {
-                    rv = self.handle_unescaped_or_value_node(node,
+                    try!(self.handle_unescaped_or_value_node(node,
                                                              item,
                                                              key.to_string(),
                                                              datastore,
-                                                             writer);
-                    match rv {
-                        Ok(_) => {}
-                        _ => {
-                            return rv;
-                        }
-                    }
+                                                             writer));
                 }
             }
             // TODO: this one doesn't quite make sense.  i don't think we need it.
             Hash(ref hash) => {
                 if hash.contains_key(&key) {
                     let tmp = &hash[&key];
-                    rv = self.handle_unescaped_or_value_node(node,
+                    try!(self.handle_unescaped_or_value_node(node,
                                                              tmp,
                                                              key.to_string(),
                                                              datastore,
-                                                             writer);
-                    match rv {
-                        Ok(_) => {}
-                        _ => {
-                            return rv;
-                        }
-                    }
+                                                             writer));
                 }
             }
             // if we have a lambda for the data, the return value of the
