@@ -312,7 +312,7 @@ impl Template {
                 Part(filename, _) => {
                     rv = self.handle_partial_file_node(filename, datastore, writer);
                 }
-                Section(ref key, ref children, ref inverted, _, _) => {
+                Section(key, ref children, ref inverted, _, _) => {
                     let tmp = key.to_string();
                     let truthy = if datastore.contains_key(&tmp) {
                         self.is_section_data_true(&datastore[&tmp])
@@ -430,7 +430,7 @@ impl Template {
                                              "render: section node static");
                 }
                 // sections are special and may be inverted
-                Section(ref key, ref children, ref inverted, _, _) => {
+                Section(key, ref children, ref inverted, _, _) => {
                     match *inverted {
                         // A normal, not inverted tag is more complicated and may recurse
                         // we need to save what sections we have been in, so the data
@@ -577,7 +577,7 @@ impl Template {
             //
             // normal section tags enclose a bit of html that will get repeated
             // for each element found in it's data
-            Section(ref key, ref children, ref inverted, _, _) => {
+            Section(key, ref children, ref inverted, _, _) => {
                 let tmp = key.to_string();
                 let truthy = if datastore.contains_key(&tmp) {
                     self.is_section_data_true(&datastore[&tmp])
