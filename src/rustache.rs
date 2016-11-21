@@ -16,7 +16,7 @@ pub trait Render {
     fn render<W: Write>(&self, template: &str, writer: &mut W) -> RustacheResult<()>;
 }
 
-/// Implement the `renderable` trait on the HashBuilder type
+/// Implement the `renderable` trait on the `HashBuilder` type
 impl<'a> Render for HashBuilder<'a> {
     fn render<W: Write>(&self, template: &str, writer: &mut W) -> RustacheResult<()> {
         // Create our nodes

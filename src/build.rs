@@ -4,7 +4,7 @@ use std::convert::Into;
 use Data;
 use Data::{Hash, Vector};
 
-/// `HashBuilder` is a helper type that constructs `Data` types in a HashMap
+/// `HashBuilder` is a helper type that constructs `Data` types in a `HashMap`
 #[derive(Debug)]
 pub struct HashBuilder<'a> {
     #[doc(hidden)]
