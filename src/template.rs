@@ -604,20 +604,13 @@ impl Template {
                             data: &HashMap<String, Data>,
                             nodes: &[Node])
                             -> RustacheResult<()> {
-        let mut rv = Ok(());
-
         // nodes are what the template file is parsed into
         // we have to iterate through each one and handle it as
         // the kind of node it is
         for node in nodes.iter() {
-            rv = self.handle_node(node, data, writer);
-            if let Err(_) = rv {
-                return rv;
-            }
-
+            try!(self.handle_node(node, data, writer));
         }
-
-        rv
+        Ok(())
     }
 
     // main entry point to Template
