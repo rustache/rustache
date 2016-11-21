@@ -504,22 +504,12 @@ impl Template {
     // the data is a bool with a value of false
     // the data is an empty vector
     fn is_section_data_true(&self, data: &Data) -> bool {
-        let mut rv = true;
-
-        match data {
+        match *data {
             // if the data is a bool, rv is just the bool value
-            &Bool(value) => {
-                rv = value;
-            }
-            &Vector(ref vec) => {
-                if vec.len() == 0 {
-                    rv = false;
-                }
-            }
-            _ => {}
+            Bool(value) => value,
+            Vector(ref vec) => !vec.is_empty(),
+            _ => true,
         }
-
-        rv
     }
 
     // children: a vector of nodes representing the template text
