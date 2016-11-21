@@ -36,7 +36,7 @@ impl Template {
     // utility method to write out rendered template with error handling
     fn write_to_stream<W: Write>(&self,
                                  writer: &mut W,
-                                 data: &String,
+                                 data: &str,
                                  errstr: &str)
                                  -> RustacheResult<()> {
         let mut rv: RustacheResult<()> = Ok(());
@@ -82,7 +82,7 @@ impl Template {
     // iterate the same way until data is found
     //
     fn look_up_section_data<'a, 'b>(&self,
-                                    key: &String,
+                                    key: &str,
                                     sections: &Vec<String>,
                                     datastore: &'b HashMap<String, Data<'a>>)
                                     -> Option<&'b Data<'a>> {
@@ -368,7 +368,7 @@ impl Template {
     // writer:    io stream
     fn handle_section_node<W: Write>(&mut self,
                                      nodes: &Vec<Node>,
-                                     _: &String,
+                                     _: &str,
                                      data: &Data,
                                      datastore: &HashMap<String, Data>,
                                      sections: &mut Vec<String>,
