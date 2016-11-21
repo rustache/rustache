@@ -380,42 +380,42 @@ impl Template {
         let mut rv = Ok(());
         // there's a special case if the section tag data was a lambda
         // if so, the lambda is used to generate the values for the tag inside the section
-        match data {
-            &Lambda(ref f) => {
+        match *data {
+            Lambda(ref f) => {
                 let raw = self.get_section_text(nodes);
                 return self.handle_unescaped_lambda_interpolation(&mut *f.borrow_mut(),
                                                                   datastore,
                                                                   *raw,
                                                                   writer);
             }
-            &Vector(ref v) => {
+            Vector(ref v) => {
                 for d in v.iter() {
                     for node in nodes.iter() {
-                        match d {
-                            &Hash(ref h) => {
+                        match *d {
+                            Hash(ref h) => {
                                 rv = self.handle_node(node, h, writer);
                             }
-                            &Strng(ref val) => {
+                            Strng(ref val) => {
                                 return Err(TemplateErrorType(UnexpectedDataType(format!("{}",
                                                                                         val))))
                             }
-                            &Bool(ref val) => {
+                            Bool(ref val) => {
                                 return Err(TemplateErrorType(UnexpectedDataType(format!("{}",
                                                                                         val))))
                             }
-                            &Integer(ref val) => {
+                            Integer(ref val) => {
                                 return Err(TemplateErrorType(UnexpectedDataType(format!("{}",
                                                                                         val))))
                             }
-                            &Float(ref val) => {
+                            Float(ref val) => {
                                 return Err(TemplateErrorType(UnexpectedDataType(format!("{}",
                                                                                         val))))
                             }
-                            &Vector(ref val) => {
+                            Vector(ref val) => {
                                 return Err(TemplateErrorType(UnexpectedDataType(format!("{:?}",
                                                                                         val))))
                             }
-                            &Lambda(_) => {
+                            Lambda(_) => {
                                 return Err(TemplateErrorType(UnexpectedDataType("lambda"
                                     .to_string())))
                             }
@@ -466,11 +466,11 @@ impl Template {
                 }
                 // sections are special and may be inverted
                 Section(ref key, ref children, ref inverted, _, _) => {
-                    match inverted {
+                    match *inverted {
                         // A normal, not inverted tag is more complicated and may recurse
                         // we need to save what sections we have been in, so the data
                         // lookup can happen correctly.  Data lookup is special for sections.
-                        &false => {
+                        false => {
                             let tmpkey = key.to_string();
                             sections.push(tmpkey.clone());
                             let tmpdata = self.look_up_section_data(&tmpkey, sections, datastore);
@@ -484,7 +484,7 @@ impl Template {
                             }
                         }
                         // inverted only has internal static text, so is easy to handle
-                        &true => {
+                        true => {
                             rv = self.handle_inverted_node(children, datastore, writer);
                         }
                     }

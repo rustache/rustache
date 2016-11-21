@@ -53,20 +53,20 @@ impl Render for ToString {
 fn parse_json(json: &Json) -> HashBuilder {
     let mut data = HashBuilder::new();
     for (k, v) in json.as_object().unwrap().iter() {
-        match v {
-            &I64(num) => {
+        match *v {
+            I64(num) => {
                 data = data.insert(&k[..], num.to_string());
             }
-            &U64(num) => {
+            U64(num) => {
                 data = data.insert(&k[..], num.to_string());
             }
-            &F64(num) => {
+            F64(num) => {
                 data = data.insert(&k[..], num.to_string());
             }
-            &Boolean(val) => {
+            Boolean(val) => {
                 data = data.insert(&k[..], val);
             }
-            &Array(ref list) => {
+            Array(ref list) => {
                 let mut builder = VecBuilder::new();
                 for item in list.iter() {
                     builder = match *item {
@@ -79,11 +79,11 @@ fn parse_json(json: &Json) -> HashBuilder {
                 }
                 data = data.insert(&k[..], builder);
             }
-            &Object(_) => {
+            Object(_) => {
                 data = data.insert(&k[..], parse_json(v));
             }
-            &Null => {}
-            &JString(ref text) => {
+            Null => {}
+            JString(ref text) => {
                 data = data.insert(&k[..], &text[..]);
             }
         }
@@ -97,20 +97,20 @@ fn parse_json(json: &Json) -> HashBuilder {
 fn parse_json_vector(json: &Json) -> VecBuilder {
     let mut data = VecBuilder::new();
     for v in json.as_array().unwrap().iter() {
-        match v {
-            &I64(num) => {
+        match *v {
+            I64(num) => {
                 data = data.push(num.to_string());
             }
-            &U64(num) => {
+            U64(num) => {
                 data = data.push(num.to_string());
             }
-            &F64(num) => {
+            F64(num) => {
                 data = data.push(num.to_string());
             }
-            &Boolean(val) => {
+            Boolean(val) => {
                 data = data.push(val);
             }
-            &Array(ref list) => {
+            Array(ref list) => {
                 let mut builder = VecBuilder::new();
                 for item in list.iter() {
                     builder = match *item {
@@ -123,11 +123,11 @@ fn parse_json_vector(json: &Json) -> VecBuilder {
                 }
                 data = data.push(builder);
             }
-            &Object(_) => {
+            Object(_) => {
                 data = data.push(parse_json(v));
             }
-            &Null => {}
-            &JString(ref text) => {
+            Null => {}
+            JString(ref text) => {
                 data = data.push(&text[..]);
             }
         }
