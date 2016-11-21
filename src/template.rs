@@ -39,39 +39,33 @@ impl Template {
                                  data: &str,
                                  errstr: &str)
                                  -> RustacheResult<()> {
-        let mut rv: RustacheResult<()> = Ok(());
-        let status = writer.write_fmt(format_args!("{}", &data[..]));
-        if let Err(err) = status {
-            let msg = format!("{}: {}", err, errstr);
-            rv = Err(TemplateErrorType(StreamWriteError(msg)));
-        }
-
-        rv
+        writer.write_fmt(format_args!("{}", &data[..])).map_err(|e| {
+            let msg = format!("{}: {}", e, errstr);
+            TemplateErrorType(StreamWriteError(msg))
+        })
     }
 
     // method to escape HTML for default value tags
-    fn escape_html(&self, input: &str) -> Box<String> {
-        let mut rv = Box::new(String::new());
-        for c in input.chars() {
+    fn escape_html(&self, input: &str) -> String {
+        input.chars().map(|c| {
             match c {
                 '<' => {
-                    rv.push_str("&lt;");
+                    "&lt;".into()
                 }
                 '>' => {
-                    rv.push_str("&gt;");
+                    "&gt;".into()
                 }
                 '&' => {
-                    rv.push_str("&amp;");
+                    "&amp;".into()
                 }
                 '"' => {
-                    rv.push_str("&quot;");
+                    "&quot;".into()
                 }
                 _ => {
-                    rv.push(c);
+                    c.to_string()
                 }
             }
-        }
-        rv
+        }).collect()
     }
 
     // key:       the key we're looking for
@@ -215,7 +209,7 @@ impl Template {
             Strng(ref val) => {
                 match *node {
                     Unescaped(_, _) => tmp = tmp + val,
-                    Value(_, _) => tmp = *self.escape_html(&val[..]),
+                    Value(_, _) => tmp = self.escape_html(&val[..]),
                     _ => return Err(TemplateErrorType(UnexpectedNodeType(format!("{:?}", node)))),
                 }
                 rv = self.write_to_stream(writer, &tmp, "render: unescaped node string fail");
