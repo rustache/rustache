@@ -428,27 +428,24 @@ impl Template {
                 }
                 // sections are special and may be inverted
                 Section(key, ref children, ref inverted, _, _) => {
-                    match *inverted {
+                    if !*inverted {
                         // A normal, not inverted tag is more complicated and may recurse
                         // we need to save what sections we have been in, so the data
                         // lookup can happen correctly.  Data lookup is special for sections.
-                        false => {
-                            let tmpkey = key.to_string();
-                            sections.push(tmpkey.clone());
-                            let tmpdata = self.look_up_section_data(&tmpkey, sections, datastore);
-                            if tmpdata.is_some() {
-                                rv = self.handle_section_node(children,
-                                                              &tmpkey,
-                                                              tmpdata.unwrap(),
-                                                              datastore,
-                                                              sections,
-                                                              writer);
-                            }
+                        let tmpkey = key.to_string();
+                        sections.push(tmpkey.clone());
+                        let tmpdata = self.look_up_section_data(&tmpkey, sections, datastore);
+                        if tmpdata.is_some() {
+                            rv = self.handle_section_node(children,
+                                                          &tmpkey,
+                                                          tmpdata.unwrap(),
+                                                          datastore,
+                                                          sections,
+                                                          writer);
                         }
+                    } else {
                         // inverted only has internal static text, so is easy to handle
-                        true => {
-                            rv = self.handle_inverted_node(children, datastore, writer);
-                        }
+                        rv = self.handle_inverted_node(children, datastore, writer);
                     }
                 }
                 // if it's a partial, we have a file to read in and render
