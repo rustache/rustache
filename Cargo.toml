@@ -19,5 +19,6 @@ name = "rustache"
 path = "src/lib.rs"
 
 [dependencies]
+error-chain = "^0.5"
 regex = "^0.1"
 rustc-serialize = "^0.3"
