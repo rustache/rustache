@@ -28,4 +28,5 @@ after_success:
 - travis-cargo --only stable doc-upload
 env:
   global:
-  - secure: vowmgrd1Bnz0uPNazdqHBFoM+Ek28qDsevGuPj/RDlLh6AWKTvD0fjndTENmh5qCJf1GPIPt0cnKIo48meaSHtzqPFi5YJVz6BPK82zM38nT3J5MYwmb78fzoDDuZoZTA4DTKT+g76XArxxRUCmonQWuCbGbkrqov4HcJwNRBX8=
+    - TRAVIS_CARGO_NIGHTLY_FEATURE=""
+    - secure: vowmgrd1Bnz0uPNazdqHBFoM+Ek28qDsevGuPj/RDlLh6AWKTvD0fjndTENmh5qCJf1GPIPt0cnKIo48meaSHtzqPFi5YJVz6BPK82zM38nT3J5MYwmb78fzoDDuZoZTA4DTKT+g76XArxxRUCmonQWuCbGbkrqov4HcJwNRBX8=
