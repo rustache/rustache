@@ -52,10 +52,8 @@ pub fn parse_nodes<'a>(list: &[Token<'a>]) -> Vec<Node<'a>> {
     let mut it = list.iter().enumerate().peekable();
     let mut status = Parse;
 
-    loop {
-        // Iterate while still nodes in the list
-        match it.next() {
-            Some((i, token)) => {
+    // Iterate while still nodes in the list
+    while let Some((i, token)) = it.next() {
                 match token {
                     &Text(text) => nodes.push(parse_text_node(text, &mut status)),
                     &Variable(name, raw) => nodes.push(parse_variable_node(name, raw)),
@@ -133,9 +131,6 @@ pub fn parse_nodes<'a>(list: &[Token<'a>]) -> Vec<Node<'a>> {
                     }
                 }
             }
-            None => break,
-        }
-    }
 
     // Return the populated list of nodes
     nodes
