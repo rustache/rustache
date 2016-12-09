@@ -352,7 +352,7 @@ impl Template {
                                 rv = self.handle_node(node, h, writer);
                             }
                             Strng(ref val) => {
-                                return Err(ErrorKind::UnexpectedDataType(format!("{}", val)).into())
+                                return Err(ErrorKind::UnexpectedDataType(val.to_owned()).into())
                             }
                             Bool(ref val) => {
                                 return Err(ErrorKind::UnexpectedDataType(format!("{}", val)).into())
