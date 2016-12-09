@@ -179,34 +179,32 @@ fn parse_comment_node<'a>(token: &Token,
                           status: &mut ParserStatus,
                           nodes: &mut Vec<Node<'a>>)
                           -> bool {
-    match *token {
-        Text(ref value) => {
-            match *status {
-                Skip => {
-                    // If whitespace and should skip, advance to next token
-                    if value.is_whitespace() {
-                        match nodes.last().unwrap() {
-                            &Static(text) => {
-                                // If the previous node is whitespace and has a newline
-                                // then remove it
-                                if text.is_whitespace() && text.contains("\n") {
-                                    nodes.pop();
-                                }
+    if let Text(value) = *token {
+        match *status {
+            Skip => {
+                // If whitespace and should skip, advance to next token
+                if value.is_whitespace() {
+                    match *nodes.last().unwrap() {
+                        Static(text) => {
+                            // If the previous node is whitespace and has a newline
+                            // then remove it
+                            if text.is_whitespace() && text.contains('\n') {
+                                nodes.pop();
                             }
-                            _ => {}
                         }
-                        *status = Parse;
-                        return true;
-                    } else {
-                        *status = Parse;
-                        return false;
+                        _ => {}
                     }
+                    *status = Parse;
+                    true
+                } else {
+                    *status = Parse;
+                    false
                 }
-                Parse => return false,
-                // Sect => return false,
             }
+            Parse => false,
         }
-        _ => return false,
+    } else {
+        false
     }
 }
 
