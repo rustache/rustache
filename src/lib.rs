@@ -12,6 +12,7 @@ use std::fmt;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::convert::From;
+use std::string;
 
 use self::Data::{Strng, Bool, Integer, Float};
 
@@ -24,7 +25,7 @@ pub use errors::*;
 // Represents the possible types that passed in data may take on
 #[doc(hidden)]
 pub enum Data<'a> {
-    Strng(String),
+    Strng(string::String),
     Bool(bool),
     Integer(i32),
     Float(f64),
@@ -36,9 +37,9 @@ pub enum Data<'a> {
 /// Alias for mustache data vectors
 pub type Vector<'a> = Vec<Data<'a>>;
 /// Alias for mustache data hashes
-pub type Hash<'a> = HashMap<String, Data<'a>>;
+pub type Hash<'a> = HashMap<string::String, Data<'a>>;
 /// Alias for a Lambda functions to transform data
-pub type Lambda<'a> = &'a mut FnMut(String) -> String;
+pub type Lambda<'a> = &'a mut FnMut(string::String) -> string::String;
 
 impl<'a, 'b> From<&'b str> for Data<'a> {
     fn from(v: &'b str) -> Data<'a> {
@@ -46,8 +47,8 @@ impl<'a, 'b> From<&'b str> for Data<'a> {
     }
 }
 
-impl<'a> From<String> for Data<'a> {
-    fn from(v: String) -> Data<'a> {
+impl<'a> From<string::String> for Data<'a> {
+    fn from(v: string::String) -> Data<'a> {
         Strng(v)
     }
 }
