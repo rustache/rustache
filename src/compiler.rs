@@ -23,7 +23,7 @@ pub enum Token<'a> {
 
 // Entry point to the template compiler. It compiles a token list of
 // all applicable tags within a template to send to the parser.
-pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
+pub fn create_tokens(contents: &str) -> Vec<Token> {
     let mut tokens: Vec<Token> = Vec::new();
 
     // Close position and length are used to catch trailing characters afer last
