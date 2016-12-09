@@ -110,21 +110,13 @@ pub fn parse_nodes<'a>(list: &[Token<'a>]) -> Vec<Node<'a>> {
                 // Check the next element for whitespace
                 match it.peek() {
                     Some(&(_, token)) => {
-                        match parse_comment_node(token, &mut status, &mut nodes) {
-                            true => {
-                                // it.next();
-                            }
-                            false => {}
-                        }
+                        parse_comment_node(token, &mut status, &mut nodes);
                     }
                     None => {
-                        match nodes.last().unwrap() {
-                            &Static(text) => {
-                                if text.is_whitespace() {
-                                    nodes.pop();
-                                }
+                        if let Static(text) = *nodes.last().unwrap() {
+                            if text.is_whitespace() {
+                                nodes.pop();
                             }
-                            _ => continue,
                         }
                     }
                 }
@@ -184,15 +176,12 @@ fn parse_comment_node<'a>(token: &Token,
             Skip => {
                 // If whitespace and should skip, advance to next token
                 if value.is_whitespace() {
-                    match *nodes.last().unwrap() {
-                        Static(text) => {
-                            // If the previous node is whitespace and has a newline
-                            // then remove it
-                            if text.is_whitespace() && text.contains('\n') {
-                                nodes.pop();
-                            }
+                    if let Static(text) = *nodes.last().unwrap() {
+                        // If the previous node is whitespace and has a newline
+                        // then remove it
+                        if text.is_whitespace() && text.contains('\n') {
+                            nodes.pop();
                         }
-                        _ => {}
                     }
                     *status = Parse;
                     true
