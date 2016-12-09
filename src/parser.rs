@@ -54,83 +54,83 @@ pub fn parse_nodes<'a>(list: &[Token<'a>]) -> Vec<Node<'a>> {
 
     // Iterate while still nodes in the list
     while let Some((i, token)) = it.next() {
-                match token {
-                    &Text(text) => nodes.push(parse_text_node(text, &mut status)),
-                    &Variable(name, raw) => nodes.push(parse_variable_node(name, raw)),
-                    &Raw(name, raw) => nodes.push(parse_raw_node(name, raw)),
-                    &Partial(name, raw) => nodes.push(Part(name, raw)),
-                    // Unopened closing tags are ignored
-                    // TODO: Return a parser error?
-                    &CTag(_, _) => continue,
-                    &OTag(name, inverted, raw) => {
-                        let mut children: Vec<Token<'a>> = vec![];
-                        let mut count = 0u32;
-                        let mut otag_count = 1u32;
-                        for item in list[i + 1..].iter() {
-                            count += 1;
-                            match *item {
-                                OTag(title, _, _) => {
-                                    if title == name {
-                                        otag_count += 1;
-                                    }
-                                    children.push((*item).clone());
-                                }
-                                CTag(title, temp) => {
-                                    if title == name && otag_count == 1 {
-                                        nodes.push(Section(name,
-                                                           parse_nodes(&children).clone(),
-                                                           inverted,
-                                                           raw.to_string(),
-                                                           temp.to_string()));
-                                        break;
-                                    } else if title == name && otag_count > 1 {
-                                        otag_count -= 1;
-                                        children.push((*item).clone());
-                                    } else {
-                                        children.push((*item).clone());
-                                        continue;
-                                    }
-                                }
-                                _ => {
-                                    children.push((*item).clone());
-                                    continue;
-                                }
+        match token {
+            &Text(text) => nodes.push(parse_text_node(text, &mut status)),
+            &Variable(name, raw) => nodes.push(parse_variable_node(name, raw)),
+            &Raw(name, raw) => nodes.push(parse_raw_node(name, raw)),
+            &Partial(name, raw) => nodes.push(Part(name, raw)),
+            // Unopened closing tags are ignored
+            // TODO: Return a parser error?
+            &CTag(_, _) => continue,
+            &OTag(name, inverted, raw) => {
+                let mut children: Vec<Token<'a>> = vec![];
+                let mut count = 0u32;
+                let mut otag_count = 1u32;
+                for item in list[i + 1..].iter() {
+                    count += 1;
+                    match *item {
+                        OTag(title, _, _) => {
+                            if title == name {
+                                otag_count += 1;
+                            }
+                            children.push((*item).clone());
+                        }
+                        CTag(title, temp) => {
+                            if title == name && otag_count == 1 {
+                                nodes.push(Section(name,
+                                                   parse_nodes(&children).clone(),
+                                                   inverted,
+                                                   raw.to_string(),
+                                                   temp.to_string()));
+                                break;
+                            } else if title == name && otag_count > 1 {
+                                otag_count -= 1;
+                                children.push((*item).clone());
+                            } else {
+                                children.push((*item).clone());
+                                continue;
                             }
                         }
-
-                        // Advance the iterator to the position of the CTAG.  If the
-                        // OTag is never closed, these children will never be processed.
-                        // TODO: Return a parser warning in the case of an unclosed tag?
-                        while count > 1 {
-                            it.next();
-                            count -= 1;
+                        _ => {
+                            children.push((*item).clone());
+                            continue;
                         }
                     }
-                    &Comment => {
-                        // Check the next element for whitespace
-                        match it.peek() {
-                            Some(&(_, token)) => {
-                                match parse_comment_node(token, &mut status, &mut nodes) {
-                                    true => {
-                                        // it.next();
-                                    }
-                                    false => {}
+                }
+
+                // Advance the iterator to the position of the CTAG.  If the
+                // OTag is never closed, these children will never be processed.
+                // TODO: Return a parser warning in the case of an unclosed tag?
+                while count > 1 {
+                    it.next();
+                    count -= 1;
+                }
+            }
+            &Comment => {
+                // Check the next element for whitespace
+                match it.peek() {
+                    Some(&(_, token)) => {
+                        match parse_comment_node(token, &mut status, &mut nodes) {
+                            true => {
+                                // it.next();
+                            }
+                            false => {}
+                        }
+                    }
+                    None => {
+                        match nodes.last().unwrap() {
+                            &Static(text) => {
+                                if text.is_whitespace() {
+                                    nodes.pop();
                                 }
                             }
-                            None => {
-                                match nodes.last().unwrap() {
-                                    &Static(text) => {
-                                        if text.is_whitespace() {
-                                            nodes.pop();
-                                        }
-                                    }
-                                    _ => continue,
-                                }
-                            }
+                            _ => continue,
                         }
                     }
                 }
             }
+        }
+    }
 
     // Return the populated list of nodes
     nodes
