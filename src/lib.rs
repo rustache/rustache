@@ -13,7 +13,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::convert::From;
 
-use self::Data::*;
+use self::Data::{Strng, Bool, Integer, Float};
 
 pub use build::{HashBuilder, VecBuilder};
 pub use rustache::Render;
@@ -28,10 +28,17 @@ pub enum Data<'a> {
     Bool(bool),
     Integer(i32),
     Float(f64),
-    Vector(Vec<Data<'a>>),
-    Hash(HashMap<String, Data<'a>>),
-    Lambda(RefCell<&'a mut FnMut(String) -> String>),
+    Vector(self::Vector<'a>),
+    Hash(self::Hash<'a>),
+    Lambda(RefCell<self::Lambda<'a>>),
 }
+
+/// Alias for mustache data vectors
+pub type Vector<'a> = Vec<Data<'a>>;
+/// Alias for mustache data hashes
+pub type Hash<'a> = HashMap<String, Data<'a>>;
+/// Alias for a Lambda functions to transform data
+pub type Lambda<'a> = &'a mut FnMut(String) -> String;
 
 impl<'a, 'b> From<&'b str> for Data<'a> {
     fn from(v: &'b str) -> Data<'a> {
@@ -63,21 +70,21 @@ impl<'a> From<f64> for Data<'a> {
     }
 }
 
-impl<'a> From<Vec<Data<'a>>> for Data<'a> {
-    fn from(v: Vec<Data<'a>>) -> Data<'a> {
-        Vector(v)
+impl<'a> From<self::Vector<'a>> for Data<'a> {
+    fn from(v: self::Vector<'a>) -> Data<'a> {
+        Data::Vector(v)
     }
 }
 
-impl<'a> From<HashMap<String, Data<'a>>> for Data<'a> {
-    fn from(v: HashMap<String, Data<'a>>) -> Data<'a> {
-        Hash(v)
+impl<'a> From<self::Hash<'a>> for Data<'a> {
+    fn from(v: self::Hash<'a>) -> Data<'a> {
+        Data::Hash(v)
     }
 }
 
-impl<'a> From<&'a mut FnMut(String) -> String> for Data<'a> {
-    fn from(v: &'a mut FnMut(String) -> String) -> Data<'a> {
-        Lambda(RefCell::new(v))
+impl<'a> From<self::Lambda<'a>> for Data<'a> {
+    fn from(v: self::Lambda<'a>) -> Data<'a> {
+        Data::Lambda(RefCell::new(v))
     }
 }
 
@@ -91,9 +98,9 @@ impl<'a> PartialEq for Data<'a> {
             (&Bool(ref val0), &Bool(ref val1)) => val0 == val1,
             (&Integer(ref val0), &Integer(ref val1)) => val0 == val1,
             (&Float(ref val0), &Float(ref val1)) => val0 == val1,
-            (&Vector(ref val0), &Vector(ref val1)) => val0 == val1,
-            (&Hash(ref val0), &Hash(ref val1)) => val0 == val1,
-            (&Lambda(_), &Lambda(_)) => panic!("Can't compare closures"),
+            (&Data::Vector(ref val0), &Data::Vector(ref val1)) => val0 == val1,
+            (&Data::Hash(ref val0), &Data::Hash(ref val1)) => val0 == val1,
+            (&Data::Lambda(_), &Data::Lambda(_)) => panic!("Can't compare closures"),
             (_, _) => false,
         }
     }
@@ -107,9 +114,9 @@ impl<'a> fmt::Debug for Data<'a> {
             Bool(val) => write!(f, "Boolean({:?})", val),
             Integer(ref val) => write!(f, "Integer({:?})", val),
             Float(ref val) => write!(f, "Float({:?})", val),
-            Vector(ref val) => write!(f, "Vector({:?})", val),
-            Hash(ref val) => write!(f, "Hash({:?})", val),
-            Lambda(_) => write!(f, "Lambda(...)"),
+            Data::Vector(ref val) => write!(f, "Vector({:?})", val),
+            Data::Hash(ref val) => write!(f, "Hash({:?})", val),
+            Data::Lambda(_) => write!(f, "Lambda(...)"),
         }
     }
 }
