@@ -138,52 +138,38 @@ pub fn parse_nodes<'a>(list: &[Token<'a>]) -> Vec<Node<'a>> {
 
 // Helper function for handling the creation of a text node
 fn parse_text_node<'a>(text: &'a str, status: &mut ParserStatus) -> Node<'a> {
-    match *status {
-        _ => {
-            if text.contains("\n") {
-                *status = Skip;
-            } else if text.is_whitespace() {
-                *status = Skip;
-            }
-            return Static(text);
-        }
+    if text.contains('\n') {
+        *status = Skip;
+    } else if text.is_whitespace() {
+        *status = Skip;
     }
+
+    Static(text)
 }
 
 // Helper function for handling the creation of a variable node
 fn parse_variable_node<'a>(name: &'a str, raw: &'a str) -> Node<'a> {
-    let dot_notation = name.contains(".");
-    match dot_notation {
-        false => return Value(name, raw.to_string()),
-        true => {
-            let parts: Vec<&str> = name.split(".").collect();
-            let node = handle_dot_notation(&parts[..], false, false);
-            return node;
-        }
+    if name.contains('.') {
+        let parts: Vec<&str> = name.split(".").collect();
+        handle_dot_notation(&parts[..], false, false)
+    } else {
+        Value(name, raw.to_string())
     }
 }
 
 // Helper function for handling the creation of an unescaped variable node
 fn parse_raw_node<'a>(name: &'a str, raw: &'a str) -> Node<'a> {
-    let dot_notation = name.contains(".");
-    let ampersand = raw.contains("&");
-    match dot_notation {
-        false => {
-            return Unescaped(name, raw.to_string());
+    let dot_notation = name.contains('.');
+    let ampersand = raw.contains('&');
+    if dot_notation {
+        let parts: Vec<&str> = name.split('.').collect();
+        if ampersand {
+            handle_dot_notation(&parts[..], true, true)
+        } else {
+            handle_dot_notation(&parts[..], true, false)
         }
-        true => {
-            let parts: Vec<&str> = name.split(".").collect();
-            match ampersand {
-                true => {
-                    let node = handle_dot_notation(&parts[..], true, true);
-                    return node;
-                }
-                false => {
-                    let node = handle_dot_notation(&parts[..], true, false);
-                    return node;
-                }
-            };
-        }
+    } else {
+        Unescaped(name, raw.to_string())
     }
 }
 
