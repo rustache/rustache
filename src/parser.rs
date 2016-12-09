@@ -54,15 +54,15 @@ pub fn parse_nodes<'a>(list: &[Token<'a>]) -> Vec<Node<'a>> {
 
     // Iterate while still nodes in the list
     while let Some((i, token)) = it.next() {
-        match token {
-            &Text(text) => nodes.push(parse_text_node(text, &mut status)),
-            &Variable(name, raw) => nodes.push(parse_variable_node(name, raw)),
-            &Raw(name, raw) => nodes.push(parse_raw_node(name, raw)),
-            &Partial(name, raw) => nodes.push(Part(name, raw)),
+        match *token {
+            Text(text) => nodes.push(parse_text_node(text, &mut status)),
+            Variable(name, raw) => nodes.push(parse_variable_node(name, raw)),
+            Raw(name, raw) => nodes.push(parse_raw_node(name, raw)),
+            Partial(name, raw) => nodes.push(Part(name, raw)),
             // Unopened closing tags are ignored
             // TODO: Return a parser error?
-            &CTag(_, _) => continue,
-            &OTag(name, inverted, raw) => {
+            CTag(_, _) => continue,
+            OTag(name, inverted, raw) => {
                 let mut children: Vec<Token<'a>> = vec![];
                 let mut count = 0u32;
                 let mut otag_count = 1u32;
@@ -106,7 +106,7 @@ pub fn parse_nodes<'a>(list: &[Token<'a>]) -> Vec<Node<'a>> {
                     count -= 1;
                 }
             }
-            &Comment => {
+            Comment => {
                 // Check the next element for whitespace
                 match it.peek() {
                     Some(&(_, token)) => {
