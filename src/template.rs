@@ -69,7 +69,6 @@ impl Template {
                                     sections: &[String],
                                     datastore: &'b HashMap<String, Data<'a>>)
                                     -> Option<&'b Data<'a>> {
-        let mut rv = None;
         let mut hashes = Vec::new();
         let mut hash = datastore;
 
@@ -128,17 +127,13 @@ impl Template {
 
         // once we've assembled the vector of hashes to look through
         // we iterate through it looking for the data
-        for hash in hashes.iter() {
-
-            rv = hash.get(key);
-            if rv.is_some() {
-                break;
-            }
-        }
+        let rv = hashes.iter()
+            .filter_map(|h| h.get(key))
+            .next();
 
         // last but not least, check the top level if we didn't find anything
         if rv.is_none() {
-            rv = datastore.get(key);
+            return datastore.get(key);
         }
 
         rv
