@@ -220,42 +220,33 @@ fn handle_dot_notation<'a>(parts: &[&'a str], unescaped: bool, amp: bool) -> Nod
                 true => {
                     match amp {
                         true => {
-                            let mut var = "{{&".to_string();
-                            var.push_str(variable);
-                            var.push_str("}}");
-                            return Unescaped(variable, var);
+                            // {{&variable}}
+                            Unescaped(variable, format!("{{{{&{}}}}}", variable))
                         }
                         false => {
-                            let mut var = "{{{".to_string();
-                            var.push_str(variable);
-                            var.push_str("}}}");
-                            return Unescaped(variable, var);
+                            // {{{variable}}}
+                            Unescaped(variable, format!("{{{{{{{}}}}}}}", variable))
                         }
                     }
                 }
                 false => {
-                    let mut var = "{{".to_string();
-                    var.push_str(variable);
-                    var.push_str("}}");
-                    return Value(variable, var);
+                    // {{variable}}
+                    Value(variable, format!("{{{{{}}}}}", variable))
                 }
             }
         }
         _ => {
-            let mut otag = "{{#".to_string();
-            let mut ctag = "{{/".to_string();
-
-            otag.push_str(variable);
-            otag.push_str("}}");
-            ctag.push_str(variable);
-            ctag.push_str("}}");
+            // {{#variable}}
+            let otag = format!("{{{{#{}}}}}", variable);
+            // {{/variable}}
+            let ctag = format!("{{{{/{}}}}}", variable);
 
             // Enter recursion and assign the results as children.
-            return Section(variable,
-                           vec![handle_dot_notation(&parts[1..], unescaped, amp)],
-                           false,
-                           otag,
-                           ctag);
+            Section(variable,
+                    vec![handle_dot_notation(&parts[1..], unescaped, amp)],
+                    false,
+                    otag,
+                    ctag)
         }
     }
 }
