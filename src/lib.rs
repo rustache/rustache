@@ -14,8 +14,6 @@ use std::collections::HashMap;
 use std::convert::From;
 use std::string;
 
-use self::Data::{Strng, Bool, Integer, Float};
-
 pub use build::{HashBuilder, VecBuilder};
 pub use rustache::Render;
 
@@ -25,7 +23,7 @@ pub use errors::*;
 // Represents the possible types that passed in data may take on
 #[doc(hidden)]
 pub enum Data<'a> {
-    Strng(string::String),
+    String(string::String),
     Bool(bool),
     Integer(i32),
     Float(f64),
@@ -43,31 +41,31 @@ pub type Lambda<'a> = &'a mut FnMut(string::String) -> string::String;
 
 impl<'a, 'b> From<&'b str> for Data<'a> {
     fn from(v: &'b str) -> Data<'a> {
-        Strng(v.to_owned())
+        Data::String(v.to_owned())
     }
 }
 
 impl<'a> From<string::String> for Data<'a> {
     fn from(v: string::String) -> Data<'a> {
-        Strng(v)
+        Data::String(v)
     }
 }
 
 impl<'a> From<bool> for Data<'a> {
     fn from(v: bool) -> Data<'a> {
-        Bool(v)
+        Data::Bool(v)
     }
 }
 
 impl<'a> From<i32> for Data<'a> {
     fn from(v: i32) -> Data<'a> {
-        Integer(v)
+        Data::Integer(v)
     }
 }
 
 impl<'a> From<f64> for Data<'a> {
     fn from(v: f64) -> Data<'a> {
-        Float(v)
+        Data::Float(v)
     }
 }
 
@@ -95,10 +93,10 @@ impl<'a> From<self::Lambda<'a>> for Data<'a> {
 impl<'a> PartialEq for Data<'a> {
     fn eq(&self, other: &Data<'a>) -> bool {
         match (self, other) {
-            (&Strng(ref val0), &Strng(ref val1)) => val0 == val1,
-            (&Bool(ref val0), &Bool(ref val1)) => val0 == val1,
-            (&Integer(ref val0), &Integer(ref val1)) => val0 == val1,
-            (&Float(ref val0), &Float(ref val1)) => val0 == val1,
+            (&Data::String(ref val0), &Data::String(ref val1)) => val0 == val1,
+            (&Data::Bool(ref val0), &Data::Bool(ref val1)) => val0 == val1,
+            (&Data::Integer(ref val0), &Data::Integer(ref val1)) => val0 == val1,
+            (&Data::Float(ref val0), &Data::Float(ref val1)) => val0 == val1,
             (&Data::Vector(ref val0), &Data::Vector(ref val1)) => val0 == val1,
             (&Data::Hash(ref val0), &Data::Hash(ref val1)) => val0 == val1,
             (&Data::Lambda(_), &Data::Lambda(_)) => panic!("Can't compare closures"),
@@ -111,10 +109,10 @@ impl<'a> PartialEq for Data<'a> {
 impl<'a> fmt::Debug for Data<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Strng(ref val) => write!(f, "Strng({:?})", val),
-            Bool(val) => write!(f, "Boolean({:?})", val),
-            Integer(ref val) => write!(f, "Integer({:?})", val),
-            Float(ref val) => write!(f, "Float({:?})", val),
+            Data::String(ref val) => write!(f, "String({:?})", val),
+            Data::Bool(val) => write!(f, "Boolean({:?})", val),
+            Data::Integer(ref val) => write!(f, "Integer({:?})", val),
+            Data::Float(ref val) => write!(f, "Float({:?})", val),
             Data::Vector(ref val) => write!(f, "Vector({:?})", val),
             Data::Hash(ref val) => write!(f, "Hash({:?})", val),
             Data::Lambda(_) => write!(f, "Lambda(...)"),

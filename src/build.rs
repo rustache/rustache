@@ -172,7 +172,8 @@ mod tests {
     use std::collections::HashMap;
 
     use {HashBuilder, VecBuilder};
-    use Data::{Strng, Bool, Integer, Float, Vector, Hash, Lambda};
+    use Data;
+    use Data::{Bool, Integer, Float, Vector, Hash, Lambda};
 
     #[test]
     fn test_new_builders() {
@@ -192,20 +193,20 @@ mod tests {
 
         let mut hearthstone = HashMap::new();
         hearthstone.insert("name".to_string(),
-                           Strng("Hearthstone: Heroes of Warcraft".to_string()));
+                           Data::String("Hearthstone: Heroes of Warcraft".to_string()));
         hearthstone.insert("release_date".to_string(),
-                           Strng("December, 2014".to_string()));
+                           Data::String("December, 2014".to_string()));
 
         let mut hash1 = HashMap::new();
-        hash1.insert("first_name".to_string(), Strng("Anduin".to_string()));
-        hash1.insert("last_name".to_string(), Strng("Wrynn".to_string()));
+        hash1.insert("first_name".to_string(), Data::String("Anduin".to_string()));
+        hash1.insert("last_name".to_string(), Data::String("Wrynn".to_string()));
         hash1.insert("age".to_string(), Integer(21i32));
         hash1.insert("weight".to_string(), Float(120.16f64));
-        hash1.insert("class".to_string(), Strng("Priest".to_string()));
+        hash1.insert("class".to_string(), Data::String("Priest".to_string()));
         hash1.insert("died".to_string(), Bool(false));
         hash1.insert("class_cards".to_string(),
-                     Vector(vec![Strng(test_string.clone()),
-                                 Strng("Prophet Velen".to_string()),
+                     Vector(vec![Data::String(test_string.clone()),
+                                 Data::String("Prophet Velen".to_string()),
                                  Hash(hearthstone)]));
 
         let hash2 = HashBuilder::new()

@@ -8,7 +8,7 @@ use parser;
 use parser::Node;
 use parser::Node::{Value, Static, Unescaped, Section, Part};
 use Data;
-use Data::{Strng, Bool, Integer, Float, Vector, Hash, Lambda};
+use Data::{Bool, Integer, Float, Vector, Hash, Lambda};
 use build::HashBuilder;
 use std::collections::HashMap;
 
@@ -187,7 +187,7 @@ impl Template {
         let mut tmp: String = String::new();
         match *data {
             // simple value-for-tag exchange, write out the string
-            Strng(ref val) => {
+            Data::String(ref val) => {
                 match *node {
                     Unescaped(_, _) => tmp = tmp + val,
                     Value(_, _) => tmp = self.escape_html(&val[..]),
@@ -346,7 +346,7 @@ impl Template {
                             Hash(ref h) => {
                                 rv = self.handle_node(node, h, writer);
                             }
-                            Strng(ref val) => {
+                            Data::String(ref val) => {
                                 return Err(ErrorKind::UnexpectedDataType(val.to_owned()).into())
                             }
                             Bool(ref val) => {
@@ -615,7 +615,7 @@ mod template_tests {
     use compiler;
     use template::Template;
     use build::{HashBuilder, VecBuilder};
-    use Data::Strng;
+    use Data;
 
     #[test]
     fn test_look_up_section_data() {
@@ -645,7 +645,7 @@ mod template_tests {
         match answer {
             Some(d) => {
                 match *d {
-                    Strng(ref s) => assert_eq!("Phil".to_string(), *s),
+                    Data::String(ref s) => assert_eq!("Phil".to_string(), *s),
                     _ => {
                         assert!(false);
                     }
@@ -680,7 +680,7 @@ mod template_tests {
         match answer {
             Some(d) => {
                 match *d {
-                    Strng(ref s) => assert_eq!("Phil".to_string(), *s),
+                    Data::String(ref s) => assert_eq!("Phil".to_string(), *s),
                     _ => {
                         assert!(false);
                     }
