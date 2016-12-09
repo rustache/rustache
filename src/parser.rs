@@ -211,43 +211,34 @@ fn parse_comment_node<'a>(token: &Token,
 // Recursively handle tag names that utilize dot notation shorthand
 fn handle_dot_notation<'a>(parts: &[&'a str], unescaped: bool, amp: bool) -> Node<'a> {
     let variable = parts[0];
-    match parts.len() {
-        // Determine if the remaining portion of the tag name is the
-        // variable or another section.
-        1 => {
-            match unescaped {
-                // Determine if the matching tag is unesecaped or normal.
-                true => {
-                    match amp {
-                        true => {
-                            // {{&variable}}
-                            Unescaped(variable, format!("{{{{&{}}}}}", variable))
-                        }
-                        false => {
-                            // {{{variable}}}
-                            Unescaped(variable, format!("{{{{{{{}}}}}}}", variable))
-                        }
-                    }
-                }
-                false => {
-                    // {{variable}}
-                    Value(variable, format!("{{{{{}}}}}", variable))
-                }
+    // Determine if the remaining portion of the tag name is the
+    // variable or another section.
+    if parts.len() == 1 {
+        // Determine if the matching tag is unesecaped or normal.
+        if unescaped {
+            if amp {
+                // {{&variable}}
+                Unescaped(variable, format!("{{{{&{}}}}}", variable))
+            } else {
+                // {{{variable}}}
+                Unescaped(variable, format!("{{{{{{{}}}}}}}", variable))
             }
+        } else {
+            // {{variable}}
+            Value(variable, format!("{{{{{}}}}}", variable))
         }
-        _ => {
-            // {{#variable}}
-            let otag = format!("{{{{#{}}}}}", variable);
-            // {{/variable}}
-            let ctag = format!("{{{{/{}}}}}", variable);
+    } else {
+        // {{#variable}}
+        let otag = format!("{{{{#{}}}}}", variable);
+        // {{/variable}}
+        let ctag = format!("{{{{/{}}}}}", variable);
 
-            // Enter recursion and assign the results as children.
-            Section(variable,
-                    vec![handle_dot_notation(&parts[1..], unescaped, amp)],
-                    false,
-                    otag,
-                    ctag)
-        }
+        // Enter recursion and assign the results as children.
+        Section(variable,
+                vec![handle_dot_notation(&parts[1..], unescaped, amp)],
+                false,
+                otag,
+                ctag)
     }
 }
 
