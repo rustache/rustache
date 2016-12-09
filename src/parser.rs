@@ -142,7 +142,7 @@ fn parse_text_node<'a>(text: &'a str, status: &mut ParserStatus) -> Node<'a> {
 // Helper function for handling the creation of a variable node
 fn parse_variable_node<'a>(name: &'a str, raw: &'a str) -> Node<'a> {
     if name.contains('.') {
-        let parts: Vec<&str> = name.split(".").collect();
+        let parts: Vec<&str> = name.split('.').collect();
         handle_dot_notation(&parts[..], false, false)
     } else {
         Value(name, raw.to_string())
