@@ -64,7 +64,7 @@ pub fn create_tokens<'a>(contents: &'a str) -> Vec<Token<'a>> {
 
         // Catch trailing whitespace
         if !trailing_whitespace.is_empty() {
-            tokens.push(Text(&trailing_whitespace));
+            tokens.push(Text(trailing_whitespace));
         }
     }
 
