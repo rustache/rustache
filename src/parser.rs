@@ -47,7 +47,7 @@ impl LocalStringExt for str {
 
 // Parse list of tokens into instruction nodes
 // Section nodes will be handled recursively
-pub fn parse_nodes<'a>(list: &Vec<Token<'a>>) -> Vec<Node<'a>> {
+pub fn parse_nodes<'a>(list: &[Token<'a>]) -> Vec<Node<'a>> {
     let mut nodes: Vec<Node> = vec![];
     let mut it = list.iter().enumerate().peekable();
     let mut status = Parse;
