@@ -130,9 +130,7 @@ pub fn parse_nodes<'a>(list: &[Token<'a>]) -> Vec<Node<'a>> {
 
 // Helper function for handling the creation of a text node
 fn parse_text_node<'a>(text: &'a str, status: &mut ParserStatus) -> Node<'a> {
-    if text.contains('\n') {
-        *status = Skip;
-    } else if text.is_whitespace() {
+    if text.contains('\n') || text.is_whitespace() {
         *status = Skip;
     }
 
