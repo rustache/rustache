@@ -31,7 +31,7 @@ is the `render` method provided by the `rustache::Render` trait like so:
 ```rust
 // Renders the given template string
 let data = rustache::HashBuilder::new().insert("name", "your name");
-let out = Cursor::new(Vec::new());
+let mut out = Cursor::new(Vec::new());
 data.render("{{ name }}", &mut out).unwrap();
 println!("{}", String::from_utf8(rv.into_inner()).unwrap());
 ```
@@ -43,7 +43,7 @@ Here's an example of how to pass in data to the `render_text` method using the `
 ```rust
 let data = HashBuilder::new()
     .insert("name", "Bob");
-let out = Cursor::new(Vec::new());
+let mut out = Cursor::new(Vec::new());
 
 data.render("{{ name }}", &mut out);
 ```
@@ -52,7 +52,7 @@ Here's an example of how to pass in data in the form of a JSON `enum` to a `rend
 
 ```rust
 let data = json::from_str(r#"{"name": "Bob"}"#);
-let out = Cursor::new(Vec::new());
+let mut out = Cursor::new(Vec::new());
 
 data.render("{{ name }}", &mut out);
 ```
