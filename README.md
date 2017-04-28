@@ -7,7 +7,7 @@ Rustache [![Build Status](https://travis-ci.org/rustache/rustache.svg?branch=mas
 
 The different Mustache tags are documented at the [mustache(5)](http://mustache.github.com/mustache.5.html) man page.
 
-The project's docs page is located [here](https://rustache.github.io/rustache/).
+The project's docs page is located [here](https://docs.rs/rustache/).
 
 ## Install
 
